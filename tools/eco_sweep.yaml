@@ -1,0 +1,24 @@
+# Eco-mode examples for --controller-config (dev only). Copy ONE block into its own file, e.g.
+#   .venv\Scripts\python.exe -m autocross run -c ..\hackuab\controller.py --controller-config my_eco.yaml ...
+# tools/eco_pareto.py writes these files itself for its sweep (with strict: true).
+#
+# Performance (the scored default; identical to leaving the key out):
+#   eco_weight: 0.0
+#
+# Recommended Eco (hackuab/eco.yaml): -36 % energy for +6.2 % lap time on 5 bicycle courses, 0 penalties
+#   eco_weight: 0.8
+#
+# Mild Eco: -23 % energy for +2.8 % lap time
+#   eco_weight: 0.6
+#
+# Most energy-saving: -49 % energy for about +12 % lap time, but hit one cone on practice_technical
+#   eco_weight: 1.0
+#
+# Finer knobs (Params fields; defaults shown), all scaled by eco_weight:
+#   eco_coast_m: 30.0        # longest lift-and-coast before a braking zone, m (limited by the 40 m view)
+#   eco_coast_margin: 0.03   # planned coast decel = (drag + rolling) / m + this, m/s^2
+#   eco_vmax_drop: 0.35      # top-speed cut as a fraction of the horizon-guard top speed
+#   eco_accel_drop: 0.5      # forward-pass acceleration cut
+#   eco_seed_drop: 0.5       # forward-pass seed-time cut (less speed-PI wind-up and overshoot braking)
+strict: true
+eco_weight: 0.8

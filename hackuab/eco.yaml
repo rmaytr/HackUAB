@@ -1,0 +1,5 @@
+# Eco mode: the same controller with one knob. Select it with
+#   --controller-config ..\hackuab\eco.yaml
+# eco_weight 0 is the scored performance controller; 1 saves the most energy.
+# The value below comes from tools/eco_pareto.py. Results are in docs/STATUS.md, section "Eco mode".
+eco_weight: 0.8

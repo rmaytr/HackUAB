@@ -23,6 +23,14 @@ imposed are remembered by course progress and applied up front next step (relaxe
 step), so a corner is usually found once and later steps verify in a single pass. Results go to
 Plan.debug (pred_* keys) for telemetry.
 
+Eco mode (Params.eco_weight in [0, 1], default 0 = everything above, unchanged): one knob trades lap
+time for energy inside the speed profile, see _eco_setup / eco_backward_pass. (a) Lift-and-coast: before
+each braking zone the profile follows the car's own coast-down (drag + rolling, ~0.2 m/s^2) and only
+brakes where coasting can no longer make the corner; the coast length grows with eco_weight and is
+limited to what fits in the visible horizon, so the car never has to brake to get onto a coast line.
+(c) Gentler acceleration and a lower top speed (drag power grows with v^3). Every eco plan still goes
+through predict.verify_plan().
+
 If the solver fails or produces non-finite values we return the Phase 0 centerline plan.
 
 New tunables (TUNABLES below; a Params field of the same name wins, so add them to params.py to tune):
@@ -82,6 +90,9 @@ TUNABLES = {
     "vis_hairpin_radius": 8.0, "vis_margin_m": 0.0, "fwd_accel_frac": 1.0, "fwd_seed_time": 1.0,
     "air_density": 1.2, "verify_iters": 1, "verify_horizon_s": 1.5, "verify_use_limit": 0.95,
     "verify_grip_limit": 1.0, "verify_rear_slip_deg": 5.0, "verify_relax": 1.01,
+    # Eco mode; the Params fields of the same name (params.py) are the ones to tune
+    "eco_coast_m": 30.0, "eco_coast_margin": 0.03, "eco_vmax_drop": 0.35, "eco_accel_drop": 0.5,
+    "eco_seed_drop": 0.5,
 }
 
 
@@ -112,7 +123,8 @@ def backward_pass(v_cap: np.ndarray, s: np.ndarray, a_dec: float) -> np.ndarray:
     return np.sqrt(np.maximum(np.minimum.accumulate(energy[::-1])[::-1] - 2.0 * a_dec * s, 0.0))
 
 
-def accel_table(vehicle: VehicleParams, p: Params, v_top: float) -> tuple[np.ndarray, np.ndarray]:
+def accel_table(vehicle: VehicleParams, p: Params, v_top: float,
+                accel_scale: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
     """Distance needed to accelerate from 0 to each speed in a table, flat out:
     a(v) = min(a_max, F_drive/m, P/(m v), a_traction) - (drag + rolling)/m and S(v) = int v / a(v) dv.
     The car is all-wheel drive, so the traction limit is set by the load on all four tyres:
@@ -121,7 +133,7 @@ def accel_table(vehicle: VehicleParams, p: Params, v_top: float) -> tuple[np.nda
     v = np.linspace(0.0, v_top, 64)
     f_drive = np.minimum(p.max_drive_force, p.max_power_w / np.maximum(v, 0.5))
     a_traction = float(getattr(p, "traction_limit", 0.97)) * float(getattr(p, "mu_model", vehicle.mu)) * G
-    a = np.minimum(np.minimum(_t(p, "fwd_accel_frac") * vehicle.max_accel, f_drive / m), a_traction)
+    a = np.minimum(np.minimum(_t(p, "fwd_accel_frac") * accel_scale * vehicle.max_accel, f_drive / m), a_traction)
     a -= (0.5 * _t(p, "air_density") * p.drag_area * v * v) / m + p.rolling_resistance * G
     a = np.maximum(a, 0.05)
     integrand = v / a
@@ -280,14 +292,23 @@ def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Pl
     finish = float(getattr(road, "finish_distance", float("nan")))
     if not (np.isfinite(finish) and 0.0 <= finish <= float(c.s[-1])):
         v_cap[-1] = min(v_cap[-1], np.sqrt(p.a_lat * r_min + 2.0 * p.a_dec * _t(p, "vis_margin_m")))
-    table = accel_table(vehicle, p, max(p.v_max, float(v_cap.max())) + 1.0)
+    eco = float(getattr(p, "eco_weight", 0.0))
+    eco_cfg = None
+    if eco > 0.0:
+        v_cap, eco_cfg = _eco_setup(v_cap, sp, vehicle, p, eco)
+    table = accel_table(vehicle, p, max(p.v_max, float(v_cap.max())) + 1.0,
+                        1.0 if eco_cfg is None else eco_cfg["accel_scale"])
     v_now = max(float(obs.speed), 0.0)
     a_now = float(np.interp(v_now + 0.1, table[0], table[1]) - np.interp(v_now, table[0], table[1]))
     a_now = 0.1 * (v_now + 0.05) / max(a_now, 1e-6)                      # a = v dv/ds
-    v_seed = v_now + a_now * _t(p, "fwd_seed_time")
+    v_seed = v_now + a_now * _t(p, "fwd_seed_time") * (1.0 if eco_cfg is None else eco_cfg["seed_scale"])
 
     def profile(cap: np.ndarray) -> np.ndarray:
-        v_back = backward_pass(cap, sp, p.a_dec)
+        if eco_cfg is None:
+            v_back = backward_pass(cap, sp, p.a_dec)
+        else:
+            v_back, eco_cfg["coast"] = eco_backward_pass(cap, sp, p.a_dec, eco_cfg)
+            eco_cfg["v_back"] = v_back.copy()
         v_back[0] = min(v_back[0], v_seed)
         return forward_pass(v_back, sp, table)
 
@@ -306,7 +327,67 @@ def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Pl
         out, cap = _verify(out, v_cap, profile, obs, vehicle, p)
         # Progress is measured along the centerline, not along this step's offset racing line.
         _VCAP.update(s=obs.progress + s, cap=np.where(cap < base_cap - 1e-6, cap, _NO_CAP), step=obs.step)
+    if eco_cfg is not None:
+        out.debug = dict(out.debug or {})
+        out.debug.update(_eco_debug(out, eco_cfg, eco, v_now, p))
     return out
+
+
+def _eco_setup(v_cap: np.ndarray, s: np.ndarray, vehicle: VehicleParams, p: Params,
+               eco: float) -> tuple[np.ndarray, dict]:
+    """Eco caps + settings. (c) top speed: a fraction of the fastest speed the horizon guard allows
+    (so even small eco_weights bite, the 22 m/s v_max is rarely reached); gentler forward pass.
+    (a) the coast-down deceleration the car really has at that speed (+ a small margin)."""
+    eco = min(max(eco, 0.0), 1.0)
+    h = float(s[-1])
+    v_guard = float(np.sqrt(v_cap[-1] ** 2 + 2.0 * p.a_dec * h))
+    v_cruise = min(p.v_max, v_guard) * (1.0 - _t(p, "eco_vmax_drop") * eco)
+    cap = np.minimum(v_cap, v_cruise)
+    m = vehicle.mass
+    a_coast = ((0.5 * _t(p, "air_density") * p.drag_area * v_cruise ** 2) / m + p.rolling_resistance * G
+               + _t(p, "eco_coast_margin"))
+    return cap, {"v_cruise": v_cruise, "a_coast": min(a_coast, 0.9 * p.a_dec), "horizon": h,
+                 "coast_m": eco * _t(p, "eco_coast_m"), "accel_scale": 1.0 - _t(p, "eco_accel_drop") * eco,
+                 "seed_scale": 1.0 - _t(p, "eco_seed_drop") * eco}
+
+
+def eco_backward_pass(v_cap: np.ndarray, s: np.ndarray, a_dec: float, cfg: dict) -> tuple[np.ndarray, np.ndarray]:
+    """Coast-then-brake reachability (vectorised K x K like backward_pass). For every capped node j
+    (a corner) the car may arrive along one of two lines in v^2: braking at a_dec, or, further out,
+    coasting at a_coast that hands over to braking d_x before j:
+        brake_j(d) = v_j^2 + 2 a_dec d
+        coast_j(d) = v_j^2 + 2 a_dec d_x + 2 a_coast (d - d_x),  d_x = (V^2 - 2 a_coast L_j - v_j^2) / (2 a_dec)
+    so coasting covers L_j metres down from the cruise speed V. L_j is the eco coast length, cut so the
+    whole coast + brake fits inside the horizon (else the car would brake to get onto the coast line).
+    The horizon-end visibility guard is not a corner and never gets a coast line.
+    Returns (v, coast) where coast[i] is True when a coast line is the binding limit at node i."""
+    v_cr, a_c, h, coast_m = cfg["v_cruise"], cfg["a_coast"], cfg["horizon"], cfg["coast_m"]
+    ds = s[None, :] - s[:, None]
+    d = np.maximum(ds, 0.0)
+    cap2 = v_cap * v_cap
+    d_brake = np.maximum(v_cr * v_cr - cap2, 0.0) / (2.0 * a_dec)
+    room = np.clip((h - d_brake) / max(1.0 - a_c / a_dec, 1e-6), 0.0, coast_m)
+    d_x = np.maximum(v_cr * v_cr - 2.0 * a_c * room - cap2, 0.0) / (2.0 * a_dec)
+    brake = cap2[None, :] + 2.0 * a_dec * d
+    coast = cap2[None, :] + 2.0 * a_dec * d_x[None, :] + 2.0 * a_c * (d - d_x[None, :])
+    real = (room > 0.0) & (cap2 < v_cr * v_cr - 1e-6)
+    real[-1] = False
+    coast = np.where(real[None, :], coast, np.inf)
+    valid = ds >= 0.0
+    b_min = np.where(valid, brake, np.inf).min(axis=1)
+    c_min = np.where(valid, coast, np.inf).min(axis=1)
+    return np.sqrt(np.maximum(np.minimum(b_min, c_min), 0.0)), c_min < b_min - 1e-9
+
+
+def _eco_debug(pl: Plan, cfg: dict, eco: float, v_now: float, p: Params) -> dict:
+    """dbg_coast = 1 when the speed the tracker follows right now comes from a coast line."""
+    s_look = max(v_now * float(getattr(p, "speed_preview_t", 0.25)), 1.0)
+    i = int(np.clip(np.searchsorted(pl.s, s_look), 0, len(pl.s) - 1))
+    vb = cfg.get("v_back")
+    coast = bool(cfg.get("coast") is not None and cfg["coast"][i] and vb is not None
+                 and abs(float(pl.v[i]) - float(vb[i])) < 1e-3)
+    return {"eco_weight": float(eco), "coast": float(coast), "regen_limited": 0.0,
+            "eco_v_cruise": float(cfg["v_cruise"]), "eco_coast_m": float(cfg["coast_m"])}
 
 
 def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: VehicleParams,

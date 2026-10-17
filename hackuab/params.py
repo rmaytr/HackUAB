@@ -32,6 +32,15 @@ class Params:
     v_max: float = 22.0                 # m/s
     v_horizon: float = 6.0              # m/s, speed cap at the end of the visible horizon
 
+    # --- Eco mode (planner.py, added by Rodion): ONE knob, 0 = today's performance controller ---
+    eco_weight: float = 0.0             # 0 = fastest lap (default, unchanged), 1 = most energy-saving
+    eco_coast_m: float = 30.0           # m, longest lift-and-coast before a braking zone (at eco_weight 1)
+    eco_coast_margin: float = 0.03      # m/s^2, planned coast decel = (drag + rolling) / m + this
+    eco_vmax_drop: float = 0.35         # top speed cut at eco_weight 1, fraction of the horizon-guard top speed
+    eco_accel_drop: float = 0.5         # forward-pass acceleration cut at eco_weight 1 (fraction)
+    eco_seed_drop: float = 0.5          # cut of the forward-pass seed time at eco_weight 1 (less speed-PI wind-up,
+                                        #  so less overshoot braking; practice_technical eco 0.6: -3.6 % Wh, -0.4 s)
+
     # --- tracking (tracker.py) ---
     pp_lookahead_min: float = 4.0       # m
     pp_lookahead_gain: float = 0.32     # s, lookahead grows with speed
