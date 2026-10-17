@@ -1,8 +1,8 @@
 {
  "schema_version": 1,
- "generated_at": "2026-10-17T21:13:31+00:00",
- "commit": "bad18cd",
- "backend_note": "Bicycle backend only: the harness's dynamic bicycle model (AWD, 40/60 drive split, per-axle traction limit), 20 Hz control. CARLA is half of the official score but is not in this dataset. Energy is rebuilt from telemetry by tools/energy.py; the simulator itself has no battery or regen.",
+ "generated_at": "2026-10-17T22:02:00+00:00",
+ "commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+ "backend_note": "Bicycle backend only: the harness's dynamic bicycle model (AWD, 40/60 drive split, per-axle traction limit), 20 Hz control. CARLA is half of the official score but is not in this dataset. Energy is rebuilt from telemetry by tools/energy.py; the simulator itself has no battery or regen. PERFORMANCE/ECO presets are final serial e3b8a28 evidence, re-exported from saved telemetry without reruns. Other sweep/baseline runs retain their historical code_commit; compare per-run provenance.",
  "assumptions": {
   "eta_drive": 0.9,
   "eta_regen": 0.65,
@@ -102,6 +102,36 @@
    "closed": false,
    "laps": 1,
    "file": "tracks/seed3.json"
+  },
+  {
+   "id": "practice_loop",
+   "name": "Practice Loop",
+   "kind": "public",
+   "length_m": 599.87,
+   "reference_time_s": 78.607,
+   "closed": true,
+   "laps": 2,
+   "file": "tracks/practice_loop.json"
+  },
+  {
+   "id": "seed4",
+   "name": "Random course (seed4)",
+   "kind": "random",
+   "length_m": 726.14,
+   "reference_time_s": 50.204,
+   "closed": false,
+   "laps": 1,
+   "file": "tracks/seed4.json"
+  },
+  {
+   "id": "seed5",
+   "name": "Random course (seed5)",
+   "kind": "random",
+   "length_m": 698.79,
+   "reference_time_s": 45.204,
+   "closed": false,
+   "laps": 1,
+   "file": "tracks/seed5.json"
   }
  ],
  "runs": [
@@ -147,7 +177,9 @@
     },
     "energy_balance_residual_pct": 0.029
    },
-   "file": "runs/practice_technical__baseline.json"
+   "file": "runs/practice_technical__baseline.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_technical__performance__ew0.00__laf0.75",
@@ -161,13 +193,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 36.733,
-    "adjusted_time_s": 36.733,
-    "technical_points": 66.93,
+    "lap_time_s": 36.84,
+    "adjusted_time_s": 36.84,
+    "technical_points": 68.08,
     "category_scores": {
-     "completion_time": 79.76,
+     "completion_time": 79.44,
      "deviation": 100.0,
-     "compute": 86.67,
+     "compute": 94.96,
      "dynamics": 100.0
     },
     "penalties": {
@@ -176,22 +208,29 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 15.0,
-    "energy_wh": 358.378,
-    "wh_per_km": 716.54,
+    "p99_step_ms": 8.78,
+    "energy_wh": 347.956,
+    "wh_per_km": 695.907,
     "peak_power_kw": 200.0,
-    "rms_jerk": 30.289,
+    "rms_jerk": 30.064,
     "energy_breakdown_wh": {
-     "drag": 9.747,
-     "rolling": 30.175,
-     "brake_dissipated": 226.462,
-     "regen_recovered": 111.607,
-     "tyre_scrub": 39.537,
-     "drive_loss": 46.999
+     "drag": 9.664,
+     "rolling": 30.166,
+     "brake_dissipated": 215.691,
+     "regen_recovered": 109.736,
+     "tyre_scrub": 39.409,
+     "drive_loss": 45.769
     },
-    "energy_balance_residual_pct": -0.014
+    "energy_balance_residual_pct": -0.014,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 5.2577809949100605,
+    "path_err_max_m": 0.24077493684984375,
+    "obstacle_hits": 0
    },
-   "file": "runs/practice_technical__performance__ew0.00__laf0.75.json"
+   "file": "runs/practice_technical__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "practice_technical__eco__ew0.20__laf0.75",
@@ -235,7 +274,9 @@
     },
     "energy_balance_residual_pct": -0.017
    },
-   "file": "runs/practice_technical__eco__ew0.20__laf0.75.json"
+   "file": "runs/practice_technical__eco__ew0.20__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_technical__eco__ew0.40__laf0.75",
@@ -279,7 +320,9 @@
     },
     "energy_balance_residual_pct": -0.016
    },
-   "file": "runs/practice_technical__eco__ew0.40__laf0.75.json"
+   "file": "runs/practice_technical__eco__ew0.40__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_technical__eco__ew0.60__laf0.75",
@@ -323,7 +366,9 @@
     },
     "energy_balance_residual_pct": -0.017
    },
-   "file": "runs/practice_technical__eco__ew0.60__laf0.75.json"
+   "file": "runs/practice_technical__eco__ew0.60__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_technical__eco__ew0.80__laf0.75",
@@ -339,11 +384,11 @@
     "result": "finished",
     "lap_time_s": 40.591,
     "adjusted_time_s": 40.591,
-    "technical_points": 63.57,
+    "technical_points": 64.87,
     "category_scores": {
      "completion_time": 68.13,
      "deviation": 100.0,
-     "compute": 87.57,
+     "compute": 96.19,
      "dynamics": 100.0
     },
     "penalties": {
@@ -352,7 +397,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 14.324,
+    "p99_step_ms": 7.861,
     "energy_wh": 244.202,
     "wh_per_km": 488.517,
     "peak_power_kw": 193.109,
@@ -365,9 +410,16 @@
      "tyre_scrub": 30.518,
      "drive_loss": 30.009
     },
-    "energy_balance_residual_pct": -0.013
+    "energy_balance_residual_pct": -0.013,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 4.710256338626094,
+    "path_err_max_m": 0.2734525458368117,
+    "obstacle_hits": 0
    },
-   "file": "runs/practice_technical__eco__ew0.80__laf0.75.json"
+   "file": "runs/practice_technical__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "practice_technical__eco__ew1.00__laf0.75",
@@ -411,7 +463,9 @@
     },
     "energy_balance_residual_pct": -0.01
    },
-   "file": "runs/practice_technical__eco__ew1.00__laf0.75.json"
+   "file": "runs/practice_technical__eco__ew1.00__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_technical__performance__ew0.00__laf0.60",
@@ -455,7 +509,9 @@
     },
     "energy_balance_residual_pct": -0.007
    },
-   "file": "runs/practice_technical__performance__ew0.00__laf0.60.json"
+   "file": "runs/practice_technical__performance__ew0.00__laf0.60.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_technical__performance__ew0.00__laf0.85",
@@ -499,7 +555,9 @@
     },
     "energy_balance_residual_pct": -0.015
    },
-   "file": "runs/practice_technical__performance__ew0.00__laf0.85.json"
+   "file": "runs/practice_technical__performance__ew0.00__laf0.85.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "hackathon_test__baseline",
@@ -543,7 +601,9 @@
     },
     "energy_balance_residual_pct": 0.02
    },
-   "file": "runs/hackathon_test__baseline.json"
+   "file": "runs/hackathon_test__baseline.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "hackathon_test__performance__ew0.00__laf0.75",
@@ -557,13 +617,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 49.772,
-    "adjusted_time_s": 49.772,
-    "technical_points": 68.58,
+    "lap_time_s": 49.766,
+    "adjusted_time_s": 49.766,
+    "technical_points": 70.25,
     "category_scores": {
-     "completion_time": 85.73,
+     "completion_time": 85.74,
      "deviation": 100.0,
-     "compute": 85.74,
+     "compute": 96.82,
      "dynamics": 100.0
     },
     "penalties": {
@@ -572,22 +632,29 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 14.821,
-    "energy_wh": 403.377,
-    "wh_per_km": 602.213,
-    "peak_power_kw": 198.294,
-    "rms_jerk": 25.705,
+    "p99_step_ms": 7.388,
+    "energy_wh": 402.26,
+    "wh_per_km": 600.884,
+    "peak_power_kw": 197.461,
+    "rms_jerk": 25.609,
     "energy_breakdown_wh": {
-     "drag": 12.214,
-     "rolling": 40.412,
-     "brake_dissipated": 282.182,
-     "regen_recovered": 156.82,
-     "tyre_scrub": 65.953,
-     "drive_loss": 56.02
+     "drag": 12.202,
+     "rolling": 40.389,
+     "brake_dissipated": 281.875,
+     "regen_recovered": 156.62,
+     "tyre_scrub": 65.977,
+     "drive_loss": 55.888
     },
-    "energy_balance_residual_pct": -0.011
+    "energy_balance_residual_pct": -0.011,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 5.561144794371239,
+    "path_err_max_m": 0.227508664336453,
+    "obstacle_hits": 0
    },
-   "file": "runs/hackathon_test__performance__ew0.00__laf0.75.json"
+   "file": "runs/hackathon_test__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "hackathon_test__eco__ew0.20__laf0.75",
@@ -631,7 +698,9 @@
     },
     "energy_balance_residual_pct": -0.013
    },
-   "file": "runs/hackathon_test__eco__ew0.20__laf0.75.json"
+   "file": "runs/hackathon_test__eco__ew0.20__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "hackathon_test__eco__ew0.40__laf0.75",
@@ -675,7 +744,9 @@
     },
     "energy_balance_residual_pct": -0.012
    },
-   "file": "runs/hackathon_test__eco__ew0.40__laf0.75.json"
+   "file": "runs/hackathon_test__eco__ew0.40__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "hackathon_test__eco__ew0.60__laf0.75",
@@ -719,7 +790,9 @@
     },
     "energy_balance_residual_pct": -0.008
    },
-   "file": "runs/hackathon_test__eco__ew0.60__laf0.75.json"
+   "file": "runs/hackathon_test__eco__ew0.60__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "hackathon_test__eco__ew0.80__laf0.75",
@@ -733,14 +806,14 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 54.053,
-    "adjusted_time_s": 54.053,
-    "technical_points": 66.06,
+    "lap_time_s": 54.092,
+    "adjusted_time_s": 54.092,
+    "technical_points": 67.37,
     "category_scores": {
-     "completion_time": 76.72,
+     "completion_time": 76.64,
      "deviation": 100.0,
-     "compute": 87.04,
-     "dynamics": 99.93
+     "compute": 95.89,
+     "dynamics": 100.0
     },
     "penalties": {
      "cone_hits": 0,
@@ -748,22 +821,29 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 14.313,
-    "energy_wh": 279.535,
-    "wh_per_km": 417.418,
-    "peak_power_kw": 198.198,
-    "rms_jerk": 19.074,
+    "p99_step_ms": 8.085,
+    "energy_wh": 278.721,
+    "wh_per_km": 416.427,
+    "peak_power_kw": 198.701,
+    "rms_jerk": 19.327,
     "energy_breakdown_wh": {
-     "drag": 9.794,
-     "rolling": 40.403,
-     "brake_dissipated": 101.847,
-     "regen_recovered": 61.289,
-     "tyre_scrub": 50.071,
-     "drive_loss": 34.082
+     "drag": 9.763,
+     "rolling": 40.381,
+     "brake_dissipated": 103.061,
+     "regen_recovered": 61.948,
+     "tyre_scrub": 49.52,
+     "drive_loss": 34.067
     },
-    "energy_balance_residual_pct": -0.006
+    "energy_balance_residual_pct": -0.005,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 4.794192366568018,
+    "path_err_max_m": 0.22633607544636775,
+    "obstacle_hits": 0
    },
-   "file": "runs/hackathon_test__eco__ew0.80__laf0.75.json"
+   "file": "runs/hackathon_test__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "hackathon_test__eco__ew1.00__laf0.75",
@@ -807,7 +887,9 @@
     },
     "energy_balance_residual_pct": -0.008
    },
-   "file": "runs/hackathon_test__eco__ew1.00__laf0.75.json"
+   "file": "runs/hackathon_test__eco__ew1.00__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "hackathon_test__performance__ew0.00__laf0.60",
@@ -851,7 +933,9 @@
     },
     "energy_balance_residual_pct": -0.011
    },
-   "file": "runs/hackathon_test__performance__ew0.00__laf0.60.json"
+   "file": "runs/hackathon_test__performance__ew0.00__laf0.60.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "hackathon_test__performance__ew0.00__laf0.85",
@@ -895,7 +979,9 @@
     },
     "energy_balance_residual_pct": -0.018
    },
-   "file": "runs/hackathon_test__performance__ew0.00__laf0.85.json"
+   "file": "runs/hackathon_test__performance__ew0.00__laf0.85.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_obstacles__baseline",
@@ -939,7 +1025,9 @@
     },
     "energy_balance_residual_pct": 0.082
    },
-   "file": "runs/practice_obstacles__baseline.json"
+   "file": "runs/practice_obstacles__baseline.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_obstacles__performance__ew0.00__laf0.75",
@@ -955,11 +1043,11 @@
     "result": "finished",
     "lap_time_s": 54.329,
     "adjusted_time_s": 54.329,
-    "technical_points": 68.35,
+    "technical_points": 70.24,
     "category_scores": {
      "completion_time": 86.71,
      "deviation": 100.0,
-     "compute": 82.23,
+     "compute": 94.84,
      "dynamics": 100.0
     },
     "penalties": {
@@ -968,7 +1056,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 18.329,
+    "p99_step_ms": 8.869,
     "energy_wh": 450.356,
     "wh_per_km": 671.14,
     "peak_power_kw": 200.0,
@@ -981,9 +1069,16 @@
      "tyre_scrub": 71.599,
      "drive_loss": 60.549
     },
-    "energy_balance_residual_pct": -0.03
+    "energy_balance_residual_pct": -0.03,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 5.033019572648628,
+    "path_err_max_m": 0.3079208253257296,
+    "obstacle_hits": 0
    },
-   "file": "runs/practice_obstacles__performance__ew0.00__laf0.75.json"
+   "file": "runs/practice_obstacles__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "practice_obstacles__eco__ew0.20__laf0.75",
@@ -1027,7 +1122,9 @@
     },
     "energy_balance_residual_pct": -0.016
    },
-   "file": "runs/practice_obstacles__eco__ew0.20__laf0.75.json"
+   "file": "runs/practice_obstacles__eco__ew0.20__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_obstacles__eco__ew0.40__laf0.75",
@@ -1071,7 +1168,9 @@
     },
     "energy_balance_residual_pct": -0.029
    },
-   "file": "runs/practice_obstacles__eco__ew0.40__laf0.75.json"
+   "file": "runs/practice_obstacles__eco__ew0.40__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_obstacles__eco__ew0.60__laf0.75",
@@ -1115,7 +1214,9 @@
     },
     "energy_balance_residual_pct": -0.026
    },
-   "file": "runs/practice_obstacles__eco__ew0.60__laf0.75.json"
+   "file": "runs/practice_obstacles__eco__ew0.60__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_obstacles__eco__ew0.80__laf0.75",
@@ -1131,11 +1232,11 @@
     "result": "finished",
     "lap_time_s": 57.761,
     "adjusted_time_s": 57.761,
-    "technical_points": 67.47,
+    "technical_points": 68.16,
     "category_scores": {
      "completion_time": 80.16,
      "deviation": 100.0,
-     "compute": 89.51,
+     "compute": 94.11,
      "dynamics": 100.0
     },
     "penalties": {
@@ -1144,7 +1245,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 12.868,
+    "p99_step_ms": 9.42,
     "energy_wh": 344.446,
     "wh_per_km": 513.412,
     "peak_power_kw": 194.752,
@@ -1157,9 +1258,16 @@
      "tyre_scrub": 57.014,
      "drive_loss": 46.393
     },
-    "energy_balance_residual_pct": -0.027
+    "energy_balance_residual_pct": -0.027,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 4.58153996983115,
+    "path_err_max_m": 0.1985592914083225,
+    "obstacle_hits": 0
    },
-   "file": "runs/practice_obstacles__eco__ew0.80__laf0.75.json"
+   "file": "runs/practice_obstacles__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "practice_obstacles__eco__ew1.00__laf0.75",
@@ -1203,7 +1311,9 @@
     },
     "energy_balance_residual_pct": -0.016
    },
-   "file": "runs/practice_obstacles__eco__ew1.00__laf0.75.json"
+   "file": "runs/practice_obstacles__eco__ew1.00__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_obstacles__performance__ew0.00__laf0.60",
@@ -1247,7 +1357,9 @@
     },
     "energy_balance_residual_pct": -0.028
    },
-   "file": "runs/practice_obstacles__performance__ew0.00__laf0.60.json"
+   "file": "runs/practice_obstacles__performance__ew0.00__laf0.60.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_obstacles__performance__ew0.00__laf0.85",
@@ -1291,7 +1403,9 @@
     },
     "energy_balance_residual_pct": -0.023
    },
-   "file": "runs/practice_obstacles__performance__ew0.00__laf0.85.json"
+   "file": "runs/practice_obstacles__performance__ew0.00__laf0.85.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_basic__baseline",
@@ -1335,7 +1449,9 @@
     },
     "energy_balance_residual_pct": 0.062
    },
-   "file": "runs/practice_basic__baseline.json"
+   "file": "runs/practice_basic__baseline.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_basic__performance__ew0.00__laf0.75",
@@ -1351,11 +1467,11 @@
     "result": "finished",
     "lap_time_s": 30.227,
     "adjusted_time_s": 30.227,
-    "technical_points": 69.73,
+    "technical_points": 71.48,
     "category_scores": {
      "completion_time": 92.3,
      "deviation": 100.0,
-     "compute": 84.08,
+     "compute": 95.76,
      "dynamics": 96.17
     },
     "penalties": {
@@ -1364,7 +1480,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 16.94,
+    "p99_step_ms": 8.179,
     "energy_wh": 294.311,
     "wh_per_km": 740.366,
     "peak_power_kw": 194.115,
@@ -1377,9 +1493,16 @@
      "tyre_scrub": 38.884,
      "drive_loss": 39.075
     },
-    "energy_balance_residual_pct": -0.015
+    "energy_balance_residual_pct": -0.015,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 6.89839087270847,
+    "path_err_max_m": 0.2330193311235954,
+    "obstacle_hits": 0
    },
-   "file": "runs/practice_basic__performance__ew0.00__laf0.75.json"
+   "file": "runs/practice_basic__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "practice_basic__eco__ew0.20__laf0.75",
@@ -1423,7 +1546,9 @@
     },
     "energy_balance_residual_pct": -0.02
    },
-   "file": "runs/practice_basic__eco__ew0.20__laf0.75.json"
+   "file": "runs/practice_basic__eco__ew0.20__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_basic__eco__ew0.40__laf0.75",
@@ -1467,7 +1592,9 @@
     },
     "energy_balance_residual_pct": -0.019
    },
-   "file": "runs/practice_basic__eco__ew0.40__laf0.75.json"
+   "file": "runs/practice_basic__eco__ew0.40__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_basic__eco__ew0.60__laf0.75",
@@ -1511,7 +1638,9 @@
     },
     "energy_balance_residual_pct": -0.012
    },
-   "file": "runs/practice_basic__eco__ew0.60__laf0.75.json"
+   "file": "runs/practice_basic__eco__ew0.60__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_basic__eco__ew0.80__laf0.75",
@@ -1527,11 +1656,11 @@
     "result": "finished",
     "lap_time_s": 32.272,
     "adjusted_time_s": 32.272,
-    "technical_points": 68.78,
+    "technical_points": 70.08,
     "category_scores": {
      "completion_time": 85.66,
      "deviation": 100.0,
-     "compute": 87.2,
+     "compute": 95.91,
      "dynamics": 100.0
     },
     "penalties": {
@@ -1540,7 +1669,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 14.599,
+    "p99_step_ms": 8.065,
     "energy_wh": 215.07,
     "wh_per_km": 541.603,
     "peak_power_kw": 192.264,
@@ -1553,9 +1682,16 @@
      "tyre_scrub": 30.366,
      "drive_loss": 26.3
     },
-    "energy_balance_residual_pct": -0.01
+    "energy_balance_residual_pct": -0.01,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 4.889540808378126,
+    "path_err_max_m": 0.2015090451002208,
+    "obstacle_hits": 0
    },
-   "file": "runs/practice_basic__eco__ew0.80__laf0.75.json"
+   "file": "runs/practice_basic__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "practice_basic__eco__ew1.00__laf0.75",
@@ -1599,7 +1735,9 @@
     },
     "energy_balance_residual_pct": -0.013
    },
-   "file": "runs/practice_basic__eco__ew1.00__laf0.75.json"
+   "file": "runs/practice_basic__eco__ew1.00__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_basic__performance__ew0.00__laf0.60",
@@ -1643,7 +1781,9 @@
     },
     "energy_balance_residual_pct": -0.019
    },
-   "file": "runs/practice_basic__performance__ew0.00__laf0.60.json"
+   "file": "runs/practice_basic__performance__ew0.00__laf0.60.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "practice_basic__performance__ew0.00__laf0.85",
@@ -1687,7 +1827,9 @@
     },
     "energy_balance_residual_pct": -0.01
    },
-   "file": "runs/practice_basic__performance__ew0.00__laf0.85.json"
+   "file": "runs/practice_basic__performance__ew0.00__laf0.85.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed1__baseline",
@@ -1731,7 +1873,9 @@
     },
     "energy_balance_residual_pct": 0.05
    },
-   "file": "runs/seed1__baseline.json"
+   "file": "runs/seed1__baseline.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed1__performance__ew0.00__laf0.75",
@@ -1745,13 +1889,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 48.481,
-    "adjusted_time_s": 48.481,
-    "technical_points": 69.36,
+    "lap_time_s": 48.243,
+    "adjusted_time_s": 48.243,
+    "technical_points": 71.07,
     "category_scores": {
-     "completion_time": 88.96,
+     "completion_time": 89.45,
      "deviation": 100.0,
-     "compute": 84.5,
+     "compute": 94.92,
      "dynamics": 100.0
     },
     "penalties": {
@@ -1760,22 +1904,29 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 16.176,
-    "energy_wh": 491.631,
-    "wh_per_km": 749.622,
+    "p99_step_ms": 8.812,
+    "energy_wh": 491.938,
+    "wh_per_km": 749.264,
     "peak_power_kw": 200.0,
-    "rms_jerk": 27.543,
+    "rms_jerk": 27.761,
     "energy_breakdown_wh": {
-     "drag": 12.411,
-     "rolling": 39.568,
-     "brake_dissipated": 317.223,
-     "regen_recovered": 146.178,
-     "tyre_scrub": 54.78,
-     "drive_loss": 63.781
+     "drag": 12.503,
+     "rolling": 39.611,
+     "brake_dissipated": 311.744,
+     "regen_recovered": 141.851,
+     "tyre_scrub": 55.979,
+     "drive_loss": 63.379
     },
-    "energy_balance_residual_pct": -0.006
+    "energy_balance_residual_pct": -0.01,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 5.105686652174849,
+    "path_err_max_m": 0.22350356599984159,
+    "obstacle_hits": 0
    },
-   "file": "runs/seed1__performance__ew0.00__laf0.75.json"
+   "file": "runs/seed1__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "seed1__eco__ew0.20__laf0.75",
@@ -1819,7 +1970,9 @@
     },
     "energy_balance_residual_pct": -0.007
    },
-   "file": "runs/seed1__eco__ew0.20__laf0.75.json"
+   "file": "runs/seed1__eco__ew0.20__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed1__eco__ew0.40__laf0.75",
@@ -1863,7 +2016,9 @@
     },
     "energy_balance_residual_pct": -0.006
    },
-   "file": "runs/seed1__eco__ew0.40__laf0.75.json"
+   "file": "runs/seed1__eco__ew0.40__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed1__eco__ew0.60__laf0.75",
@@ -1907,7 +2062,9 @@
     },
     "energy_balance_residual_pct": -0.013
    },
-   "file": "runs/seed1__eco__ew0.60__laf0.75.json"
+   "file": "runs/seed1__eco__ew0.60__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed1__eco__ew0.80__laf0.75",
@@ -1923,11 +2080,11 @@
     "result": "finished",
     "lap_time_s": 52.592,
     "adjusted_time_s": 52.592,
-    "technical_points": 66.94,
+    "technical_points": 68.43,
     "category_scores": {
      "completion_time": 80.35,
      "deviation": 100.0,
-     "compute": 85.55,
+     "compute": 95.51,
      "dynamics": 100.0
     },
     "penalties": {
@@ -1936,7 +2093,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 15.84,
+    "p99_step_ms": 8.367,
     "energy_wh": 309.081,
     "wh_per_km": 471.315,
     "peak_power_kw": 194.568,
@@ -1949,9 +2106,16 @@
      "tyre_scrub": 42.578,
      "drive_loss": 38.111
     },
-    "energy_balance_residual_pct": -0.01
+    "energy_balance_residual_pct": -0.01,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 4.405379383938451,
+    "path_err_max_m": 0.24556618749521325,
+    "obstacle_hits": 0
    },
-   "file": "runs/seed1__eco__ew0.80__laf0.75.json"
+   "file": "runs/seed1__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "seed1__eco__ew1.00__laf0.75",
@@ -1995,7 +2159,9 @@
     },
     "energy_balance_residual_pct": 0.005
    },
-   "file": "runs/seed1__eco__ew1.00__laf0.75.json"
+   "file": "runs/seed1__eco__ew1.00__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed1__performance__ew0.00__laf0.60",
@@ -2039,7 +2205,9 @@
     },
     "energy_balance_residual_pct": -0.011
    },
-   "file": "runs/seed1__performance__ew0.00__laf0.60.json"
+   "file": "runs/seed1__performance__ew0.00__laf0.60.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed1__performance__ew0.00__laf0.85",
@@ -2083,7 +2251,9 @@
     },
     "energy_balance_residual_pct": -0.006
    },
-   "file": "runs/seed1__performance__ew0.00__laf0.85.json"
+   "file": "runs/seed1__performance__ew0.00__laf0.85.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed2__baseline",
@@ -2127,7 +2297,9 @@
     },
     "energy_balance_residual_pct": 0.045
    },
-   "file": "runs/seed2__baseline.json"
+   "file": "runs/seed2__baseline.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed2__performance__ew0.00__laf0.75",
@@ -2143,11 +2315,11 @@
     "result": "finished",
     "lap_time_s": 61.587,
     "adjusted_time_s": 61.587,
-    "technical_points": 68.51,
+    "technical_points": 69.45,
     "category_scores": {
      "completion_time": 86.11,
      "deviation": 100.0,
-     "compute": 86.25,
+     "compute": 92.54,
      "dynamics": 98.24
     },
     "penalties": {
@@ -2156,7 +2328,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 15.315,
+    "p99_step_ms": 10.597,
     "energy_wh": 448.012,
     "wh_per_km": 661.758,
     "peak_power_kw": 200.0,
@@ -2169,9 +2341,16 @@
      "tyre_scrub": 73.157,
      "drive_loss": 61.325
     },
-    "energy_balance_residual_pct": -0.026
+    "energy_balance_residual_pct": -0.026,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 7.905697800029944,
+    "path_err_max_m": 0.24977931546951204,
+    "obstacle_hits": 0
    },
-   "file": "runs/seed2__performance__ew0.00__laf0.75.json"
+   "file": "runs/seed2__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "seed2__eco__ew0.20__laf0.75",
@@ -2215,7 +2394,9 @@
     },
     "energy_balance_residual_pct": -0.026
    },
-   "file": "runs/seed2__eco__ew0.20__laf0.75.json"
+   "file": "runs/seed2__eco__ew0.20__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed2__eco__ew0.40__laf0.75",
@@ -2259,7 +2440,9 @@
     },
     "energy_balance_residual_pct": -0.024
    },
-   "file": "runs/seed2__eco__ew0.40__laf0.75.json"
+   "file": "runs/seed2__eco__ew0.40__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed2__eco__ew0.60__laf0.75",
@@ -2303,7 +2486,9 @@
     },
     "energy_balance_residual_pct": -0.022
    },
-   "file": "runs/seed2__eco__ew0.60__laf0.75.json"
+   "file": "runs/seed2__eco__ew0.60__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed2__eco__ew0.80__laf0.75",
@@ -2317,13 +2502,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 63.936,
-    "adjusted_time_s": 63.936,
-    "technical_points": 67.56,
+    "lap_time_s": 64.01,
+    "adjusted_time_s": 64.01,
+    "technical_points": 68.33,
     "category_scores": {
-     "completion_time": 82.13,
-     "deviation": 100.0,
-     "compute": 86.15,
+     "completion_time": 82.0,
+     "deviation": 99.59,
+     "compute": 91.95,
      "dynamics": 100.0
     },
     "penalties": {
@@ -2332,22 +2517,29 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 15.386,
-    "energy_wh": 390.577,
-    "wh_per_km": 576.67,
+    "p99_step_ms": 10.695,
+    "energy_wh": 390.321,
+    "wh_per_km": 575.898,
     "peak_power_kw": 200.0,
-    "rms_jerk": 28.794,
+    "rms_jerk": 28.527,
     "energy_breakdown_wh": {
-     "drag": 8.124,
-     "rolling": 40.862,
-     "brake_dissipated": 235.057,
-     "regen_recovered": 142.345,
-     "tyre_scrub": 65.806,
-     "drive_loss": 53.292
+     "drag": 8.149,
+     "rolling": 40.89,
+     "brake_dissipated": 235.87,
+     "regen_recovered": 143.114,
+     "tyre_scrub": 65.977,
+     "drive_loss": 53.344
     },
-    "energy_balance_residual_pct": -0.023
+    "energy_balance_residual_pct": -0.023,
+    "overruns": 1,
+    "budget_guard_trips": 1,
+    "rear_slip_max_deg": 5.036115524789456,
+    "path_err_max_m": 0.5253842290068974,
+    "obstacle_hits": 0
    },
-   "file": "runs/seed2__eco__ew0.80__laf0.75.json"
+   "file": "runs/seed2__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "seed2__eco__ew1.00__laf0.75",
@@ -2391,7 +2583,9 @@
     },
     "energy_balance_residual_pct": -0.006
    },
-   "file": "runs/seed2__eco__ew1.00__laf0.75.json"
+   "file": "runs/seed2__eco__ew1.00__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed2__performance__ew0.00__laf0.60",
@@ -2435,7 +2629,9 @@
     },
     "energy_balance_residual_pct": -0.026
    },
-   "file": "runs/seed2__performance__ew0.00__laf0.60.json"
+   "file": "runs/seed2__performance__ew0.00__laf0.60.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed2__performance__ew0.00__laf0.85",
@@ -2479,7 +2675,9 @@
     },
     "energy_balance_residual_pct": -0.025
    },
-   "file": "runs/seed2__performance__ew0.00__laf0.85.json"
+   "file": "runs/seed2__performance__ew0.00__laf0.85.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed3__baseline",
@@ -2523,7 +2721,9 @@
     },
     "energy_balance_residual_pct": 0.042
    },
-   "file": "runs/seed3__baseline.json"
+   "file": "runs/seed3__baseline.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed3__performance__ew0.00__laf0.75",
@@ -2539,11 +2739,11 @@
     "result": "finished",
     "lap_time_s": 52.497,
     "adjusted_time_s": 52.497,
-    "technical_points": 68.54,
+    "technical_points": 69.89,
     "category_scores": {
      "completion_time": 86.04,
      "deviation": 100.0,
-     "compute": 84.88,
+     "compute": 93.84,
      "dynamics": 100.0
     },
     "penalties": {
@@ -2552,7 +2752,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 16.338,
+    "p99_step_ms": 9.624,
     "energy_wh": 476.065,
     "wh_per_km": 731.434,
     "peak_power_kw": 200.0,
@@ -2565,9 +2765,16 @@
      "tyre_scrub": 64.598,
      "drive_loss": 63.174
     },
-    "energy_balance_residual_pct": -0.014
+    "energy_balance_residual_pct": -0.014,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 5.115218004777996,
+    "path_err_max_m": 0.2867663928896311,
+    "obstacle_hits": 0
    },
-   "file": "runs/seed3__performance__ew0.00__laf0.75.json"
+   "file": "runs/seed3__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "seed3__eco__ew0.20__laf0.75",
@@ -2611,7 +2818,9 @@
     },
     "energy_balance_residual_pct": -0.011
    },
-   "file": "runs/seed3__eco__ew0.20__laf0.75.json"
+   "file": "runs/seed3__eco__ew0.20__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed3__eco__ew0.40__laf0.75",
@@ -2655,7 +2864,9 @@
     },
     "energy_balance_residual_pct": -0.01
    },
-   "file": "runs/seed3__eco__ew0.40__laf0.75.json"
+   "file": "runs/seed3__eco__ew0.40__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed3__eco__ew0.60__laf0.75",
@@ -2699,7 +2910,9 @@
     },
     "energy_balance_residual_pct": -0.006
    },
-   "file": "runs/seed3__eco__ew0.60__laf0.75.json"
+   "file": "runs/seed3__eco__ew0.60__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed3__eco__ew0.80__laf0.75",
@@ -2715,11 +2928,11 @@
     "result": "finished",
     "lap_time_s": 55.181,
     "adjusted_time_s": 55.181,
-    "technical_points": 65.68,
+    "technical_points": 68.43,
     "category_scores": {
      "completion_time": 80.7,
      "deviation": 100.0,
-     "compute": 76.45,
+     "compute": 94.77,
      "dynamics": 100.0
     },
     "penalties": {
@@ -2728,7 +2941,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 22.664,
+    "p99_step_ms": 8.926,
     "energy_wh": 348.572,
     "wh_per_km": 535.64,
     "peak_power_kw": 194.578,
@@ -2741,9 +2954,16 @@
      "tyre_scrub": 53.887,
      "drive_loss": 45.294
     },
-    "energy_balance_residual_pct": -0.004
+    "energy_balance_residual_pct": -0.004,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 4.967467002256285,
+    "path_err_max_m": 0.22710677776655033,
+    "obstacle_hits": 0
    },
-   "file": "runs/seed3__eco__ew0.80__laf0.75.json"
+   "file": "runs/seed3__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   },
   {
    "id": "seed3__eco__ew1.00__laf0.75",
@@ -2787,7 +3007,9 @@
     },
     "energy_balance_residual_pct": 0.004
    },
-   "file": "runs/seed3__eco__ew1.00__laf0.75.json"
+   "file": "runs/seed3__eco__ew1.00__laf0.75.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed3__performance__ew0.00__laf0.60",
@@ -2831,7 +3053,9 @@
     },
     "energy_balance_residual_pct": -0.017
    },
-   "file": "runs/seed3__performance__ew0.00__laf0.60.json"
+   "file": "runs/seed3__performance__ew0.00__laf0.60.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
   },
   {
    "id": "seed3__performance__ew0.00__laf0.85",
@@ -2875,8 +3099,317 @@
     },
     "energy_balance_residual_pct": -0.015
    },
-   "file": "runs/seed3__performance__ew0.00__laf0.85.json"
+   "file": "runs/seed3__performance__ew0.00__laf0.85.json",
+   "code_commit": "bad18cd",
+   "evidence": "historical parameter sweep / baseline export"
+  },
+  {
+   "id": "practice_loop__performance__ew0.00__laf0.75",
+   "course": "practice_loop",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 86.01,
+    "adjusted_time_s": 86.01,
+    "technical_points": 70.28,
+    "category_scores": {
+     "completion_time": 86.27,
+     "deviation": 100.0,
+     "compute": 95.96,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 8.028,
+    "energy_wh": 708.606,
+    "wh_per_km": 588.527,
+    "peak_power_kw": 172.013,
+    "rms_jerk": 25.299,
+    "energy_breakdown_wh": {
+     "drag": 23.004,
+     "rolling": 72.641,
+     "brake_dissipated": 642.678,
+     "regen_recovered": 347.015,
+     "tyre_scrub": 138.833,
+     "drive_loss": 105.562
+    },
+    "energy_balance_residual_pct": -0.014,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 5.816151145666861,
+    "path_err_max_m": 0.21526080978849121,
+    "obstacle_hits": 0
+   },
+   "file": "runs/practice_loop__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
+  },
+  {
+   "id": "seed4__performance__ew0.00__laf0.75",
+   "course": "seed4",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 57.39,
+    "adjusted_time_s": 57.39,
+    "technical_points": 68.57,
+    "category_scores": {
+     "completion_time": 81.61,
+     "deviation": 100.0,
+     "compute": 93.91,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 9.571,
+    "energy_wh": 405.979,
+    "wh_per_km": 594.389,
+    "peak_power_kw": 178.365,
+    "rms_jerk": 27.465,
+    "energy_breakdown_wh": {
+     "drag": 10.135,
+     "rolling": 41.208,
+     "brake_dissipated": 275.953,
+     "regen_recovered": 148.78,
+     "tyre_scrub": 88.286,
+     "drive_loss": 55.476
+    },
+    "energy_balance_residual_pct": -0.016,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 5.050998652891955,
+    "path_err_max_m": 0.21397153493241716,
+    "obstacle_hits": 0
+   },
+   "file": "runs/seed4__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
+  },
+  {
+   "id": "seed5__performance__ew0.00__laf0.75",
+   "course": "seed5",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 49.402,
+    "adjusted_time_s": 49.402,
+    "technical_points": 70.53,
+    "category_scores": {
+     "completion_time": 86.39,
+     "deviation": 100.0,
+     "compute": 97.39,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 6.957,
+    "energy_wh": 395.954,
+    "wh_per_km": 605.163,
+    "peak_power_kw": 190.762,
+    "rms_jerk": 26.754,
+    "energy_breakdown_wh": {
+     "drag": 11.498,
+     "rolling": 39.475,
+     "brake_dissipated": 265.535,
+     "regen_recovered": 136.455,
+     "tyre_scrub": 66.875,
+     "drive_loss": 53.241
+    },
+    "energy_balance_residual_pct": 0.0,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 4.871248848954922,
+    "path_err_max_m": 0.2643796046070557,
+    "obstacle_hits": 0
+   },
+   "file": "runs/seed5__performance__ew0.00__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
+  },
+  {
+   "id": "practice_loop__eco__ew0.80__laf0.75",
+   "course": "practice_loop",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 93.24,
+    "adjusted_time_s": 93.24,
+    "technical_points": 67.61,
+    "category_scores": {
+     "completion_time": 77.51,
+     "deviation": 100.0,
+     "compute": 95.74,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 8.199,
+    "energy_wh": 397.223,
+    "wh_per_km": 330.29,
+    "peak_power_kw": 168.321,
+    "rms_jerk": 18.953,
+    "energy_breakdown_wh": {
+     "drag": 18.388,
+     "rolling": 72.558,
+     "brake_dissipated": 187.353,
+     "regen_recovered": 111.271,
+     "tyre_scrub": 104.997,
+     "drive_loss": 50.849
+    },
+    "energy_balance_residual_pct": 0.005,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 4.798951481971936,
+    "path_err_max_m": 0.24703986827564087,
+    "obstacle_hits": 0
+   },
+   "file": "runs/practice_loop__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
+  },
+  {
+   "id": "seed4__eco__ew0.80__laf0.75",
+   "course": "seed4",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 59.77,
+    "adjusted_time_s": 59.77,
+    "technical_points": 65.67,
+    "category_scores": {
+     "completion_time": 77.09,
+     "deviation": 90.0,
+     "compute": 93.62,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 9.789,
+    "energy_wh": 316.812,
+    "wh_per_km": 464.357,
+    "peak_power_kw": 181.345,
+    "rms_jerk": 22.542,
+    "energy_breakdown_wh": {
+     "drag": 8.841,
+     "rolling": 41.162,
+     "brake_dissipated": 166.613,
+     "regen_recovered": 100.752,
+     "tyre_scrub": 72.628,
+     "drive_loss": 41.756
+    },
+    "energy_balance_residual_pct": -0.007,
+    "overruns": 0,
+    "budget_guard_trips": 1,
+    "rear_slip_max_deg": 5.266252675238397,
+    "path_err_max_m": 1.1249519723269532,
+    "obstacle_hits": 0
+   },
+   "file": "runs/seed4__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
+  },
+  {
+   "id": "seed5__eco__ew0.80__laf0.75",
+   "course": "seed5",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 53.386,
+    "adjusted_time_s": 53.386,
+    "technical_points": 68.09,
+    "category_scores": {
+     "completion_time": 78.0,
+     "deviation": 100.0,
+     "compute": 97.92,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 6.557,
+    "energy_wh": 272.664,
+    "wh_per_km": 417.215,
+    "peak_power_kw": 189.797,
+    "rms_jerk": 20.288,
+    "energy_breakdown_wh": {
+     "drag": 9.384,
+     "rolling": 39.429,
+     "brake_dissipated": 115.816,
+     "regen_recovered": 69.084,
+     "tyre_scrub": 48.138,
+     "drive_loss": 34.175
+    },
+    "energy_balance_residual_pct": -0.004,
+    "overruns": 0,
+    "budget_guard_trips": 0,
+    "rear_slip_max_deg": 4.913219348560324,
+    "path_err_max_m": 0.25181889676065355,
+    "obstacle_hits": 0
+   },
+   "file": "runs/seed5__eco__ew0.80__laf0.75.json",
+   "code_commit": "e3b8a285ee44f071ee8f2b24b3804c47bc247a3b",
+   "evidence": "final serial single-pass validation; retained timing failures"
   }
  ],
- "failures": []
+ "failures": [],
+ "historical_export_commit": "bad18cd"
 }

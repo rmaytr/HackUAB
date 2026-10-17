@@ -1,5 +1,7 @@
 # ROADMAP: HackBama_01 EcoCAR Autocross (goal: 1st place)
 
+> **Final state, 2026-10-17:** Rodion selected verifier-enabled e3b8a28 for final main. The timeline below is historical. See [STATUS](STATUS.md) for completed validation and remaining CARLA/runtime limits; [README](../README.md) and [INNOVATION](INNOVATION.md) describe the shipped result.
+
 Written 11:20 AM. **Code freeze 5:00 PM.** Demo 3–5 min. Read [CLAUDE.md](../CLAUDE.md) first, because it has
 the API, rules and module contracts. This file says **who does what, when, and how**.
 

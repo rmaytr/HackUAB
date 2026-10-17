@@ -1,5 +1,32 @@
 # STATUS: where the project stands (handoff file for any AI agent)
 
+## Final main selection (2026-10-17)
+
+Rodion explicitly selected the validated **e3b8a28 verifier-enabled controller** as the final
+main result, superseding the earlier hold/promotion recommendations below. The code is
+unchanged from the 129-test / 22-lap bicycle validation; only final documentation and replay
+artifacts were added. PERFORMANCE remains the default and verification remains enabled.
+README and INNOVATION now describe the shipped features and measured improvements. The
+visualization's PERFORMANCE/ECO presets were refreshed from all twenty saved final laps,
+including public loop and generated seeds 4/5; no new driving or timing reruns were performed.
+Historical sweep/baseline data retain separate per-run commit provenance. A final technical
+report image is published in docs/media. Initial permission errors and all timing outliers
+remain recorded below. The untracked review handoff and simulator are preserved.
+
+Post-export validation: all **5 visualization schema tests passed**. Final controller/test/
+submodule content remains identical to e3b8a28, so the complete existing bicycle validation
+applies without new laps. Final preset metrics were cross-checked against saved summaries.
+
+Acceptance evidence: **129 tests passed; 22/22 standalone laps finished with zero driving
+penalties/errors; public mean 70.066 PERFORMANCE / 67.618 ECO**. PERFORMANCE had zero
+overruns/guard trips. ECO retains one overrun and two soft-budget trips; rear-slip and path-error
+limits remain as documented below. Exact-code CARLA evidence is still outstanding; this
+selection is not a certification of the official weighted score or a guarantee of 70+ on CARLA.
+
+Remaining external handoff: Viraj can validate this exact controller on CARLA; organizers'
+submission destination, video/app publication and any final media upload are separate tasks.
+No experimental verifier-off/corridor/squeeze branch was integrated.
+
 ## Dedicated bicycle validation: e3b8a28 (2026-10-17)
 
 Tested **rodion/compute-final at e3b8a285ee44f071ee8f2b24b3804c47bc247a3b**,

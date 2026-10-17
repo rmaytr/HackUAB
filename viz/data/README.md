@@ -1,5 +1,7 @@
 # Web-app dataset (`viz/data/`)
 
+> **Final preset refresh, 2026-10-17:** PERFORMANCE (eco_weight 0, lat_accel_frac 0.75) and ECO (0.8/0.75) for all five public courses and seeds 1-5 now come from the saved serial e3b8a28 validation telemetry. No laps were rerun. Each run has `code_commit` and `evidence`; other sweeps/baselines retain the historical bad18cd export. The top-level `commit` identifies the final preset code, not every historical run. Extra preset metrics retain overruns, budget-guard trips, peak rear slip, path error and obstacle hits. See [final validation](../../docs/STATUS.md).
+
 Static JSON for the demo web app, which replays our laps step by step and compares driving modes and
 parameters. The app cannot run Python, so every number here is precomputed by `tools/export_viz.py` and
 fetched from `https://raw.githubusercontent.com/rmaytr/HackUAB/main/viz/data/`.
@@ -30,7 +32,7 @@ renamed or removed. A new key can be added without a version bump, so the app sh
 | Key | Meaning |
 |---|---|
 | `schema_version` | `1` |
-| `generated_at`, `commit` | UTC time of the export and the git commit of the code that drove the laps |
+| `generated_at`, `commit` | UTC time of the latest export refresh and the code commit for the final PERFORMANCE/ECO presets; use each run's `code_commit` for historical sweeps/baselines |
 | `backend_note` | One sentence on what was simulated |
 | `assumptions` | `eta_drive`, `eta_regen` and `p_regen_max_kw` used for the energy figures. **They are assumed values for a generic EV, not Blazer EV specifications.** The simulator has no battery or regen, so energy is rebuilt from the wheel forces in telemetry. |
 | `param_axes` | Every value in the grid: `eco_weight` (0 = fastest lap, 1 = most energy-saving) and `lat_accel_frac` (the fraction of tyre grip the planner uses for cornering). The eco_weight sweep and both presets use the `hackuab/params.py` default (currently 0.75); the other values are run at eco_weight 0 only. |
@@ -40,7 +42,7 @@ renamed or removed. A new key can be added without a version bump, so the app sh
 | `failures` | Laps that crashed or timed out during the export: `id`, `course`, `mode`, `params`, `error`. They have no run file. |
 
 **`courses[]`**: `id`, `name`, `kind` (`"public"` for the released practice courses, `"random"` for `gen-track`
-courses with seeds 1–3 and 3 obstacle groups), `length_m` (centerline length), `reference_time_s` (the
+courses with seeds 1–5 and 3 obstacle groups), `length_m` (centerline length), `reference_time_s` (the
 scorer's reference lap time), `closed` (a loop instead of point-to-point), `laps` and `file` (`tracks/<id>.json`).
 
 **`runs[]`**:

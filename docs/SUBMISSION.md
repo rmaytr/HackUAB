@@ -1,5 +1,7 @@
 # SUBMISSION: what we hand in, who makes it, and by when
 
+> **Final code selection, 2026-10-17:** Rodion selected verifier-enabled e3b8a28 for main. README, INNOVATION, final results and default replay data are updated. 129 tests and 22 standalone bicycle laps passed without driving penalties/errors; ECO timing exceptions and the missing exact-code CARLA check remain in [STATUS](STATUS.md). The delivery checklist/timeline below is historical planning, not proof that organizer submission, video/app publication or media delivery occurred.
+
 Written 4:07 PM. **Code freeze 5:00 PM.** Everything below is ordered by deadline.
 Source of the rules: `simulator/README.md` ("Submitting", "Scoring", "Official evaluation") and
 `simulator/config/scoring.yaml`. Upstream has no newer instructions (checked: pinned `06db384` = upstream).
