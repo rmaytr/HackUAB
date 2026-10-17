@@ -457,6 +457,7 @@ def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: Veh
               corridor=corridor)
     v0 = pl.v
     best, best_res, best_cap, n = pl, None, v_cap, 0
+    first_res = None
     deadline = t0 + max(_t(p, "verify_budget_ms"), 0.0) * 1e-3
     if deadline_s is not None:
         deadline = min(deadline, deadline_s)
@@ -473,6 +474,8 @@ def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: Veh
             break
         before = perf_counter()
         res = verify_plan(pl, obs, vehicle, p, **kw)
+        if first_res is None:
+            first_res = res
         cost = max(cost, perf_counter() - before)
         n += 1
         if best_res is None or res["ok"] or rank(res) < rank(best_res):
@@ -515,12 +518,13 @@ def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: Veh
                   "pred_demand_max": r["demand_max"], "pred_ok": float(verified and r["ok"]),
                   "pred_verified": float(verified), "pred_fallback": float(fallback),
                   "pred_unresolved": float(not verified or not r["ok"]),
-                  "pred_budget_exhausted": float(exhausted),
+                  "pred_budget_exhausted": float(exhausted or perf_counter() > deadline),
                   "pred_corridor_checked": float(corridor is not None),
                   "pred_corridor_ok": float(verified and r.get("corridor_ok", True)),
                   "pred_corridor_max": max(float(r.get("corridor_violation_max", 0.0)), 0.0),
                   "pred_corridor_first_s": float(r.get("corridor_first_s", -1.0)),
                   "pred_corridor_first_time": float(r.get("corridor_first_time", -1.0)),
+                  "pred_corridor_initial_max": max(float(first_res.get("corridor_violation_max", 0.0)), 0.0),
                   "pred_iters": float(n),
                   "v_scale_min": float(np.min(best.v / np.maximum(v0, 0.1))),
                   "t_verify_ms": (perf_counter() - t0) * 1e3}

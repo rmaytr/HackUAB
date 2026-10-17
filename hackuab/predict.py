@@ -387,6 +387,8 @@ def corridor_clearance(poses: np.ndarray, corridor) -> dict:
     if np.any(seg2 < 1e-12) or np.any(np.linalg.norm(normal, axis=1) < 0.5):
         return bad
     normal = normal / np.linalg.norm(normal, axis=1, keepdims=True)
+    if np.any(np.sum(normal[:-1] * normal[1:], axis=1) <= 0.0):
+        return bad  # folded/degenerate cross-sections are not certifiable free space
     delta = poses[:, None, :] - center[None, :-1, :]
     dn = np.diff(normal, axis=0)
 
@@ -411,6 +413,12 @@ def corridor_clearance(poses: np.ndarray, corridor) -> dict:
     ray_error = np.abs(cross(residual, normals)) / np.maximum(normal_lengths, 1e-9)
     inverse = (ray_error <= 1e-5) & (normal_lengths > 1e-9)
     distance = np.sum(residual * residual, axis=2)
+    start_along = cross(residual[:, 0], normals[:, 0]) / np.maximum(normal_lengths[:, 0], 1e-9)
+    inverse[:, 0] |= ((u[:, 0] <= 1e-9) & (start_along <= 0.0) &
+                      (-start_along <= min(0.5 * float(np.sqrt(seg2[0])), 0.5)))
+    # A remote normal ray across a hairpin may also intersect this point. It must not
+    # displace the local projection just because a clamped endpoint has a tiny residual.
+    inverse &= distance <= distance.min(axis=1)[:, None] + 0.25
     distance = np.where(inverse.any(axis=1)[:, None], np.where(inverse, distance, np.inf), distance)
     j = np.argmin(distance, axis=1)
     rows = np.arange(count)
@@ -480,8 +488,12 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
     t_steps = max(int(round(horizon_s / dt)), 1)
     if n_nodes < 2:
         return {"poses": np.zeros((1, 2)), "friction_use_max": 0.0, "grip_demand_max": 0.0,
-                "rear_slip_max_deg": 0.0, "lat_dev_max": 0.0, "v_scale": np.ones(n_nodes),
-                "corridor_violation_max": float("nan"), "ok": False}
+                "rear_slip_max_deg": 0.0, "lat_dev_max": 0.0, "v_scale": np.zeros(n_nodes),
+                "demand_max": 1e3, "corridor_ok": False, "corridor_valid": False,
+                "corridor_violation": np.full(1, 1e3), "corridor_covered": np.zeros(1, bool),
+                "corridor_station": np.zeros(1), "corridor_offset": np.zeros(1),
+                "corridor_first_step": 0, "corridor_first_time": 0.0, "corridor_first_s": 0.0,
+                "corridor_first_path_s": 0.0, "corridor_violation_max": 1e3, "ok": False}
     seg = np.diff(path, axis=0)
     seg_len = np.maximum(np.hypot(seg[:, 0], seg[:, 1]), 1e-6)
     ux_l, uy_l = (seg[:, 0] / seg_len).tolist(), (seg[:, 1] / seg_len).tolist()

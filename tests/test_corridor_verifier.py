@@ -100,6 +100,33 @@ def test_curved_vertex_does_not_create_an_unobserved_wedge(offset):
     np.testing.assert_allclose(result['corridor_station'], s[j] + f, atol=1e-6)
 
 
+def test_local_start_projection_wins_over_a_remote_hairpin_normal():
+    from horizon import left_normals
+    s = np.arange(41.)
+    theta = s / 8.
+    center = np.column_stack((8 * np.sin(theta), 8 * (1 - np.cos(theta))))
+    c = band(center, s, left_normals(center), 1., 1.)
+    result = predict.corridor_clearance(np.array([[0., -.65]]), c)
+    assert result['corridor_covered'][0]
+    assert result['corridor_station'][0] < .1
+    assert result['corridor_violation'][0] == 0
+
+
+def test_folded_normals_fail_closed_without_nan_speeds():
+    pl, c, obs = circle_case(3.)
+    c.normal[1] *= -1
+    result = predict.verify_plan(pl, obs, VP, Params.from_vehicle(VP), corridor=c)
+    assert not result['ok']
+    assert np.isfinite(result['v_scale']).all()
+
+
+def test_single_node_plan_reports_failure_with_complete_breach_metadata():
+    pl = planner.Plan(np.zeros((1, 2)), np.zeros(1), np.zeros(1), np.ones(1))
+    result = predict.verify_plan(pl, _obs(1.), VP, Params.from_vehicle(VP))
+    assert not result['ok'] and result['demand_max'] > 1
+    assert result['corridor_first_step'] == 0
+
+
 @pytest.mark.parametrize("kind", ['invalid', 'nan', 'closed', 'duplicate', 'unobserved'])
 def test_bad_or_unobserved_corridor_does_not_pass(kind):
     s = np.arange(4.)
@@ -204,3 +231,26 @@ def test_production_plan_passes_original_corridor(monkeypatch):
     monkeypatch.setattr(planner, 'verify_plan', capture)
     planner.plan(c, obs, VP, Params.from_vehicle(VP))
     assert seen and all(value is c for value in seen)
+
+
+@pytest.mark.parametrize('width,changes', [(.005, True), (3., False)])
+def test_production_speed_response_is_clearance_dependent(monkeypatch, width, changes):
+    _, c, obs = circle_case(width)
+    obs.road = SimpleNamespace(lateral_offset=0., heading_error=0., finish_distance=np.nan)
+    obs.step, obs.progress = 0, 0.
+    p = Params.from_vehicle(VP, {'v_max': 8.})
+    monkeypatch.setattr(planner, '_WARM', {})
+    monkeypatch.setattr(planner, '_VCAP', {})
+    monkeypatch.setitem(planner.TUNABLES, 'verify_budget_ms', 1000.)
+    monkeypatch.setitem(planner.TUNABLES, 'verify_iters', -1)
+    reference = planner.plan(c, obs, VP, p)
+    planner._WARM.clear()
+    planner._VCAP.clear()
+    monkeypatch.setitem(planner.TUNABLES, 'verify_iters', 1)
+    result = planner.plan(c, obs, VP, p)
+    np.testing.assert_array_equal(result.path, reference.path)
+    if changes:
+        assert np.any(result.v < reference.v - 1e-6)
+    else:
+        np.testing.assert_array_equal(result.v, reference.v)
+        assert result.debug['pred_ok']
