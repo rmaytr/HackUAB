@@ -244,11 +244,22 @@ Change a contract only after telling the team, and update this section in the sa
 
 ## Agent skills in this repo
 
-Project skills are committed in `.claude/skills/`, so Claude Code picks them up automatically after you pull:
+Skills are committed as real folders (not symlinks) in two places, so they work right after `git pull`:
 
-| Skill | Use it for |
-|---|---|
-| `find-skills` | Searching the skills registry (`npx skills find <query>`) |
-| `frontend-design` | Making the demo plots, slides and visuals look intentional |
+- `.claude/skills/` is loaded by Claude Code. Start a new session after pulling.
+- `.agents/skills/` is the universal location read by Codex, Cursor, Gemini CLI, Copilot and others.
 
-_More skills to be added once the team agrees on them._
+`skills-lock.json` records each skill's source and hash.
+
+| Skill | Source | Use it for |
+|---|---|---|
+| `python-performance-optimization` | wshobson/agents | Profiling `step()` (cProfile, `perf_counter`) to stay under 35 ms average |
+| `python-testing-patterns` | wshobson/agents | pytest unit tests for `horizon.py` / `planner.py` / `tracker.py` against synthetic `RoadModel`s |
+| `data-visualization` | anthropics/knowledge-work-plugins | Demo charts: lap time vs. baseline, speed profile, step-time histogram |
+| `doc-coauthoring` | anthropics/skills | README, the innovation write-up for judges, the demo script |
+| `frontend-design` | anthropics/skills | Making slides and visuals look intentional |
+| `find-skills` | vercel-labs/skills | Searching for more skills (`npx skills find <query>`) |
+
+To add another skill, run `npx skills add <owner/repo@skill> -y` from the repo root. Then replace the
+symlink it creates in `.claude/skills/` with a real copy of the `.agents/skills/<name>` folder before
+committing, because the symlink points at an absolute path on your machine.
