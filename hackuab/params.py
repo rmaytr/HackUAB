@@ -41,8 +41,8 @@ class Params:
     steer_rate_margin: float = 0.95     # fraction of max_steer_rate the command may use
     speed_preview_t: float = 0.25       # s, how far ahead on the profile the speed target is read
     kp_speed: float = 1.2               # (m/s^2) per (m/s)
-    ki_speed: float = 0.3
-    i_limit: float = 2.0                # m/s^2, integrator clamp
+    ki_speed: float = 0.5
+    i_limit: float = 4.0                # m/s^2, integrator clamp (CARLA needs ~3 to hold speed against drag)
     coast_band: float = 0.25            # m/s^2, small decel requests coast instead of braking
     accel_floor: float = 0.15           # min fraction of max_accel the ellipse leaves at full lateral load
     brake_floor: float = 0.3            # min fraction of max_decel ever allowed (safety over realism)

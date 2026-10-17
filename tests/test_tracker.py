@@ -82,6 +82,13 @@ def test_accelerates_when_slow_and_brakes_when_fast():
     assert brk > 0.0 and thr == 0.0
 
 
+def test_falling_profile_ahead_does_not_hold_back_a_slow_car():
+    plan = arc_plan(v=17.0)
+    plan.v = np.linspace(17.0, 6.0, len(plan.s))     # horizon-guard ramp, car far below it
+    _, thr, brk = track(plan, obs(12.0), VEHICLE, None, {})
+    assert brk == 0.0 and thr > 0.9
+
+
 def test_nan_inputs_give_finite_outputs():
     out = track(arc_plan(), obs(speed=float("nan"), yaw_rate=float("nan"), steer=float("nan")), VEHICLE, None, {})
     assert all(math.isfinite(x) for x in out)

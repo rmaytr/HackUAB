@@ -113,6 +113,11 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
     a_ff = (v1 * v1 - v0 * v0) / (2.0 * (s1 - s0))
     v_ref = v1
     err = v_ref - v
+    if err > 0.0:
+        # Below the profile its downward slope is not a demand: the profile always falls toward
+        # the horizon-end guard, and following that slope here caps speed short of the target
+        # (on CARLA's weaker drivetrain the car stalled at 13 m/s against a 17 m/s target).
+        a_ff = max(a_ff, 0.0)
     i_lim = _p(p, "i_limit")
     state["i_err"] = float(np.clip(state.get("i_err", 0.0) + _p(p, "ki_speed") * err * dt, -i_lim, i_lim))
     a_cmd = a_ff + _p(p, "kp_speed") * err + state["i_err"]
