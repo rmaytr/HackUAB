@@ -463,10 +463,12 @@ def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: Veh
         deadline = min(deadline, deadline_s)
     cost, exhausted = 0.0, False
 
-    def rank(res):
+    def violation(res):
         violation = float(res.get("corridor_violation_max", 0.0))
-        return (not res.get("corridor_ok", True),
-                max(violation, 0.0) if np.isfinite(violation) else 0.0, res["demand_max"])
+        return max(violation, 0.0) if np.isfinite(violation) else 0.0
+
+    def rank(res):
+        return (not res.get("corridor_ok", True), violation(res), res["demand_max"])
 
     for it in range(int(_t(p, "verify_iters")) + 1):
         if n and perf_counter() + cost * 1.25 >= deadline:
@@ -525,10 +527,10 @@ def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: Veh
                   "pred_budget_exhausted": float(exhausted or perf_counter() > deadline),
                   "pred_corridor_checked": float(corridor is not None),
                   "pred_corridor_ok": float(verified and r.get("corridor_ok", True)),
-                  "pred_corridor_max": max(float(r.get("corridor_violation_max", 0.0)), 0.0),
+                  "pred_corridor_max": violation(r),
                   "pred_corridor_first_s": float(r.get("corridor_first_s", -1.0)),
                   "pred_corridor_first_time": float(r.get("corridor_first_time", -1.0)),
-                  "pred_corridor_initial_max": max(float(first_res.get("corridor_violation_max", 0.0)), 0.0),
+                  "pred_corridor_initial_max": violation(first_res),
                   "pred_iters": float(n),
                   "v_scale_min": float(np.min(best.v / np.maximum(v0, 0.1))),
                   "t_verify_ms": (perf_counter() - t0) * 1e3}

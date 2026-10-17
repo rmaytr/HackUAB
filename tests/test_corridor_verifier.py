@@ -212,6 +212,13 @@ def test_wide_corridor_preserves_speed_plan_bit_for_bit(monkeypatch):
     assert not result.debug['pred_fallback']
 
 
+def test_legacy_grip_only_verification_has_finite_debug_without_certifying_clearance():
+    pl, _, obs = circle_case(3.)
+    result, _ = planner._verify(pl, pl.v.copy(), lambda cap: cap, obs, VP, Params.from_vehicle(VP))
+    assert all(np.isfinite(value) for value in result.debug.values())
+    assert result.debug['pred_corridor_checked'] == 0
+
+
 def test_budget_exhaustion_reports_unverified_braking_fallback(monkeypatch):
     pl, c, obs = circle_case(.005)
     p = Params.from_vehicle(VP)
