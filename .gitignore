@@ -46,3 +46,6 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 .idea/
+
+# Sensor-fusion CARLA recordings (large .npz frames; share results, not raw captures)
+fusion_capture/
