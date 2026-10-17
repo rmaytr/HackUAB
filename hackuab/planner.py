@@ -21,7 +21,8 @@ New tunables (TUNABLES below; a Params field of the same name wins, so add them 
     rl_w_smooth          4.0    weight on the curvature rate (third difference of n), m^2
     rl_w_start           1e4    weight tying n_0 to the car's lateral offset
     rl_w_heading         20.0   weight tying dn/ds at s=0 to tan(heading_error)
-    rl_w_warm            0.002  weight (per m) pulling n toward last step's (shifted) solution
+    rl_w_warm            0.05   weight (per m) pulling n toward last step's (shifted) solution; it keeps
+                                apexes already committed to (0.002 -> 0.05 cut 1-3 s per course)
     rl_fade_m            8.0    m, length over which n is pulled back to 0 at the horizon end
     rl_w_fade            2.0    weight (per m) of that pull at the very end (grows quadratically)
     rl_iters             3      projected re-solves with the violated bounds pinned
@@ -55,7 +56,7 @@ class Plan:
 
 
 TUNABLES = {
-    "rl_ds": 1.0, "rl_w_smooth": 4.0, "rl_w_start": 1e4, "rl_w_heading": 20.0, "rl_w_warm": 0.002,
+    "rl_ds": 1.0, "rl_w_smooth": 4.0, "rl_w_start": 1e4, "rl_w_heading": 20.0, "rl_w_warm": 0.05,
     "rl_fade_m": 8.0, "rl_w_fade": 2.0, "rl_iters": 3, "rl_start_free_m": 1.0,
     "rl_rejoin_m": 6.0, "rl_rejoin_time": 1.0, "rl_margin": 0.5,
     "vis_hairpin_radius": 8.0, "vis_margin_m": 0.0, "fwd_accel_frac": 1.0, "fwd_seed_time": 1.0,
