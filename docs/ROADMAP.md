@@ -20,8 +20,8 @@ So the order is **clean > fast > clever-and-explained**. The 4 obstacle cones al
 
 | | Rodion | Saisi | Viraj |
 |---|---|---|---|
-| **Owns** | `hackuab/planner.py`, CARLA, `hackuab/predict.py` (physics model) | `hackuab/horizon.py`, `fusion/` (sensor-fusion track) | `hackuab/controller.py`, `hackuab/params.py`, `hackuab/tracker.py`, `tools/` |
-| **Theme** | Racing line, speed profile, physics-based prediction | Corridor + obstacles, then lidar/radar/camera fusion | Integration, control, testing harness, demo visuals + slides |
+| **Owns** | `hackuab/planner.py`, `hackuab/predict.py` (physics model) | `hackuab/horizon.py`, `fusion/` (sensor-fusion track) | `hackuab/controller.py`, `hackuab/params.py`, `hackuab/tracker.py`, `tools/`, **CARLA** |
+| **Theme** | Racing line, speed profile, physics-based prediction | Corridor + obstacles, then lidar/radar/camera fusion | Integration, control, testing harness, CARLA runs + demo footage, slides |
 | **Branch** | `rodion/*` | `saisi/*` | `viraj/*` |
 
 `docs/` (README, pitch, write-ups) is shared: one person edits a file at a time, and you announce it in the chat.
@@ -34,7 +34,7 @@ At every checkpoint: 10-minute standup, merge green branches into `main`, run `s
 
 | Time | Phase | Exit criteria |
 |---|---|---|
-| **11:20–11:50** | 0. Skeleton | `hackuab/` skeleton on `main` that reproduces the baseline and passes `selftest`. CARLA download started. Contracts frozen. |
+| **11:20–11:50** | 0. Skeleton | `hackuab/` skeleton on `main` that reproduces the baseline and passes `selftest`. Contracts frozen. |
 | **11:50–1:30** | 1. MVP | Each module's MVP is merged. **0 cone hits on `practice_technical`** and faster than the baseline. |
 | **1:30** | Checkpoint 1 | Lap time + penalties table on `practice_technical` + 3 random seeds |
 | **1:30–3:30** | 2. Innovation | Physics prediction, min-curvature line, friction ellipse, fusion pipeline, first CARLA runs |
@@ -66,29 +66,7 @@ a working stub that follows the contracts in CLAUDE.md. Together they reproduce 
 
 ---
 
-## Rodion: planner, physics-based prediction, CARLA
-
-### R1. Get CARLA running (start the download NOW; it's about 20 GB unpacked)
-**Hardware warning:** Rodion's laptop has **Intel Iris Xe integrated graphics (no NVIDIA GPU)**, and the harness is
-tested on RTX 30-series cards. Plan for it:
-- **Plan A:** if Saisi's or Viraj's laptop has an NVIDIA GPU, run the CARLA *server* there. Rodion runs the harness
-  against it with `--set carla.host=<their LAN IP>` (ports 2000–2002 must be reachable; hackathon Wi-Fi may block
-  them, so try a phone hotspot).
-- **Plan A2: cloud GPU VM** (works without anyone's GPU): rent an AWS `g4dn.xlarge` (NVIDIA T4, about $0.53/hr)
-  with the "Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 22.04)" image, open only SSH (port 22), SSH in, and run
-  `curl -fsSLO https://raw.githubusercontent.com/rmaytr/HackUAB/main/tools/carla_remote_setup.sh && bash carla_remote_setup.sh`.
-  The script sets up Docker + headless CARLA + our repo and runs check + baseline + our lap on CARLA. The **whole
-  harness runs on the VM**; we copy `runs/` back with `scp`. First check that the account's EC2 quota for
-  "Running On-Demand G and VT instances" is ≥ 4 vCPUs, because a raise can take hours. **Stop the VM when idle.**
-- **Plan B:** run on the Iris Xe with `scripts\start_carla.ps1 -Headless` (Low quality) and `--set carla.render=false`.
-  It's slow but fine for scoring runs.
-- **Plan C (decide by 2:30):** bicycle only. CARLA is half the official score, but the judges run it themselves.
-  Our job is to make sure the car *behaves the same* there, so lean on the fitted bicycle model (`compare`).
-
-**How:** download the CARLA 0.9.16 Windows release, unzip to `C:\CARLA_0.9.16`, then run
-`scripts\start_carla.ps1 -Headless`, `python -m autocross check`, and a baseline run on `hackathon_test`.
-Then run `compare -c ..\hackuab\controller.py -t tracks\practice_technical.yaml` to check our controller
-is within 2.5 % on both backends.
+## Rodion: planner, physics-based prediction
 
 ### R2. Racing line: `planner.py`
 **What:** a minimum-curvature line inside the safe corridor, re-solved every step over the 40 m horizon.
@@ -204,6 +182,27 @@ Own `main`'s health: review PRs, run `selftest` at every checkpoint, keep the fa
 ### V4. Demo + slides (lead from 4:15; everyone contributes)
 See the demo plan below.
 
+
+### V5. CARLA: install, runs, bicycle-vs-CARLA agreement (Viraj has CARLA installed locally)
+CARLA counts for **50 %** of the official score, so the car must behave the same on both backends.
+**How (from `simulator\`, with CARLA started via `scripts\start_carla.ps1 -Headless`):**
+1. `python -m autocross check`, then a baseline run on `practice_technical` with `--backend carla --no-render`.
+   Post the numbers to the team (compare with the bicycle baseline: 39.47 s, 4 cones, 57.5/75).
+2. After every checkpoint merge (1:30, 2:30, 3:30): run
+   `python -m autocross compare -c ..\hackuab\controller.py -t tracks\practice_technical.yaml -t tracks\hackathon_test.yaml`.
+   The lap-time difference must be < 2.5 %. If it's worse, report *where* (the speed-profile RMS per course) to Rodion,
+   because the planner's grip and braking fractions are usually the cause.
+3. Run `selftest -c ..\hackuab\controller.py --carla` at 3:30 and again before the 5:00 freeze.
+4. Demo footage: from 4:15, restart CARLA with `-Quality Epic` (windowed) and record our car on `practice_technical`
+   with the cyan planned path visible, plus a baseline run for the side-by-side.
+5. If Saisi's fusion work wants real sensor data, record ~30 s of camera + lidar + radar from CARLA for her (S2).
+
+**Backup if Viraj's CARLA stops working:** the cloud GPU VM. Rent an AWS `g4dn.xlarge` (NVIDIA T4, ~$0.53/hr) with the
+"Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 22.04)" image, SSH in and run
+`curl -fsSLO https://raw.githubusercontent.com/rmaytr/HackUAB/main/tools/carla_remote_setup.sh && bash carla_remote_setup.sh`.
+The whole harness runs on the VM. First check that the EC2 quota "Running On-Demand G and VT instances" is ≥ 4, and stop the VM when idle.
+Last resort (decide by 2:30): bicycle only, and rely on the fitted bicycle model.
+
 ---
 
 ## Demo plan (4 minutes)
@@ -243,7 +242,7 @@ Record the videos **before 4:45**. Never demo live without a recorded backup.
 
 | Risk | Mitigation |
 |---|---|
-| CARLA won't run on integrated graphics | Plans A/B/C in R1. Decide by 2:30 |
+| Viraj's CARLA install breaks | Cloud GPU VM backup in V5. Decide by 2:30 |
 | A module breaks `main` near freeze | `controller.py` fallback + checkpoint merges only + feature freeze at 4:15 |
 | Overfitting to the test tracks | Always evaluate on random seeds; never branch on position/station |
 | Step-time spikes from the rollout/solver | Hard per-stage budget in `controller.py`; skip the verifier if over budget |

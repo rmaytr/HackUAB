@@ -195,9 +195,9 @@ docs/                   ROADMAP.md, pitch, innovation write-up, demo media
 
 | Teammate | Owns | Branch prefix |
 | -------- | ---- | ------------- |
-| Rodion   | `planner.py`, `predict.py`, CARLA setup + validation runs | `rodion/*` |
+| Rodion   | `planner.py`, `predict.py` | `rodion/*` |
 | Saisi    | `horizon.py`, `fusion/` | `saisi/*` |
-| Viraj    | `controller.py`, `params.py`, `tracker.py`, `tools/`, demo slides | `viraj/*` |
+| Viraj    | `controller.py`, `params.py`, `tracker.py`, `tools/`, CARLA runs + demo footage, slides | `viraj/*` |
 
 `docs/` is shared: announce in the chat before editing a file there. **The plan, the timeline and each
 task's "how" are in [docs/ROADMAP.md](docs/ROADMAP.md). Read it before starting work.**
