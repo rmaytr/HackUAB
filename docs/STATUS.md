@@ -35,10 +35,88 @@ controller. Weather is configurable in the pinned harness and wet-grip robustnes
 exist in `tools/robustness_*.yaml`; no live weather-check controller feature was found on main
 or in weather-related remote history. Do not introduce network/raw-sensor access at submission.
 
-Validation: code is pushed before the requested **single final** pytest/strict/public/ECO
-validation pass. Results will replace this pending note after that pass. Bicycle scores are
-not directly comparable with the reported 69.9 CARLA score; Viraj must validate this exact
-branch on CARLA before promotion. No merge is authorized by a local microbenchmark.
+### Single final validation pass: d86723b (bicycle, official one-core sandbox)
+
+Code was committed/pushed **before** validation, as requested. All commands were run serially,
+once, without parameter sweeps or reruns. Full pytest was launched from the repository root
+so the fusion package is importable. All four prescribed checks below were covered, plus ECO
+and generated seeds 1/2/3 with three obstacle groups in **both** modes.
+
+| Check vs recorded STATUS reference | Recorded reference | This branch |
+|---|---|---|
+| Full pytest | 100 in historical mode-merge section | **127 passed**, 32.99 s; golden commands unchanged |
+| Strict technical | latest PR #7 reference **36.83951304188144 s**, clean | **Exactly equal**, clean; p99 8.51 ms |
+| Strict obstacles | historical pre-PR #7 **56.541 s**, clean | 54.329 s, clean; p99 10.08 ms |
+| Default public selftest | historical pre-PR #7 mean **68.3/75**, 5 clean finishes | **68.294/75**, 5 clean finishes; **6 deadline overruns** |
+| ECO public selftest | historical pre-PR #7 mean **66.5/75**, clean | **67.490/75**, clean; 0 overruns |
+| Seeds 1/2/3, both modes | historical seed checks clean | All 6 clean; 0 errors/overruns |
+
+The historical table predates the already-merged 0.75/30 m/s tuning. Its lap-time differences
+are **not** attributable to this compute-only patch. The paired microprofile above compares
+actual main code with this patch; no second full baseline sweep was run. Viraj's reported
+**69.9 CARLA** reference is also a different backend/machine, not a paired bicycle benchmark.
+
+| Public course | PERFORMANCE time / points / step p99 | ECO time / points / step p99 |
+|---|---|---|
+| hackathon_test | 49.766 s / 69.96 / 8.82 ms | 54.092 s / 67.35 / 8.23 ms |
+| practice_basic | 30.227 s / 71.13 / 9.94 ms | 32.272 s / 69.95 / 8.74 ms |
+| practice_loop | 86.010 s / 69.85 / 10.16 ms | 93.240 s / 67.53 / 8.60 ms |
+| practice_obstacles | 54.317 s / 62.57 / **37.91 ms** | 57.761 s / 67.82 / 11.14 ms |
+| practice_technical | 36.840 s / 67.96 / 9.35 ms | 40.591 s / 64.80 / 8.22 ms |
+| **Mean points / total lap time** | **68.294 / 257.160 s** | **67.490 / 277.956 s** |
+
+| Generated course | PERFORMANCE time / points / p99 | ECO time / points / p99 |
+|---|---|---|
+| seed 1, obstacles 3 | 48.243 s / 70.95 / 9.43 ms | 52.592 s / 68.32 / 8.92 ms |
+| seed 2, obstacles 3 | 61.587 s / 69.47 / 10.52 ms | 63.936 s / 68.55 / 10.46 ms |
+| seed 3, obstacles 3 | 52.497 s / 69.74 / 10.37 ms | 55.181 s / 68.19 / 10.12 ms |
+
+Every one of the 18 standalone laps (two strict + ten public + six random) finished with
+**0 cone hits, obstacle hits, off-course events, missed gates and controller errors**.
+The Performance obstacle selftest is an important **runtime failure**, not a clean-compute claim:
+
+- Step p99 **37.910 ms**, max **107.069 ms**, **6** hard-deadline overruns and **10** soft-budget
+  guard trips. Earlier strict obstacles, same code/defaults: p99 **10.081 ms**, 0 overruns/trips.
+- Compute category fell from **93.23 (13.98 points)** in the strict run to **52.90 (7.94 points)**;
+  deviation fell from **100 (15 points)** to **90.75 (13.61 points)** as fallback planning occurred.
+  The observed score was **62.57**, versus **70.00** in the strict run. Keep both results.
+- Telemetry records planner median/p99 **5.57/20.91 ms**, verifier **4.34/17.56 ms** on this
+  outlier; strict obstacles planner **3.87/8.55 ms**, verifier **3.05/7.64 ms**.
+  Normal Performance public planner medians are **3.64–4.45 ms**, but p99 **7.14–8.29 ms**:
+  **the planner is not under 5 ms at p99**, even excluding the outlier.
+- No competing Python workload was found in a process-command-line snapshot after the spike.
+  The cause is **not established**; do not attribute it to another session or hide it as noise.
+  No runtime rechecks were run, respecting the one-pass request.
+
+Rear slip / tracking checks: worst PERFORMANCE rear slip **7.906 deg** (seed 2), worst ECO
+**5.036 deg**; path-error max **1.078 m** (Performance obstacle outlier) / **0.306 m** (ECO).
+The seed-2 Performance dynamics category **98.24** matches main's checked-in visualization
+dataset; basic's **96.17** also matches. These are retained existing dynamics limitations,
+not grounds to claim every slip limit passed. Commanded-grip-over-110% fraction is zero on
+the reported public/random runs. ECO public total lap time is **8.09%** longer and estimated
+battery energy **32.63%** lower (1479.66 vs 2196.36 Wh); energy-tool assumptions, not CARLA
+battery measurements. Energy balance residuals stay below **0.031%**.
+
+An independent reviewer made two read-only passes and found no blocking correctness/sandbox issue or
+unbounded cache growth. Exact-scale churn and transition queries can reduce cache speedup;
+the reviewer did not establish them as the cause of the timing spike.
+
+**Decision: keep main unchanged; do not promote on these results.** The candidate's faster
+kernels do not establish a better full-run score than 69.9 or a sub-5-ms p99 controller.
+CARLA validation of this exact verifier-enabled candidate is still outstanding.
+
+Final fetch found Viraj's **c2e7312** on `origin/viraj/compute-tuning`, which changes
+`verify_iters` from 1 to -1 (disables verification). Its commit message reports bicycle and
+CARLA gains on its tested subsets; those are **not this branch's results**. Rodion explicitly
+chose **keep verifier enabled; finish this branch**. That commit was NOT integrated, and no
+golden references were re-recorded to accommodate it. Fusion/web assets remain intact.
+
+Next: coordinate the verifier-enabled vs verifier-off submission decision with Viraj;
+investigate repeatable tail latency on the official pinned core and then validate on CARLA
+before any promotion. Preserve known-good main and keep the corridor/squeeze work separate.
+Local ignored artifacts: `runs/compute-final/` (command logs, `validation_exit_codes.json`,
+`results.json`, paired profiler and detached main worktree). The user-owned untracked
+`docs/CLAUDE_REVIEW_HANDOFF.md` was not edited or staged.
 
 **Update this file at the end of every task** (results table + what changed + next step) and commit it
 with your work, so the next agent, whether Claude, ChatGPT/Codex or a teammate's, picks up exactly where you left off.
