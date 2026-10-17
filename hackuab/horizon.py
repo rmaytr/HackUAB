@@ -8,7 +8,7 @@ After an obstacle cut the band can sit entirely on one side of the centerline, s
 or ``right`` may be negative there. Only ``-right <= left`` is guaranteed.
 
 Tunables (read from ``p``; the obstacle ones fall back to these defaults until params.py has them):
-  cone_margin         0.3  m  clearance added to the vehicle half-width on every side
+  corridor_margin     0.3  m  clearance added to the vehicle half-width on every side
   min_half_width      0.2  m  the wall-only band never shrinks below this per side
   obstacle_hold_m     0.5  m  extra full-cut length before/after an obstacle, past the car half-length
   obstacle_taper_m    8.0  m  ramp length in front of/behind the full cut, so the path shifts smoothly
@@ -49,7 +49,7 @@ def _empty() -> Corridor:
 def build_corridor(road: RoadModel | None, vehicle: VehicleParams, p: Params) -> Corridor:
     if road is None or not road.valid or len(road.preview_s) < 2:
         return _empty()
-    margin = float(getattr(p, "cone_margin", 0.3))
+    margin = float(getattr(p, "corridor_margin", 0.3))
     min_half = float(getattr(p, "min_half_width", 0.2))
     hold = 0.5 * vehicle.length + float(getattr(p, "obstacle_hold_m", 0.5))
     taper = max(float(getattr(p, "obstacle_taper_m", 8.0)), 1e-3)

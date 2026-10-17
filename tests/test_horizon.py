@@ -123,7 +123,7 @@ def test_nan_inputs_give_finite_output():
 
 
 def test_params_override_margin():
-    c = build_corridor(road(), VEHICLE, SimpleNamespace(cone_margin=0.5))
+    c = build_corridor(road(), VEHICLE, SimpleNamespace(corridor_margin=0.5))
     np.testing.assert_allclose(c.left, 2.75 - VEHICLE.width / 2 - 0.5)
 
 
@@ -131,7 +131,14 @@ def test_team_params_object_works():
     from params import Params
     p = Params.from_vehicle(VEHICLE)
     c = build_corridor(road(obstacles=[obstacle(20.0, -1.7, -1.0)]), VEHICLE, p)
-    assert c.valid and -at(c, 20.0)[1] == pytest.approx(-1.0 + VEHICLE.width / 2 + p.cone_margin)
+    assert c.valid and -at(c, 20.0)[1] == pytest.approx(-1.0 + VEHICLE.width / 2 + p.corridor_margin)
+
+
+def test_corridor_margin_from_controller_config_reaches_horizon():
+    from params import Params
+    p = Params.from_vehicle(VEHICLE, {"corridor_margin": 0.5})
+    c = build_corridor(road(), VEHICLE, p)
+    np.testing.assert_allclose(c.left, 2.75 - VEHICLE.width / 2 - 0.5)
 
 
 def test_very_narrow_road_keeps_min_half_width():
