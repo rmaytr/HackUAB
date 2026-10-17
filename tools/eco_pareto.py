@@ -95,7 +95,7 @@ def recommend(res: dict, max_loss: float) -> tuple[float | None, dict]:
         for c in res["courses"].values():
             r, r0 = c["eco"][k], c["eco"]["0"]
             clean = r["finished"] and r["penalties"] == 0 and r["errors"] == 0
-            loss = (r["time_s"] / r0["time_s"] - 1.0) if clean else float("inf")
+            loss = (r["time_s"] / r0["time_s"] - 1.0) if r["finished"] else float("inf")
             ok &= clean and loss <= max_loss
             d_t.append(loss)
             d_e.append(r["Wh_per_km"] / r0["Wh_per_km"] - 1.0)
@@ -136,16 +136,18 @@ def markdown(res: dict, best, table, max_loss: float) -> str:
 def plot(res: dict, best, max_loss: float, path: str) -> None:
     import plot_run as pr
     import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(figsize=(8.4, 5.2))
+    fig, ax = plt.subplots(figsize=(8.8, 5.6))
     markers = ["o", "s", "D", "^", "v"]
+    labels = []
     ws = res["weights"]
     for (name, c), mk in zip(res["courses"].items(), markers):
         r0 = c["eco"]["0"]
         x = [100 * (c["eco"][f"{w:g}"]["time_s"] / r0["time_s"] - 1) for w in ws]
         y = [100 * (c["eco"][f"{w:g}"]["Wh_per_km"] / r0["Wh_per_km"] - 1) for w in ws]
         ax.plot(x, y, color=pr.OURS, lw=2, marker=mk, ms=6, mfc=pr.SURFACE, mec=pr.OURS, mew=1.6, zorder=3)
-        ax.annotate(name.replace("_", " "), (x[-1], y[-1]), xytext=(6, -2), textcoords="offset points",
-                    fontsize=8.5, color=pr.INK2, va="center")
+        ax.annotate(name.replace("_", " ").replace("seed", "random seed "), (x[-1], y[-1]), xytext=(7, 0),
+                    textcoords="offset points", fontsize=8, color=pr.INK2, va="center")
+        labels.append((x[-1], y[-1]))
         if best is not None:
             i = ws.index(best)
             ax.plot(x[i], y[i], marker=mk, ms=11, color=pr.OURS, mec=pr.SURFACE, mew=2, zorder=4)
@@ -154,22 +156,23 @@ def plot(res: dict, best, max_loss: float, path: str) -> None:
             bx, by = 100 * (b["time_s"] / r0["time_s"] - 1), 100 * (b["Wh_per_km"] / r0["Wh_per_km"] - 1)
             ax.plot(bx, by, marker=mk, ms=7, color=pr.BASE, ls="none", zorder=2)
     ax.axvline(100 * max_loss, color=pr.AXIS, lw=1, ls="--", zorder=1)
-    ax.text(100 * max_loss, ax.get_ylim()[1], f"  {100 * max_loss:.0f} % lap-time budget", color=pr.MUTED,
-            fontsize=8.5, va="top")
+    ax.text(100 * max_loss, 1.5, f" {100 * max_loss:.0f} % lap-time budget", color=pr.MUTED, fontsize=8, va="bottom")
     ax.axhline(0, color=pr.AXIS, lw=0.8)
     ax.axvline(0, color=pr.AXIS, lw=0.8)
     ax.set_xlabel("Lap time vs Performance mode (eco_weight 0), %")
     ax.set_ylabel("Battery energy per km vs Performance mode, %")
     title = "Eco mode: one knob from fastest lap to lowest energy"
-    ax.set_title(title)
+    ax.set_title(title, pad=30)
     sub = (f"eco_weight {ws[0]:g} to {ws[-1]:g} along each line; large marker = recommended {best:g}; "
            if best is not None else "")
-    ax.text(0, 1.01, sub + "grey = baseline pure pursuit. Bicycle backend, energy from tools/energy.py "
-            "(assumed eta_drive 0.90, regen 0.65 up to 60 kW)", transform=ax.transAxes, fontsize=8, color=pr.MUTED)
+    ax.text(0, 1.02, sub + "grey = baseline pure pursuit (same marker per course).\nBicycle backend; energy from "
+            "tools/energy.py with assumed 90 % drivetrain efficiency and 65 % regen up to 60 kW.",
+            transform=ax.transAxes, fontsize=7.5, color=pr.MUTED, va="bottom")
     from matplotlib.lines import Line2D
     ax.legend(handles=[Line2D([], [], color=pr.OURS, lw=2, marker="o", mfc=pr.SURFACE, label="ours, eco_weight sweep"),
                        Line2D([], [], color=pr.BASE, ls="none", marker="o", label="baseline pure pursuit")],
-              loc="upper right", fontsize=8.5)
+              loc="lower left", fontsize=8.5)
+    ax.set_xlim(right=max(x for x, _ in labels) + 4.5)
     fig.tight_layout()
     fig.savefig(path, dpi=160)
     plt.close(fig)

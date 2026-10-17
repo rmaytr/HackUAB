@@ -24,20 +24,20 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 FIG = os.path.join(HERE, "figures")
 PERF = "#104281"                      # Performance: the dark step of the accent ramp; Eco: the accent itself
-PARTS = [("drag", "Aero drag", "#0d366b"), ("roll", "Rolling", "#1c5cab"), ("tyre", "Tyre scrub (cornering)", "#5598e7"),
+PARTS = [("ke", "Kinetic energy left at the finish line", "#b7d3f6"), ("drag", "Aero drag", "#0d366b"), ("roll", "Rolling", "#1c5cab"), ("tyre", "Tyre scrub (cornering)", "#5598e7"),
          ("brake", "Brake heat (not recovered)", "#898781"), ("drive", "Drivetrain loss (assumed 10 %)", "#c3c2b7")]
 
 
 def parts(run_dir: str, veh: dict) -> dict:
     e = energy.analyse_run(run_dir, veh)
-    return {"drag": e["E_drag_Wh"], "roll": e["E_roll_Wh"], "tyre": e["E_tyre_Wh"],
+    return {"ke": e["dKE_Wh"], "drag": e["E_drag_Wh"], "roll": e["E_roll_Wh"], "tyre": e["E_tyre_Wh"],
             "brake": e["E_brake_Wh"] - e["E_regen_Wh"], "drive": e["drive_loss_Wh"],
             "total": e["E_batt_Wh"], "lap": e["lap_time_s"], "Wh_km": e["Wh_per_km"]}
 
 
 def fig_breakdown(runs: dict, veh: dict, course: str, path: str) -> dict:
     vals = {k: parts(r, veh) for k, r in runs.items()}
-    fig, ax = plt.subplots(figsize=(7.6, 4.6))
+    fig, ax = plt.subplots(figsize=(9.6, 4.8))
     names = list(vals)
     x = np.arange(len(names))
     bottom = np.zeros(len(names))
@@ -52,10 +52,11 @@ def fig_breakdown(runs: dict, veh: dict, course: str, path: str) -> dict:
     ax.set_xticks(x, names)
     ax.set_ylabel("Battery energy for one run, Wh")
     ax.set_ylim(0, bottom.max() * 1.22)
-    ax.set_title(f"Where the energy goes, {course.replace('_', ' ')}")
-    ax.text(0, 1.01, "bicycle backend; regen recovered 65 % up to 60 kW and 90 % drivetrain efficiency are "
-            "assumptions (the simulator has no regen)", transform=ax.transAxes, fontsize=8, color=pr.MUTED)
-    ax.legend(loc="upper right", fontsize=8, ncol=1, reverse=True)
+    ax.set_title(f"Where the energy goes, {course.replace('_', ' ')}", pad=26)
+    ax.text(0, 1.02, "Bicycle backend. Assumed: 90 % drivetrain efficiency, regen recovers 65 % of braking up to 60 kW\n"
+            "(the simulator has no electric drivetrain; these are not vehicle specs)", transform=ax.transAxes,
+            fontsize=7.5, color=pr.MUTED, va="bottom")
+    ax.legend(loc="upper left", bbox_to_anchor=(1.0, 1.0), fontsize=8, ncol=1, reverse=True)
     ax.grid(axis="x", visible=False)
     fig.tight_layout()
     fig.savefig(path, dpi=160)
