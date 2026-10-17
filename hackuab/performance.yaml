@@ -1,0 +1,5 @@
+# PERFORMANCE mode: fastest legal lap. This is the scored submission and the default:
+# running with this file is identical to running with no --controller-config at all.
+#   python ..\tools\run_mode.py performance selftest
+#   python -m autocross run -c ..\hackuab\controller.py --controller-config ..\hackuab\performance.yaml -t tracks\practice_technical.yaml --backend bicycle
+mode: performance

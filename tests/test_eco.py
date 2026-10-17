@@ -69,6 +69,7 @@ def run_sequence(config=None) -> dict[str, np.ndarray]:
     return {k: np.asarray(x, float) for k, x in out.items()}
 
 
+@pytest.mark.performance
 def test_eco_weight_zero_reproduces_golden_commands():
     if not os.path.exists(GOLDEN):
         pytest.skip("golden file missing; record it with --record")
@@ -79,6 +80,7 @@ def test_eco_weight_zero_reproduces_golden_commands():
             np.testing.assert_array_equal(got[key], gold[key], err_msg=f"{key} differs with config {cfg}")
 
 
+@pytest.mark.eco
 def test_eco_mode_coasts_before_braking_and_uses_less_energy():
     perf, eco = run_sequence({}), run_sequence({"eco_weight": 1.0})
     for r in (perf, eco):
@@ -93,6 +95,7 @@ def test_eco_mode_coasts_before_braking_and_uses_less_energy():
     assert coast(eco) > coast(perf)
 
 
+@pytest.mark.eco
 def test_eco_debug_keys_and_plan_verified():
     planner._WARM.clear()
     planner._VCAP.clear()
@@ -112,6 +115,8 @@ def test_eco_debug_keys_and_plan_verified():
 MAIN_TECHNICAL_TIME_S = 38.54889586951406      # main at 96a781e, default config, bicycle, practice_technical
 
 
+@pytest.mark.performance
+@pytest.mark.sim
 def test_eco_weight_zero_keeps_practice_technical_lap_time(tmp_path):
     """Full bicycle run (about 10 s): the default config must reproduce main's lap time exactly."""
     import json

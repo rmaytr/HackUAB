@@ -6,8 +6,43 @@ with your work, so the next agent, whether Claude, ChatGPT/Codex or a teammate's
 _Last updated: 2026-10-17, Rodion's lap-time optimization (`70cb357`) promoted from
 `rodion/lap-time-optimization` to `main` after validation. CARLA validation remains pending.
 Code freeze 5:00 PM, feature freeze 4:15 PM._
+_~3:40 PM: Eco mode merged into `main` together with PERFORMANCE / ECO mode selection (below)._
 
-## Eco mode (branch `rodion/eco-mode`, NOT merged; innovation add-on for the judges)
+## Driving modes: PERFORMANCE (default, scored) and ECO
+
+One controller, two selectable modes. The mode is picked **only** by `mode:` in a `--controller-config` YAML
+(`params.MODES` holds each mode's values), never by course or position. No config means PERFORMANCE.
+
+| Mode | Config file | What it does | Run it (from `simulator/`) | Its tests |
+|---|---|---|---|---|
+| **PERFORMANCE** | `hackuab/performance.yaml` (or no config) | Fastest legal lap: `eco_weight 0`, the scored submission | `.venv\Scripts\python.exe ..\tools\run_mode.py performance selftest` | `.venv\Scripts\python.exe -m pytest ..\tests -m performance` |
+| **ECO** | `hackuab/eco.yaml` | Energy-optimal lap: `eco_weight 0.8` (lift-and-coast, gentler accel, lower top speed) | `.venv\Scripts\python.exe ..\tools\run_mode.py eco selftest` | `.venv\Scripts\python.exe -m pytest ..\tests -m eco` |
+
+- One lap: `..\tools\run_mode.py eco run practice_technical` (add `--view` to watch, `--strict` to re-raise errors,
+  `--backend carla` for CARLA). Any extra autocross flags pass through.
+- Fast unit tests only: `-m "eco and not sim"`. Full simulator laps are marked `sim`.
+- An unknown mode (e.g. a typo `mode: ecco`) raises in `on_start` instead of silently driving the wrong profile.
+- Keys set explicitly in the YAML override the mode's values (e.g. `mode: eco` + `eco_weight: 0.6`).
+
+Selftest at merge (bicycle, 0 cones / 0 off-course / 0 gates / 0 errors on every course in every row):
+
+| Course | No config | PERFORMANCE | ECO | `main` before the merge |
+|---|---|---|---|---|
+| hackathon_test | 51.4 s · 68.6 | 51.4 s · 68.6 | 55.5 s · 66.3 | 51.4 s · 68.6 |
+| practice_basic | 31.3 s · 70.3 | 31.3 s · 70.3 | 33.0 s · 69.0 | 31.3 s · 70.3 |
+| practice_loop | 88.6 s · 68.9 | 88.6 s · 68.9 | 96.0 s · 66.9 | 88.6 s · 68.8 |
+| practice_obstacles | 56.5 s · 68.1 | 56.5 s · 68.1 | 59.3 s · 66.8 | 56.5 s · 68.0 |
+| practice_technical | 38.5 s · 65.9 | 38.5 s · 65.8 | 41.7 s · 63.3 | 38.5 s · 65.9 |
+| **Mean technical** | **68.3** | **68.3** | **66.5** | **68.3** |
+
+Lap times are identical between no config, PERFORMANCE and pre-merge `main`. The ±0.1 differences are the compute score
+reacting to step-time noise (p99 ≈ 8–9 ms). ECO trades technical points (completion time) for energy; its
+energy numbers are in the next section. 100 tests pass (`-m performance`: 7, `-m eco`: 10, the rest are mode-independent).
+
+**For Viraj:** `params.py` gained `MODES`, `resolve_mode()` and the `mode` handling in `from_vehicle()`;
+`tools/run_mode.py` is new; `pytest.ini` (markers) is new at the repo root.
+
+## Eco mode (merged into `main`; innovation add-on for the judges)
 
 **Pitch:** same controller, one knob. `eco_weight` 0 gives the fastest legal lap and 1 the
 lowest-energy lap, and the trade-off is measured on a Pareto front. Selected only through

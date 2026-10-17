@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.eco          # energy meter: part of the ECO mode test group
+
 _spec = importlib.util.spec_from_file_location("energy", Path(__file__).resolve().parents[1] / "tools" / "energy.py")
 energy = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(energy)

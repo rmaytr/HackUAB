@@ -12,6 +12,26 @@ from autocross.api import VehicleParams
 
 G = 9.81
 
+# Driving modes: the same controller with a named set of overrides. Pick one with `mode:` in the
+# --controller-config YAML (hackuab/performance.yaml or hackuab/eco.yaml). No `mode` key means
+# "performance", the scored default. Keys given explicitly in the YAML win over the mode's values.
+MODES: dict[str, dict[str, float]] = {
+    "performance": {"eco_weight": 0.0},   # fastest legal lap (the scored submission)
+    "eco": {"eco_weight": 0.8},           # energy-optimal lap: Pareto knee from tools/eco_pareto.py
+}
+DEFAULT_MODE = "performance"
+
+
+def resolve_mode(config: dict[str, Any] | None) -> tuple[str, dict[str, Any]]:
+    """Split a controller config into (mode name, effective overrides). Raises ValueError for an
+    unknown mode, so a typo in a YAML fails loudly in on_start instead of silently driving the
+    wrong profile."""
+    cfg = dict(config or {})
+    mode = str(cfg.pop("mode", DEFAULT_MODE)).strip().lower()
+    if mode not in MODES:
+        raise ValueError(f"unknown mode {mode!r}; choose one of {sorted(MODES)}")
+    return mode, {**MODES[mode], **cfg}
+
 
 @dataclass
 class Params:
@@ -99,7 +119,9 @@ class Params:
     @classmethod
     def from_vehicle(cls, vehicle: VehicleParams, config: dict[str, Any] | None = None) -> "Params":
         names = {f.name for f in fields(cls)}
-        p = cls(**{k: float(v) for k, v in (config or {}).items() if k in names})
+        mode, config = resolve_mode(config)
+        p = cls(**{k: float(v) for k, v in config.items() if k in names})
+        p.mode = mode                                   # plain attribute (not a float field)
         p.a_lat = p.lat_accel_frac * vehicle.mu * G
         p.a_dec = p.decel_frac * vehicle.max_decel
         p.a_acc = p.accel_frac * vehicle.max_accel
