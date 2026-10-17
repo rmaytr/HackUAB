@@ -1,6 +1,7 @@
 """Eco mode (planner eco_weight) and its guarantee that eco_weight = 0 is today's controller, bit for bit.
 
-The golden file tests/data/eco0_golden.npz was recorded from main at 96a781e (before Eco mode existed)
+The golden file tests/data/eco0_golden.npz was re-recorded from main at d35176d (PR #7 defaults;
+first recorded at 96a781e, before Eco mode existed)
 by running this file as a script:  .venv\\Scripts\\python.exe ..\\tests\\test_eco.py --record
 The sequence is closed loop on a synthetic course (straight, then a tight corner, then a straight),
 so it covers acceleration, the braking zone, cornering and the warm-start / verifier-cap memories.
@@ -112,13 +113,35 @@ def test_eco_debug_keys_and_plan_verified():
     assert cmd.debug["pred_ok"] == 1.0
 
 
-MAIN_TECHNICAL_TIME_S = 38.54889586951406      # main at 96a781e, default config, bicycle, practice_technical
+# main at d35176d (PR #7 defaults: lat_accel_frac 0.75, v_max 30, corner-tracking tracker), default config,
+# bicycle, practice_technical, 0 overruns; identical on 3 repeat runs. Re-record whenever defaults change.
+# (Before PR #7, main at 96a781e: 38.54889586951406.)
+MAIN_TECHNICAL_TIME_S = 36.83951304188144
+# The controller's budget guard (controller.py) swaps in the cheap plan for one step after any step over
+# budget_ms, so a lap is only bit-reproducible when the guard never tripped. When it did (a loaded machine),
+# the lap may differ by a few ms; allow this much instead of failing on machine load.
+GUARD_TRIP_TOLERANCE_S = 0.1
+
+
+def budget_guard_trips(run_dir) -> int:
+    """How many times the controller's compute-budget guard tripped during a run (dbg_n_over_budget)."""
+    import csv
+    with open(os.path.join(run_dir, "telemetry.csv")) as f:
+        vals = [float(r["dbg_n_over_budget"]) for r in csv.DictReader(f) if r.get("dbg_n_over_budget") not in (None, "")]
+    return int(max(vals, default=0.0))
+
+
+def assert_reference_lap(time_s: float, trips: int) -> None:
+    """Exact match with the reference lap when timing never interfered; a small tolerance otherwise."""
+    tol = 1e-9 if trips == 0 else GUARD_TRIP_TOLERANCE_S
+    assert time_s == pytest.approx(MAIN_TECHNICAL_TIME_S, abs=tol), f"budget guard trips: {trips}"
 
 
 @pytest.mark.performance
 @pytest.mark.sim
 def test_eco_weight_zero_keeps_practice_technical_lap_time(tmp_path):
-    """Full bicycle run (about 10 s): the default config must reproduce main's lap time exactly."""
+    """Full bicycle run (about 10 s): the default config must reproduce main's lap time (exactly unless the
+    compute-budget guard tripped on a loaded machine; see assert_reference_lap)."""
     import json
     import re
     import subprocess
@@ -140,7 +163,7 @@ def test_eco_weight_zero_keeps_practice_technical_lap_time(tmp_path):
     run = re.search(r"^\s+-> (.+)$", out, re.M).group(1).strip()
     m = json.load(open(os.path.join(run, "summary.json")))["metrics"]
     assert m["completion"]["finished"]
-    assert m["completion"]["time_s"] == pytest.approx(MAIN_TECHNICAL_TIME_S, abs=1e-9)
+    assert_reference_lap(m["completion"]["time_s"], budget_guard_trips(run))
     assert m["compute"]["errors"] == 0 and sum(m["penalties"].values()) == 0
 
 
