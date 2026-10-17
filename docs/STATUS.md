@@ -1,5 +1,96 @@
 # STATUS: where the project stands (handoff file for any AI agent)
 
+## Dedicated bicycle validation: e3b8a28 (2026-10-17)
+
+Tested **rodion/compute-final at e3b8a285ee44f071ee8f2b24b3804c47bc247a3b**,
+checking branch/SHA and unchanged controller/test/submodule content before every command.
+Verifier stayed enabled (`verify_iters=1`, unchanged 1.5 s / 50 ms prediction). This task
+changed documentation only: no tuning, controller edits, merge or replacement of main.
+The user-owned untracked `docs/CLAUDE_REVIEW_HANDOFF.md` retains SHA256
+`330c17e74bdb3ff40a19cabdc35e581cff2695d7a86edb9e92b873b6b4ae88a9`.
+
+All checks used `simulator/.venv/Scripts/python.exe`, serially. An initial OS-sandbox launch
+failed before any lap began: Windows denied multiprocessing pipe creation (WinError 5).
+Its pytest attempt displayed six errors and one failure, then failed temporary-directory
+cleanup before producing the detailed failure report; the failure's cause is not established.
+Those logs and exit codes remain intact. A separate permission-corrected pass completed all
+checks once; **no completed scored lap was rerun**, and both completed-pass timing outliers
+were retained. Full pytest ran from the
+repo root so fusion is importable, with a fresh workspace `--basetemp`.
+
+| Check | Prior STATUS evidence (d86723b unless noted) | e3b8a28 result |
+|---|---|---|
+| Full pytest | 127 passed; follow-up fast-only 126 + 3 deselected | **129 passed in 25.12 s** |
+| Strict technical | PR #7 reference 36.83951304188144 s, clean | **Exactly equal**, 68.36/75; p99 7.354 ms |
+| Strict obstacles | 54.329 s, 70.00/75, clean | **54.329 s**, 70.29/75; p99 8.615 ms |
+| Default PERFORMANCE public selftest | mean 68.294/75; 6 overruns | **70.066/75**, 5 clean finishes; 0 overruns/guard trips |
+| ECO public selftest | mean 67.490/75; 0 overruns | **67.618/75**, 5 clean finishes; 0 overruns/guard trips |
+| Generated seeds 1-3, both modes, obstacles 3 | 6 clean finishes, 0 overruns | 6 clean finishes; **1 ECO seed-2 overrun** |
+| Generated seeds 4-5, both modes, obstacles 3 | older pre-PR #7 defaults hit 1 obstacle cone per seed | **4 clean finishes**; 1 ECO seed-4 soft-budget trip |
+
+Every one of the **22 standalone laps finished with 0 cone hits, obstacle hits, off-course
+events, missed gates and controller errors**. The full pytest also includes three bicycle
+lap regressions; their fresh artifacts are copied into this task's `official-pass/pytest-laps/`.
+The table below reports standalone laps. C/O/off/G/E = cones / obstacle hits / off-course /
+missed gates / controller errors. Path error is committed-path mean/max in metres;
+rear slip is peak absolute rear-axle slip above 3 m/s. Overruns and soft-budget guard trips
+are separate from driving penalties/errors.
+
+| Mode / course | Time s | Technical /75 | C/O/off/G/E | Rear slip deg | Path mean/max m | Step p99 ms | Overruns / guards |
+|---|---:|---:|---|---:|---:|---:|---:|
+| strict / technical | 36.840 | 68.36 | 0/0/0/0/0 | 5.258 | 0.061/0.241 | 7.354 | 0 / 0 |
+| strict / obstacles | 54.329 | 70.29 | 0/0/0/0/0 | 5.033 | 0.072/0.308 | 8.615 | 0 / 0 |
+| PERFORMANCE / hackathon_test | 49.766 | 70.25 | 0/0/0/0/0 | 5.561 | 0.064/0.228 | 7.388 | 0 / 0 |
+| PERFORMANCE / practice_basic | 30.227 | 71.48 | 0/0/0/0/0 | 6.898 | 0.065/0.233 | 8.179 | 0 / 0 |
+| PERFORMANCE / practice_loop | 86.010 | 70.28 | 0/0/0/0/0 | 5.816 | 0.064/0.215 | 8.028 | 0 / 0 |
+| PERFORMANCE / practice_obstacles | 54.329 | 70.24 | 0/0/0/0/0 | 5.033 | 0.072/0.308 | 8.869 | 0 / 0 |
+| PERFORMANCE / practice_technical | 36.840 | 68.08 | 0/0/0/0/0 | 5.258 | 0.061/0.241 | 8.780 | 0 / 0 |
+| PERFORMANCE / seed 1 | 48.243 | 71.07 | 0/0/0/0/0 | 5.106 | 0.068/0.224 | 8.812 | 0 / 0 |
+| PERFORMANCE / seed 2 | 61.587 | 69.45 | 0/0/0/0/0 | 7.906 | 0.078/0.250 | 10.597 | 0 / 0 |
+| PERFORMANCE / seed 3 | 52.497 | 69.89 | 0/0/0/0/0 | 5.115 | 0.061/0.287 | 9.624 | 0 / 0 |
+| PERFORMANCE / seed 4 | 57.390 | 68.57 | 0/0/0/0/0 | 5.051 | 0.072/0.214 | 9.571 | 0 / 0 |
+| PERFORMANCE / seed 5 | 49.402 | 70.53 | 0/0/0/0/0 | 4.871 | 0.070/0.264 | 6.957 | 0 / 0 |
+| ECO / hackathon_test | 54.092 | 67.37 | 0/0/0/0/0 | 4.794 | 0.044/0.226 | 8.085 | 0 / 0 |
+| ECO / practice_basic | 32.272 | 70.08 | 0/0/0/0/0 | 4.890 | 0.050/0.202 | 8.065 | 0 / 0 |
+| ECO / practice_loop | 93.240 | 67.61 | 0/0/0/0/0 | 4.799 | 0.042/0.247 | 8.199 | 0 / 0 |
+| ECO / practice_obstacles | 57.761 | 68.16 | 0/0/0/0/0 | 4.582 | 0.052/0.199 | 9.420 | 0 / 0 |
+| ECO / practice_technical | 40.591 | 64.87 | 0/0/0/0/0 | 4.710 | 0.046/0.273 | 7.861 | 0 / 0 |
+| ECO / seed 1 | 52.592 | 68.43 | 0/0/0/0/0 | 4.405 | 0.055/0.246 | 8.367 | 0 / 0 |
+| ECO / seed 2 | 64.010 | 68.33 | 0/0/0/0/0 | 5.036 | 0.072/0.525 | 10.695 | **1 / 1** |
+| ECO / seed 3 | 55.181 | 68.43 | 0/0/0/0/0 | 4.967 | 0.055/0.227 | 8.926 | 0 / 0 |
+| ECO / seed 4 | 59.770 | 65.67 | 0/0/0/0/0 | 5.266 | 0.060/1.125 | 9.789 | **0 / 1** |
+| ECO / seed 5 | 53.386 | 68.09 | 0/0/0/0/0 | 4.913 | 0.051/0.252 | 6.557 | 0 / 0 |
+
+Public total lap time: PERFORMANCE **257.171 s** (prior 257.160), ECO **277.956 s**
+(unchanged). Generated five-seed means: PERFORMANCE **69.902/75**, ECO **67.790/75**.
+No paired fresh main sweep was run. The prior PERFORMANCE obstacle result (62.57 points,
+6 overruns, 10 guard trips) remains valid evidence; this pass's 70.24 points does not erase it.
+Most lap times match the prior candidate; ECO seed 2 is now 64.010 vs 63.936 s and public
+PERFORMANCE obstacles 54.329 vs 54.317 s. Timing guards can change the commanded trajectory.
+Seed-4/5 historical comparisons use different defaults and cannot isolate this compute patch.
+
+Runtime limitations retained: ECO seed 2 step maximum **52.060 ms** exceeded the 50 ms
+deadline, with one guard trip; ECO seed 4 maximum **38.128 ms** triggered one soft-budget
+trip without a hard overrun. Its deviation category is **90.0**, maximum path error **1.125 m**.
+The causes of these timing spikes are not established. PERFORMANCE p99 ranges **6.957-10.597 ms**
+across public/generated runs; ECO **6.557-10.695 ms**. These do not establish a sub-5-ms controller.
+Verification diagnostics are present on **24,357** standalone control samples. PERFORMANCE
+basic/seed 2 still exceed the 6-degree rear-slip threshold (peaks **6.898/7.906 deg**, violation
+fractions **1.915%/0.878%**, dynamics categories **96.17/98.24**). ECO peak is **5.266 deg**.
+No commanded-grip-over-110% or pedal-overlap violations appear in these standalone laps.
+
+PERFORMANCE public mean is numerically **0.166 points above Rodion's reported 69.9 CARLA**,
+but that is a different backend/machine and course aggregation, not evidence of CARLA improvement
+or of the official weighted unreleased-course score. **Main remains unchanged.** Next: Viraj
+should validate this exact verifier-enabled code SHA on CARLA; investigate retained ECO tail
+latency/path-error excursions before claiming zero-overrun performance in both modes.
+
+Artifacts (ignored, local): `runs/compute-final/bicycle-e3b8a28/`; initial failed-launch logs
+at its root, completed pass under `official-pass/`, and `results.json` / `results.md` include
+all metrics and prior-result comparisons. Commands, exit codes, manifests and fresh generated
+YAMLs are retained. Strict technical and ECO seed-4 reports were visually inspected. No run artifacts
+or the untracked review handoff are included in the documentation commit.
+
 ## Ten-minute follow-up: scalar verifier hot path, fusion included (2026-10-17)
 
 Branch remains **rodion/compute-final**, based on the prior pushed **c1d12c0** candidate below.
