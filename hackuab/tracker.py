@@ -19,43 +19,21 @@ What it does each step (all O(N) numpy, no loops over the path):
      and rear-axle slip; shrinks the usable lateral grip when the tyres saturate and recovers
      it slowly. The result goes in state["a_lat_scale"] for the planner to read.
 
-`plan` is duck-typed (needs .path, .s, .kappa, .v). `p` is read with getattr
-and the defaults below, so params.py only needs to define the values it wants to change.
-Debug values for Command.debug are left in state["debug"].
+`plan` is duck-typed (needs .path, .s, .kappa, .v). Tunables are the tracking section of
+params.Params; `p` is read with getattr, falling back to the Params defaults, so a partial
+namespace (tests, tools/) works too. Debug values for Command.debug are left in state["debug"],
+and the speed target in state["v_target"].
 """
 from __future__ import annotations
 
 import math
+from dataclasses import fields
 
 import numpy as np
 
-G = 9.81
+from params import G, Params
 
-# Tunables, readable from params.py under the same names.
-DEFAULTS = {
-    "pp_lookahead_min": 4.0,        # m
-    "pp_lookahead_gain": 0.32,      # s, lookahead grows with speed
-    "pp_lookahead_max": 16.0,       # m
-    "lat_accel_frac": 0.85,         # fraction of mu*g the ellipse treats as available
-    "grip_cap": 1.05,               # max commanded v^2*tan(delta)/L as a fraction of mu*g
-    "steer_rate_margin": 0.95,      # fraction of max_steer_rate the command may use
-    "speed_preview_t": 0.25,        # s, how far ahead on the profile the speed target is read
-    "kp_speed": 1.2,                # (m/s^2) per (m/s)
-    "ki_speed": 0.3,
-    "i_limit": 2.0,                 # m/s^2, integrator clamp
-    "coast_band": 0.25,             # m/s^2, small decel requests coast instead of braking
-    "accel_floor": 0.15,            # min fraction of max_accel the ellipse leaves at full lateral load
-    "brake_floor": 0.3,             # min fraction of max_decel ever allowed (safety over realism)
-    "jerk_max": 40.0,               # m/s^3, max change of the acceleration command
-    "ff_preview_t": 0.2,            # s, curvature feedforward is read this far ahead of the car
-    "fb_gain": 1.0,                # weight of the pure-pursuit error feedback on top of the plan's curvature
-    "slip_ema_alpha": 0.2,          # low-pass on the yaw-rate understeer indicator
-    "slip_threshold": 0.15,         # filtered 1 - r_meas/r_expected above this counts as understeer
-    "rear_slip_max_deg": 4.0,       # rear-axle slip above this counts as oversteer
-    "slip_drop": 0.01,              # a_lat_scale drop per step while slipping
-    "slip_recover": 0.002,          # a_lat_scale recovery per step otherwise
-    "slip_scale_min": 0.75,
-}
+DEFAULTS = {f.name: f.default for f in fields(Params)}
 
 
 def _p(p, name):
@@ -75,7 +53,7 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
 
     # ------------------------------------------------------------------ slip adaptation
     scale = _update_slip(obs, vehicle, p, state, v)
-    a_lat_max = _p(p, "lat_accel_frac") * mu_g * scale
+    a_lat_max = _p(p, "ellipse_lat_frac") * mu_g * scale
 
     # ------------------------------------------------------------------ latency compensation
     t_pred = dt * (1 + int(getattr(vehicle, "actuation_delay_steps", 0)))
@@ -171,6 +149,7 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
     if throttle == 0.0 and brake == 0.0 and v < 0.5 and v_ref < 0.5:
         brake = 0.3                          # hold still when the plan says stop
 
+    state["v_target"] = v_ref
     state["debug"] = {
         "v_target": v_ref, "a_cmd": a_cmd, "a_lat": a_lat, "lon_frac": lon_frac,
         "lookahead": ld, "kappa_cmd": kappa_cmd, "kappa_ff": kappa_ff, "kappa_pp": kappa_pp,

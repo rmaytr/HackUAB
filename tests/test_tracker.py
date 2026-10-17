@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "hackuab"))
+from params import Params  # noqa: E402
 from tracker import track  # noqa: E402
 
 VEHICLE = SimpleNamespace(
@@ -91,6 +92,14 @@ def test_understeer_lowers_lateral_grip_estimate():
     for _ in range(30):  # commanded full-ish lock, car barely rotates
         track(arc_plan(1 / 30.0, 12.0), obs(12.0, steer=0.15, yaw_rate=0.05), VEHICLE, None, state)
     assert state["a_lat_scale"] < 1.0
+
+
+def test_works_with_real_params_and_sets_v_target():
+    p = Params.from_vehicle(SimpleNamespace(mu=0.95, max_decel=9.0, max_accel=5.2, width=2.16))
+    state = {}
+    out = track(arc_plan(1 / 30.0, 8.0), obs(8.0), VEHICLE, p, state)
+    assert all(math.isfinite(x) for x in out)
+    assert state["v_target"] == pytest.approx(8.0)
 
 
 def test_params_object_overrides_defaults():
