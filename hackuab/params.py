@@ -36,8 +36,10 @@ class Params:
     pp_lookahead_min: float = 4.0       # m
     pp_lookahead_gain: float = 0.32     # s, lookahead grows with speed
     pp_lookahead_max: float = 16.0      # m
-    ff_preview_t: float = 0.2           # s, curvature feedforward is read this far ahead of the car
-    fb_gain: float = 1.0                # weight of the pure-pursuit error feedback on top of the plan's curvature
+    ff_preview_t: float = 0.1           # s, curvature feedforward is read this far ahead of the car
+                                        # (0.2 turned in early and cut 0.3-0.6 m inside right-handers: cone 230
+                                        #  on practice_technical, seed 5's inside obstacle; 0.1 cuts path error 3x)
+    fb_gain: float = 1.5                # weight of the pure-pursuit error feedback on top of the plan's curvature
     grip_frac: float = 0.85             # fraction of mu each axle's friction circle may use (safety margin)
     grip_cap: float = 1.05              # max commanded v^2*tan(delta)/L as a fraction of mu*g (metric flags > 1.1)
     steer_rate_margin: float = 0.95     # fraction of max_steer_rate the command may use
