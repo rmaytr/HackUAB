@@ -82,7 +82,7 @@ Reproduce from simulator/: `..\tools\eco_pareto.py --out <tmp>`, then
 `..\tools\eco_figures.py --results <tmp>\results.json --eco 0.8`.
 
 Verification on this branch (bicycle):
-- 91 tests pass: 75 inherited from main, 3 for the energy meter (`tests/test_energy.py`) and 4 Eco tests,
+- 91 tests pass: 84 inherited from main, 3 for the energy meter (`tests/test_energy.py`) and 4 Eco tests,
   including the eco_weight 0 golden sequence and the lap-time regression.
 - Default selftest (`runs/20261017-150854_selftest`): times identical to main 96a781e (51.357 / 31.272 /
   88.646 / 56.541 / 38.549 s), 0 penalties, 0 controller errors, 0 overruns, p99 8.3–9.5 ms.
