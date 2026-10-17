@@ -8,6 +8,37 @@ _Last updated: 2026-10-17, Rodion's lap-time optimization (`70cb357`) promoted f
 Code freeze 5:00 PM, feature freeze 4:15 PM._
 _~3:40 PM: Eco mode merged into `main` together with PERFORMANCE / ECO mode selection (below)._
 
+## Regression baselines re-recorded for PR #7 defaults (~4:00 PM)
+
+PR #7 (lat_accel_frac 0.6 → 0.75, v_max 22 → 30, corner-tracking tracker) intentionally changed the default
+behaviour, so the "same as before" tests were re-baselined at `d35176d`:
+- `tests/data/eco0_golden.npz` re-recorded (deterministic on repeat).
+- `MAIN_TECHNICAL_TIME_S` = **36.83951304188144 s** (PERFORMANCE, practice_technical, bicycle; identical on 3 runs, 0 overruns).
+- Lap tests compare exactly only when the controller's compute-budget guard never tripped (`dbg_n_over_budget` = 0).
+  When it did (a loaded machine: the verifier occasionally spikes to 30–36 ms), they allow ±0.1 s, because one
+  cheap-plan step shifts the lap by a few ms. That isn't a behaviour regression.
+- ECO lap bound per course: ≤ 12 % slower than PERFORMANCE (practice_technical is +10.2 %: 40.59 s vs 36.84 s;
+  all 5 public courses together are +7.8 %, inside the 10 % Eco budget). Consider re-running `tools/eco_pareto.py`
+  on the new defaults to re-pick the Eco knee point.
+- `test_batch_rollout_is_fast` passes on an idle machine (2.5–2.8 ms vs 3 ms) and fails under load. Run it on its own.
+- `viz/data` (branch `rodion/viz-data`) was generated before PR #7. Re-run `tools/export_viz.py` to refresh it.
+
+## Fixed: blocked corridor (~3:45 PM, `rodion/blocked-corridor`)
+
+When an obstacle leaves no gap the car fits through (`build_corridor` returns `valid=False`), the planner
+used to return a normal, accelerating centerline plan: full throttle at the obstacle, target 18 m/s,
+fallback 0, in both modes (review finding 1 in docs/CLAUDE_REVIEW_HANDOFF.md, reproduced on `1d93fac`).
+Now `planner._blocked_plan` brakes to `blocked_creep_speed` (2 m/s, so a transient blockage or a cone wall
+can't cause the 8 s "stuck" DNF; set 0 for a true stop) at a stop point `blocked_stop_margin` (1 m) before
+the car's nose reaches the first blocked station, and the speed target never exceeds the current speed.
+Logged as `dbg_blocked` / `dbg_blocked_s`. Tests: `tests/test_blocked.py` (final Command in both modes,
+closed-loop slow-down, gap control case).
+The blocked plan never triggers on any public course (0 of ~11k steps, both modes), so lap times are
+unchanged (PERFORMANCE identical; ECO practice_obstacles 59.30 s = before, with 0 overruns).
+Still open from the same review: the verifier doesn't receive the corridor (finding 2), the jerk limit can undo
+the grip clamp (3), the stale understeer estimate on straights (4), unknown YAML keys silently ignored (5),
+and narrow-road clamping (6).
+
 ## Driving modes: PERFORMANCE (default, scored) and ECO
 
 One controller, two selectable modes. The mode is picked **only** by `mode:` in a `--controller-config` YAML
