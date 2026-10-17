@@ -16,8 +16,12 @@ G = 9.81
 @dataclass
 class Params:
     # --- corridor (horizon.py) ---
-    cone_margin: float = 0.3            # m, extra clearance on top of half the car width
-    min_half_width: float = 0.2         # m, never shrink the usable corridor below this per side
+    cone_margin: float = 0.3            # m, extra clearance on top of half the car width (Phase 0 stub)
+    min_half_width: float = 0.2         # m, never shrink the usable corridor below this per side (Phase 0 stub)
+    corridor_margin: float = 0.3        # m, clearance added to the vehicle half-width on every side
+    obstacle_hold_m: float = 0.5        # m, extra full-cut length before/after an obstacle, past the car half-length
+    obstacle_taper_m: float = 8.0       # m, ramp length in front of/behind the full cut, so the path shifts smoothly
+    side_hysteresis_m: float = 0.3      # m, gaps closer than this in width are decided by where the car already is
 
     # --- speed profile (planner.py) ---
     lat_accel_frac: float = 0.6         # fraction of mu*g used for cornering
@@ -27,14 +31,28 @@ class Params:
     v_horizon: float = 6.0              # m/s, speed cap at the end of the visible horizon
 
     # --- tracking (tracker.py) ---
-    lookahead_gain: float = 0.5         # s, Ld = max(lookahead_min, gain*v + lookahead_offset)
-    lookahead_min: float = 4.0          # m
-    lookahead_offset: float = 2.0       # m
-    kp: float = 0.5
-    ki: float = 0.1
-    i_limit: float = 5.0
-    min_throttle_cap: float = 0.15      # friction-circle throttle cap never goes below this
-    brake_gain: float = 0.6
+    pp_lookahead_min: float = 4.0       # m
+    pp_lookahead_gain: float = 0.32     # s, lookahead grows with speed
+    pp_lookahead_max: float = 16.0      # m
+    ff_preview_t: float = 0.2           # s, curvature feedforward is read this far ahead of the car
+    fb_gain: float = 1.0                # weight of the pure-pursuit error feedback on top of the plan's curvature
+    ellipse_lat_frac: float = 0.85      # fraction of mu*g the friction ellipse treats as available
+    grip_cap: float = 1.05              # max commanded v^2*tan(delta)/L as a fraction of mu*g (metric flags > 1.1)
+    steer_rate_margin: float = 0.95     # fraction of max_steer_rate the command may use
+    speed_preview_t: float = 0.25       # s, how far ahead on the profile the speed target is read
+    kp_speed: float = 1.2               # (m/s^2) per (m/s)
+    ki_speed: float = 0.5
+    i_limit: float = 4.0                # m/s^2, integrator clamp (CARLA needs ~3 to hold speed against drag)
+    coast_band: float = 0.25            # m/s^2, small decel requests coast instead of braking
+    accel_floor: float = 0.15           # min fraction of max_accel the ellipse leaves at full lateral load
+    brake_floor: float = 0.3            # min fraction of max_decel ever allowed (safety over realism)
+    jerk_max: float = 40.0              # m/s^3, max change of the acceleration command
+    slip_ema_alpha: float = 0.2         # low-pass on the yaw-rate understeer indicator
+    slip_threshold: float = 0.15        # filtered 1 - r_meas/r_expected above this counts as understeer
+    rear_slip_max_deg: float = 4.0      # rear-axle slip above this counts as oversteer
+    slip_drop: float = 0.01             # a_lat_scale drop per step while slipping
+    slip_recover: float = 0.002         # a_lat_scale recovery per step otherwise
+    slip_scale_min: float = 0.75
 
     # --- compute budget (controller.py) ---
     budget_ms: float = 35.0             # soft per-step budget; over it is logged in debug
