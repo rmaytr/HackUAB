@@ -23,6 +23,17 @@ __pycache__/
 .venv/
 venv/
 
+.pytest_cache/
+
+# Simulator outputs / local sim checkout (clone it next to this repo, not inside)
+runs/
+tracks/
+ecocar-hackathon-sim/
+*.log
+
+# Claude Code local settings (shared skills in .claude/skills ARE committed)
+.claude/settings.local.json
+
 # Testing
 coverage/
 playwright-report/
