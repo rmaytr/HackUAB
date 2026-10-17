@@ -125,15 +125,24 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
         a_ff = max(a_ff, 0.0)
     i_lim = _p(p, "i_limit")
     state["i_err"] = float(np.clip(state.get("i_err", 0.0) + _p(p, "ki_speed") * err * dt, -i_lim, i_lim))
-    a_cmd = a_ff + _p(p, "kp_speed") * err + state["i_err"]
+    i_term = state["i_err"]
+    if err < -_p(p, "overspeed_band"):
+        # Clearly too fast: the integral that holds speed against drag on the straight must not
+        # cancel the braking into the corner (CARLA, practice_technical esses: throttle at +2.6 m/s).
+        # Only its effect is suppressed; its value is kept so cruise speed returns at once after.
+        i_term = min(i_term, 0.0)
+    a_cmd = a_ff + _p(p, "kp_speed") * err + i_term
 
     # AWD per-axle friction limit: grip used for cornering is not available for driving or
-    # braking. Lateral load is the larger of what the steering asks now and what the path asks
-    # just ahead (corner entry). The floors are safety overrides: always some drive to keep
-    # moving, and always some braking even if it costs grip.
+    # braking. Braking is limited by the cornering load the tyres carry now (from the steering);
+    # throttle also anticipates the path just ahead, so it is not opened into a corner. Using the
+    # path-ahead load for braking would forbid exactly the braking that makes the corner possible.
+    # The floors are safety overrides: always some drive to keep moving, always some braking.
     delta = steer * vehicle.max_steer
-    a_lat = max(v * v * abs(math.tan(delta)) / L, v * v * abs(kappa_ff))
-    env_up, env_dn = lon_envelope(a_lat, vehicle, p, scale)
+    a_lat_now = v * v * abs(math.tan(delta)) / L
+    a_lat = max(a_lat_now, v * v * abs(kappa_ff))
+    env_up = lon_envelope(a_lat, vehicle, p, scale)[0]
+    env_dn = lon_envelope(a_lat_now, vehicle, p, scale)[1]
     a_up = max(env_up, _p(p, "accel_floor") * vehicle.max_accel)
     a_dn = max(env_dn, _p(p, "brake_floor") * vehicle.max_decel)
     lon_frac = env_up / vehicle.max_accel

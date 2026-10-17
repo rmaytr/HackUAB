@@ -162,8 +162,9 @@ def main():
     name = (track.name if track else os.path.basename(a.ours)) + "_" + s_o["backend"]
     t_o, t_b = s_o["metrics"]["completion"]["time_s"], s_b["metrics"]["completion"]["time_s"]
     where = f"{track.name if track else ''} on {s_o['backend'].upper() if s_o['backend'] == 'carla' else 'the bicycle model'}"
-    map_title = (f"Ours {t_o:.1f} s vs baseline {t_b:.1f} s ({t_o - t_b:+.1f} s)" if (t_o and t_b)
-                 else "Driven line, coloured by our speed")
+    pts_o, pts_b = s_o["score"]["technical_points"], s_b["score"]["technical_points"]
+    map_title = (f"Ours {pts_o:.1f} vs baseline {pts_b:.1f} points · lap {t_o:.1f} s vs {t_b:.1f} s"
+                 if (t_o and t_b) else "Driven line, coloured by our speed")
     start, end = (track.start_offset, track.start_offset + track.length * track.laps) if track else (0.0, 1e9)
     g_launch, g_total = launch_split(d_o, d_b, start, end)
     speed_title = (f"{g_launch:.1f} s of the {g_total:.1f} s gain comes from the launch; the rest from corner exits"

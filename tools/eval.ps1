@@ -3,14 +3,15 @@
 param(
     [string]$Controller = "..\hackuab\controller.py",
     [string]$Team = "dev",
-    [int[]]$Seeds = @(42, 7, 123),
+    [string]$Seeds = "42,7,123",    # comma-separated; a string because -File collapses int[] args
     [string]$Config = ""            # optional --controller-config YAML (e.g. tracker overrides)
 )
 $extra = if ($Config) { @("--controller-config", $Config) } else { @() }
 $py = ".venv\Scripts\python.exe"
 New-Item -ItemType Directory -Force ..\tracks | Out-Null     # repo-root tracks/ is git-ignored
 $courses = @("tracks\practice_technical.yaml")
-foreach ($s in $Seeds) {
+foreach ($s in ($Seeds -split ",")) {
+    $s = $s.Trim()
     $f = "..\tracks\seed$s.yaml"
     if (-not (Test-Path $f)) { & $py -m autocross gen-track --seed $s --obstacles 3 --out $f | Out-Null }
     $courses += $f

@@ -7,7 +7,8 @@ import json
 import os
 import sys
 
-print(f"{'run':44} {'time':>7} {'tech':>5} {'perr':>5} {'time%':>6} {'dev%':>5} {'dyn%':>5} {'cones':>5}")
+print(f"{'run':44} {'time':>7} {'tech':>5} {'perr':>5} {'time%':>6} {'dev%':>5} {'cpu%':>5} {'p99':>5} "
+      f"{'dyn%':>5} {'cones':>5}")
 for arg in sys.argv[1:]:
     dirs = [arg] if os.path.exists(os.path.join(arg, "summary.json")) else \
         sorted(os.path.join(arg, d) for d in os.listdir(arg) if os.path.exists(os.path.join(arg, d, "summary.json")))
@@ -18,4 +19,5 @@ for arg in sys.argv[1:]:
         t = m["completion"]["time_s"]
         print(f"{os.path.relpath(d)[-44:]:44} {t if t else float('nan'):7.2f} {sc['technical_points']:5.1f} "
               f"{m['deviation']['path_err_mean_m']:5.2f} {cs['completion_time']:6.1f} {cs['deviation']:5.1f} "
-              f"{cs['dynamics']:5.1f} {sc['deductions'].get('cone_hit', 0) // 2:5d}")
+              f"{cs['compute']:5.1f} {m['compute']['step_ms_p99']:5.1f} {cs['dynamics']:5.1f} "
+              f"{sc['deductions'].get('cone_hit', 0) // 2:5d}")

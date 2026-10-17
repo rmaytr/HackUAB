@@ -132,6 +132,14 @@ def test_slip_estimate_shrinks_the_envelope():
     assert lon_envelope(5.0, VEHICLE, P, 0.8)[1] < lon_envelope(5.0, VEHICLE, P, 1.0)[1]
 
 
+def test_overspeed_into_a_corner_brakes_despite_wound_up_integral():
+    plan = arc_plan(kappa=-1 / 12.0, v=8.4)     # tight right-hander ahead, car still straight
+    state = {"i_err": 4.0, "a_prev": -9.0, "steer_prev": 0.0}
+    _, thr, brk = track(plan, obs(11.7), VEHICLE, None, state)
+    assert thr == 0.0 and brk > 0.3             # path-ahead load must not cap the braking at the floor
+    assert state["i_err"] > 3.0                 # suppressed, not erased: cruise speed comes back after
+
+
 def test_nan_inputs_give_finite_outputs():
     out = track(arc_plan(), obs(speed=float("nan"), yaw_rate=float("nan"), steer=float("nan")), VEHICLE, None, {})
     assert all(math.isfinite(x) for x in out)
