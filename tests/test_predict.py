@@ -287,3 +287,54 @@ def test_kinematic_helpers_still_work():
     assert out.shape == (2, 6, 4) and out[0, -1, 0] == pytest.approx(2.5)
     pose = predict.predict_pose(10.0, 0.1, 3.0, 0.5)
     assert pose[0] > 0 and pose[1] > 0
+
+
+@pytest.mark.parametrize("seed", [1, 7, 19])
+def test_cached_grip_bounds_match_tracker_across_geometry_and_tuning(seed):
+    from dataclasses import replace
+    import tracker
+
+    rng = np.random.default_rng(seed)
+    for _ in range(4):
+        vp = replace(VP, mass=float(rng.uniform(1400, 2400)), mu=float(rng.uniform(0.6, 1.1)),
+                     cg_to_front=float(rng.uniform(1.1, 1.8)))
+        p = Params.from_vehicle(vp, {"grip_frac": float(rng.uniform(0.6, 1.0)),
+                                    "front_drive_fraction": float(rng.uniform(0.1, 0.9)),
+                                    "front_brake_fraction": float(rng.uniform(0.4, 0.8)),
+                                    "traction_limit": float(rng.uniform(0.6, 1.0))})
+        frozen_vp, frozen_p = predict._grip_constants(vp, p)
+        for lat, scale in rng.uniform([0.0, 0.5], [12.0, 1.05], (100, 2)):
+            expected = tracker.lon_envelope(lat, vp, p, scale)
+            assert predict._grip_bound(frozen_vp, frozen_p, lat, scale, False) == expected[0]
+            assert predict._grip_bound(frozen_vp, frozen_p, lat, scale, True) == expected[1]
+
+
+def test_cached_grip_bound_quantization_edges_and_parameter_changes():
+    from dataclasses import replace
+    import tracker
+
+    for p in (P, replace(P, grip_frac=0.7), replace(P, front_drive_fraction=0.8)):
+        vp, frozen = predict._grip_constants(VP, p)
+        for lat in (0.0, 4.0, np.nextafter(4.0, 0.0), np.nextafter(4.0, np.inf), 9.0):
+            for scale in (0.0, 0.75, np.nextafter(0.75, 0.0), np.nextafter(0.75, np.inf), 1.0):
+                expected = tracker.lon_envelope(lat, VP, p, scale)
+                assert predict._grip_bound(vp, frozen, lat, scale, False) == expected[0]
+                assert predict._grip_bound(vp, frozen, lat, scale, True) == expected[1]
+    assert predict._grip_grid.cache_info().currsize <= 2048
+
+
+def test_cached_grip_key_covers_helper_dependencies():
+    """Mutation coverage for helper dependencies absent from the frozen cache keys."""
+    from dataclasses import fields, replace
+    import tracker
+
+    variants = [(VP, P)]
+    variants += [(VP, replace(P, **{f.name: getattr(P, f.name) * 0.8 + 0.05})) for f in fields(P)]
+    variants += [(replace(VP, **{f.name: getattr(VP, f.name) * 0.9}), P) for f in fields(VP)
+                 if f.name != "actuation_delay_steps"]
+    for vp, p in variants:
+        frozen_vp, frozen_p = predict._grip_constants(vp, p)
+        for lat, scale in ((0.0, 1.0), (2.0, 0.9), (5.0, 0.8), (7.0, 1.0)):
+            expected = tracker.lon_envelope(lat, vp, p, scale)
+            assert predict._grip_bound(frozen_vp, frozen_p, lat, scale, False) == expected[0]
+            assert predict._grip_bound(frozen_vp, frozen_p, lat, scale, True) == expected[1]

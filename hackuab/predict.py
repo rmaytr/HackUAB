@@ -1,6 +1,6 @@
 """Physics-based prediction. Owner: Rodion.
 
-Three tools, all pure functions (no module state), numpy + stdlib only:
+Three tools, all pure functions (with bounded memoization), numpy + stdlib only:
 
 * rollout_kinematic / predict_pose: the Phase 0 kinematic helpers (delay compensation, V2).
 * rollout_dynamic: a batched dynamic single-track model with the same equations as the harness's
@@ -22,12 +22,13 @@ from __future__ import annotations
 
 import math
 from bisect import bisect_right
+from functools import lru_cache
 from typing import Callable, NamedTuple
 from types import SimpleNamespace
 
 import numpy as np
 
-from tracker import _p, _tangent, _update_slip, lon_envelope
+from tracker import _finite, _p, _tangent, _update_slip, lon_envelope
 
 G = 9.81
 
@@ -307,6 +308,54 @@ def pedal_for_accel(a_des, vx, vp, p):
 
 # ----------------------------------------------------------------------------- plan verification
 
+class _GripVehicle(NamedTuple):
+    mass: float
+    wheelbase: float
+    cg_to_front: float
+    mu: float
+    max_accel: float
+    max_decel: float
+
+
+class _GripParams(NamedTuple):
+    cg_height: float
+    grip_frac: float
+    traction_limit: float
+    front_drive_fraction: float
+    front_brake_fraction: float
+
+
+def _grip_constants(vp, p) -> tuple[_GripVehicle, _GripParams]:
+    """Immutable keys containing every input read by tracker.lon_envelope()."""
+    return (_GripVehicle(float(vp.mass), float(vp.wheelbase), float(vp.cg_to_front),
+                         float(vp.mu), float(vp.max_accel), float(vp.max_decel)),
+            _GripParams(*(_p(p, name) for name in _GripParams._fields)))
+
+
+@lru_cache(maxsize=2048)
+def _grip_grid(vp: _GripVehicle, p: _GripParams, a_lat: float, scale: float) -> tuple[float, float]:
+    return lon_envelope(a_lat, vp, p, scale)
+
+
+def _grip_bound(vp: _GripVehicle, p: _GripParams, a_lat: float, scale: float, down: bool) -> float:
+    """Exact shared-envelope answer, memoizing cells wholly inside one grid plateau.
+
+    Capacity decreases with lateral demand and increases with grip. If both extreme corners
+    of a small (a_lat, scale) cell give the same discrete capacity, every point inside gives
+    that value. At any boundary we evaluate the original helper at the actual input. There
+    is no interpolation, rounding of the returned capacity, or second copy of the AWD model.
+    Binary cell sizes keep endpoint arithmetic exact for ordinary finite inputs.
+    """
+    if not (math.isfinite(a_lat) and math.isfinite(scale)
+            and 0.0 <= a_lat < 1e6 and 0.0 <= scale < 1e6):
+        return lon_envelope(a_lat, vp, p, scale)[down]
+    low_lat = math.floor(a_lat * 32.0) / 32.0
+    low_mu = math.floor(scale * 256.0) / 256.0
+    high = _grip_grid(vp, p, low_lat, low_mu + 1.0 / 256.0)[down]
+    low = _grip_grid(vp, p, low_lat + 1.0 / 32.0, low_mu)[down]
+    return low if low == high else lon_envelope(a_lat, vp, p, scale)[down]
+
+
 def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: float = 1.5,
                 dt: float = 0.05, corridor=None, use_limit: float = 0.95, grip_limit: float = 1.0,
                 rear_slip_limit_deg: float = 5.0) -> dict:
@@ -333,6 +382,7 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
       corridor_violation_max (m outside corridor.left/right; NaN without a corridor), ok (bool).
     """
     c = model_constants(vp, p)
+    grip_vp, grip_p = _grip_constants(vp, p)
     path = np.nan_to_num(np.asarray(plan.path, float))
     n_nodes = len(path)
     t_steps = max(int(round(horizon_s / dt)), 1)
@@ -386,9 +436,9 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
             j += 1
 
     lag = _lag_coeffs(c, dt)
-    app = float(np.nan_to_num(obs.steer))
-    s = (0.0, 0.0, 0.0, max(float(np.nan_to_num(obs.vx)), 0.0), float(np.nan_to_num(obs.vy)),
-         float(np.nan_to_num(obs.yaw_rate)), app * max_steer, app, float(np.nan_to_num(obs.ax)))
+    app = _finite(obs.steer)
+    s = (0.0, 0.0, 0.0, max(_finite(obs.vx), 0.0), _finite(obs.vy),
+         _finite(obs.yaw_rate), app * max_steer, app, _finite(obs.ax))
     steer_prev, i_err, a_prev = app, 0.0, None
     i = 0
     xs, ys, yaws, spd, rates, devs, nodes, rears = [], [], [], [], [], [], [], []
@@ -452,10 +502,10 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
             # Only the bound on the command's side of zero can clip it. Commands already
             # inside the safety floors cannot be clipped by either AWD envelope at all.
             if a_cmd > max_acc * acc_floor:
-                env_up = lon_envelope(a_lat, vp, p, scale)[0]
+                env_up = _grip_bound(grip_vp, grip_p, a_lat, scale, False)
                 a_cmd = min(a_cmd, max(env_up, max_acc * acc_floor))
             elif a_cmd < -max_dec * brk_floor:
-                env_dn = lon_envelope(a_lat_now, vp, p, scale)[1]
+                env_dn = _grip_bound(grip_vp, grip_p, a_lat_now, scale, True)
                 a_cmd = max(a_cmd, -max(env_dn, max_dec * brk_floor))
             if a_prev is not None:
                 a_cmd = min(max(a_cmd, a_prev - jerk), a_prev + jerk)
