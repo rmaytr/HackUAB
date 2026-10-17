@@ -360,6 +360,7 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
     ff_t, fb_gain, grip_cap = g("ff_preview_t"), g("fb_gain"), g("grip_cap")
     max_step = g("steer_rate_margin") * c.steer_rate * vp.control_dt
     spd_t, kp, ki, i_lim = g("speed_preview_t"), g("kp_speed"), g("ki_speed"), g("i_limit")
+    overspeed_band = g("overspeed_band")
     coast, acc_floor, brk_floor = g("coast_band"), g("accel_floor"), g("brake_floor")
     jerk = g("jerk_max") * vp.control_dt
     max_acc, max_dec = float(vp.max_accel), float(vp.max_decel)
@@ -444,10 +445,18 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
             if err > 0.0:
                 a_ff = max(a_ff, 0.0)
             i_err = min(max(i_err + ki * err * vp.control_dt, -i_lim), i_lim)
-            a_cmd = a_ff + kp * err + i_err
-            a_lat = speed * speed * max(abs(math.tan(steer * max_steer)) / L, abs(kappa_ff))
-            env_up, env_dn = lon_envelope(a_lat, vp, p, scale)
-            a_cmd = min(max(a_cmd, -max(env_dn, max_dec * brk_floor)), max(env_up, max_acc * acc_floor))
+            i_term = min(i_err, 0.0) if err < -overspeed_band else i_err
+            a_cmd = a_ff + kp * err + i_term
+            a_lat_now = speed * speed * abs(math.tan(steer * max_steer)) / L
+            a_lat = max(a_lat_now, speed * speed * abs(kappa_ff))
+            # Only the bound on the command's side of zero can clip it. Commands already
+            # inside the safety floors cannot be clipped by either AWD envelope at all.
+            if a_cmd > max_acc * acc_floor:
+                env_up = lon_envelope(a_lat, vp, p, scale)[0]
+                a_cmd = min(a_cmd, max(env_up, max_acc * acc_floor))
+            elif a_cmd < -max_dec * brk_floor:
+                env_dn = lon_envelope(a_lat_now, vp, p, scale)[1]
+                a_cmd = max(a_cmd, -max(env_dn, max_dec * brk_floor))
             if a_prev is not None:
                 a_cmd = min(max(a_cmd, a_prev - jerk), a_prev + jerk)
             a_prev = a_cmd

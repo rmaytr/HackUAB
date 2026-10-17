@@ -217,14 +217,15 @@ def test_verify_plan_mirrors_the_tracker():
     assert np.abs(mirror["poses"] - ref["poses"]).max() < 0.3
 
 
-@pytest.mark.parametrize("speed,target,grip,delay", [
-    (10.0, 16.0, 0.85, 0),   # acceleration limited by the AWD front/rear circles
-    (14.0, 7.0, 0.85, 0),    # trail braking and rear unloading
-    (10.0, 16.0, 0.65, 2),   # grip_frac override and actuation delay
-    (16.0, 18.0, 0.85, 0),   # safety floors and slip adaptation at saturation
-    (0.0, 0.0, 0.85, 0),     # hold brake at rest
+@pytest.mark.parametrize("speed,target,grip,delay,profile_drop", [
+    (10.0, 16.0, 0.85, 0, 0.03),   # acceleration limited by the AWD front/rear circles
+    (14.0, 7.0, 0.85, 0, 0.03),    # trail braking and rear unloading
+    (10.0, 16.0, 0.65, 2, 0.03),   # grip_frac override and actuation delay
+    (16.0, 18.0, 0.85, 0, 0.03),   # safety floors and slip adaptation at saturation
+    (0.0, 0.0, 0.85, 0, 0.03),     # hold brake at rest
+    (10.0, 13.0, 0.85, 0, 0.7),    # accelerate, then brake with a positive integral
 ])
-def test_verify_plan_pedals_match_tracker_on_same_states(monkeypatch, speed, target, grip, delay):
+def test_verify_plan_pedals_match_tracker_on_same_states(monkeypatch, speed, target, grip, delay, profile_drop):
     """Check the actual pedals passed to physics, at every predicted state, against track().
 
     A steering/path-only comparison misses the old friction ellipse's different pedal command.
@@ -241,10 +242,11 @@ def test_verify_plan_pedals_match_tracker_on_same_states(monkeypatch, speed, tar
     pl.s = np.linspace(0.0, math.sqrt(40.0), len(pl.s)) ** 2
     theta = pl.s / 30.0
     pl.path = np.column_stack((30.0 * np.sin(theta), 30.0 * (1.0 - np.cos(theta)) + 0.2))
-    pl.v = np.maximum(target - 0.03 * pl.s, 0.0)
+    pl.v = np.maximum(target - profile_drop * pl.s, 0.0)
     state = {"a_lat_scale": 0.9}
     step = predict._step
     checked = []
+    suppressed_integral = []
 
     def check_pedals(xp, s, steer, throttle, brake, *args):
         x, y, yaw, vx, vy, r, _, applied, _ = s
@@ -254,6 +256,7 @@ def test_verify_plan_pedals_match_tracker_on_same_states(monkeypatch, speed, tar
                                 s=pl.s, kappa=pl.kappa, v=pl.v)
         obs = SimpleNamespace(speed=math.hypot(vx, vy), vx=vx, vy=vy, yaw_rate=r, steer=applied)
         expected = tracker.track(local, obs, vp, p, state)
+        suppressed_integral.append(state["i_err"] > 0.0 and state["v_target"] - obs.speed < -p.overspeed_band)
         np.testing.assert_allclose((steer, throttle, brake), expected, atol=1e-11, rtol=1e-11)
         checked.append((throttle, brake))
         return step(xp, s, steer, throttle, brake, *args)
@@ -262,6 +265,8 @@ def test_verify_plan_pedals_match_tracker_on_same_states(monkeypatch, speed, tar
     predict.verify_plan(pl, _obs(speed), vp, p)
     assert len(checked) == 30
     assert all(throttle * brake == 0.0 for throttle, brake in checked)
+    if profile_drop == 0.7:
+        assert any(suppressed_integral)
 
 
 def test_verify_plan_corridor_and_custom_tracker():
