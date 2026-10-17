@@ -338,3 +338,58 @@ def test_cached_grip_key_covers_helper_dependencies():
             expected = tracker.lon_envelope(lat, vp, p, scale)
             assert predict._grip_bound(frozen_vp, frozen_p, lat, scale, False) == expected[0]
             assert predict._grip_bound(frozen_vp, frozen_p, lat, scale, True) == expected[1]
+
+
+def test_grip_interval_reuse_is_certified_and_storage_is_bounded(monkeypatch):
+    import tracker
+
+    vp, p = predict._grip_constants(VP, P)
+    predict._grip_grid.cache_clear()
+    predict._grip_samples.cache_clear()
+    calls = []
+    original = tracker.lon_envelope
+
+    def counted(*args):
+        calls.append(args)
+        return original(*args)
+
+    monkeypatch.setattr(predict, "lon_envelope", counted)
+    for lat in (0.0, 1e-5):
+        assert predict._grip_bound(vp, p, lat, 1.0, False) == original(lat, vp, p, 1.0)[0]
+    assert len(calls) == 2
+    for down in (False, True):
+        assert predict._grip_bound(vp, p, 5e-6, 1.0, down) == original(5e-6, vp, p, 1.0)[down]
+    assert len(calls) == 2  # a certified interval does not call the helper again
+    rng = np.random.default_rng(82)
+    for lat in rng.uniform(0.0, 14.0, 1800):
+        expected = original(lat, vp, p, 1.0)
+        for down in (False, True):
+            assert predict._grip_bound(vp, p, lat, 1.0, down) == expected[down]
+    demands, answers = predict._grip_samples(vp, p, 1.0)
+    assert len(demands) == len(answers) <= 2 * (len(tracker._AX_UP) + len(tracker._AX_DN))
+    assert all(a < b for a, b in zip(demands, demands[1:]))
+    for scale in np.linspace(0.5, 1.0, 180):
+        predict._grip_bound(vp, p, 3.0, float(scale), False)
+    assert predict._grip_samples.cache_info().currsize <= 128
+    assert predict._grip_grid.cache_info().currsize <= 2048
+    # Don't leave answers recorded through the monkeypatched helper in global caches.
+    predict._grip_grid.cache_clear()
+    predict._grip_samples.cache_clear()
+
+
+@pytest.mark.parametrize("radius,speed,target,scale", [
+    (25.0, 14.0, 19.0, 1.0), (-18.0, 15.0, 7.0, 0.8),
+    (80.0, 20.0, 25.0, 0.75), (12.0, 8.0, 11.0, 1.0)])
+def test_verifier_cached_and_direct_tracker_envelopes_are_identical(monkeypatch, radius, speed, target, scale):
+    from dataclasses import replace
+    import tracker
+
+    p = replace(P, a_lat=P.a_lat * scale)
+    pl, obs = _circle_plan(radius=radius, v=target), _obs(speed)
+    cached = predict.verify_plan(pl, obs, VP, p)
+    monkeypatch.setattr(predict, "_grip_bound",
+                        lambda vp, p, lat, scale, down: tracker.lon_envelope(lat, vp, p, scale)[down])
+    reference = predict.verify_plan(pl, obs, VP, p)
+    assert cached.keys() == reference.keys()
+    for key in cached:
+        np.testing.assert_array_equal(cached[key], reference[key], err_msg=key)

@@ -72,6 +72,39 @@ def test_curvature_on_nonuniform_circle_is_rotation_invariant():
     np.testing.assert_allclose(planner.curvature(path @ rot.T + [50.0, -30.0], s), kappa, atol=1e-9)
 
 
+def test_acceleration_table_cache_is_exact_and_not_exposed(straight):
+    from dataclasses import fields, replace
+
+    _, _, vehicle, p = straight
+
+    def reference(vp, params, v_top, scale):
+        m = vp.mass
+        v = np.linspace(0.0, v_top, 64)
+        drive = np.minimum(params.max_drive_force, params.max_power_w / np.maximum(v, 0.5))
+        traction = getattr(params, "traction_limit", 0.97) * getattr(params, "mu_model", vp.mu) * 9.81
+        a = np.minimum(np.minimum(planner._t(params, "fwd_accel_frac") * scale * vp.max_accel,
+                                  drive / m), traction)
+        a -= 0.5 * planner._t(params, "air_density") * params.drag_area * v * v / m + params.rolling_resistance * 9.81
+        integrand = v / np.maximum(a, 0.05)
+        return v, np.concatenate(([0.0], np.cumsum(0.5 * (integrand[1:] + integrand[:-1]) * np.diff(v))))
+
+    variants = [(vehicle, p)]
+    variants += [(vehicle, replace(p, **{f.name: getattr(p, f.name) * 0.9})) for f in fields(p)]
+    variants += [(replace(vehicle, mass=1500.0, max_accel=4.0, mu=0.7), p)]
+    for vp, params in variants:
+        for scale in (1.0, 0.6):  # Performance and ECO acceleration scaling
+            actual = planner.accel_table(vp, params, 31.0, scale)
+            expected = reference(vp, params, 31.0, scale)
+            for a, b in zip(actual, expected):
+                np.testing.assert_array_equal(a, b)
+    v, dist = planner.accel_table(vehicle, p, 31.0)
+    v[:] = -1.0
+    dist[:] = -1.0
+    for a, b in zip(planner.accel_table(vehicle, p, 31.0), reference(vehicle, p, 31.0, 1.0)):
+        np.testing.assert_array_equal(a, b)
+    assert planner._accel_table.cache_info().currsize <= 32
+
+
 def test_remembered_speed_caps_use_centerline_progress_not_racing_line_length(straight, monkeypatch):
     c, obs, vp, p = straight
     theta = c.s / 20.0

@@ -1,5 +1,45 @@
 # STATUS: where the project stands (handoff file for any AI agent)
 
+## Final compute-only candidate: `rodion/compute-final` (2026-10-17)
+
+Based on refreshed `origin/main` **3fa788e**, the integrated version Rodion reports as
+CARLA-tested by Viraj at **69.9/75**. Main is preserved; the unmerged corridor-verifier /
+squeeze experiments are NOT included. No controller, tracker, horizon, Params, mode tuning,
+prediction horizon or safety-limit changes. PERFORMANCE remains lat_accel_frac **0.75**,
+v_max **30**; ECO remains eco_weight **0.8**. Older sections below describe historical defaults.
+
+Changes, limited to Rodion's files:
+
+- `predict.py`: replace quantized two-corner AWD envelope queries with sampled intervals at
+  the **exact** grip scale. Reuse only where the tracker's own helper returns equal limits at
+  both endpoints; otherwise call that helper at the actual input. No second AWD model.
+  Immutable vehicle/tuning keys, 128 cached setups/scales, plateau-endpoint compaction.
+- Cache repeated node tangents inside each verification; still use tracker's helper.
+- `planner.py`: cache acceleration-distance tables using all numerical dependencies, with
+  32-entry eviction and independent writable copies returned to callers.
+- Add exact cached-vs-shared-helper trajectory checks, cache dependency/storage tests and
+  exact acceleration-table regression checks. Existing command golden files are unchanged.
+
+Initial paired microprofile (same process/hardware, 160 verifications per condition, 4
+straight/cornering/acceleration/braking examples; diagnostic, not a scored lap):
+
+| Measurement | Main 3fa788e | Candidate | Change |
+|---|---:|---:|---:|
+| Cold verifier median / p99 | 2.944 / 5.443 ms | 1.932 / 4.289 ms | median -34.4% |
+| Warm verifier median / p99 | 0.944 / 2.905 ms | 0.770 / 2.081 ms | median -18.4% |
+| Acceleration table median | 0.0154 ms | 0.0012 ms | -92.2% |
+
+Feature audit: main already contains both driving modes and PR #8's camera/LiDAR/radar fusion
+demo/bridge. Fusion deliberately stays **offline**, not imported into the sandboxed scored
+controller. Weather is configurable in the pinned harness and wet-grip robustness scenarios
+exist in `tools/robustness_*.yaml`; no live weather-check controller feature was found on main
+or in weather-related remote history. Do not introduce network/raw-sensor access at submission.
+
+Validation: code is pushed before the requested **single final** pytest/strict/public/ECO
+validation pass. Results will replace this pending note after that pass. Bicycle scores are
+not directly comparable with the reported 69.9 CARLA score; Viraj must validate this exact
+branch on CARLA before promotion. No merge is authorized by a local microbenchmark.
+
 **Update this file at the end of every task** (results table + what changed + next step) and commit it
 with your work, so the next agent, whether Claude, ChatGPT/Codex or a teammate's, picks up exactly where you left off.
 

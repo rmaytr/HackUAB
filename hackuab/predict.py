@@ -337,23 +337,45 @@ def _grip_grid(vp: _GripVehicle, p: _GripParams, a_lat: float, scale: float) -> 
     return lon_envelope(a_lat, vp, p, scale)
 
 
-def _grip_bound(vp: _GripVehicle, p: _GripParams, a_lat: float, scale: float, down: bool) -> float:
-    """Exact shared-envelope answer, memoizing cells wholly inside one grid plateau.
+@lru_cache(maxsize=128)
+def _grip_samples(vp: _GripVehicle, p: _GripParams, scale: float) -> tuple[list, list]:
+    """Sampled lateral demands and exact shared-helper answers, for one immutable setup.
 
-    Capacity decreases with lateral demand and increases with grip. If both extreme corners
-    of a small (a_lat, scale) cell give the same discrete capacity, every point inside gives
-    that value. At any boundary we evaluate the original helper at the actual input. There
-    is no interpolation, rounding of the returned capacity, or second copy of the AWD model.
-    Binary cell sizes keep endpoint arithmetic exact for ordinary finite inputs.
+    Keep only the ends of each plateau. Both envelope components are nonincreasing with
+    nonnegative lateral demand, so there are at most twice as many samples as distinct
+    answer pairs (the tracker currently has 41 candidates per component).
+    """
+    return [], []
+
+
+def _grip_bound(vp: _GripVehicle, p: _GripParams, a_lat: float, scale: float, down: bool) -> float:
+    """Reuse only intervals certified by equal answers from tracker.lon_envelope().
+
+    At a FIXED, exact grip scale capacity decreases with lateral demand. Two sampled
+    endpoints with the same capacity certify every demand between them. Otherwise ask the
+    shared helper at the actual input, once, rather than evaluating two quantized cell
+    corners and possibly the input too. No rounded grip, interpolated limit, copied AWD
+    equations or inferred boundary is used. Every mutable helper dependency is in the key.
     """
     if not (math.isfinite(a_lat) and math.isfinite(scale)
             and 0.0 <= a_lat < 1e6 and 0.0 <= scale < 1e6):
         return lon_envelope(a_lat, vp, p, scale)[down]
-    low_lat = math.floor(a_lat * 32.0) / 32.0
-    low_mu = math.floor(scale * 256.0) / 256.0
-    high = _grip_grid(vp, p, low_lat, low_mu + 1.0 / 256.0)[down]
-    low = _grip_grid(vp, p, low_lat + 1.0 / 32.0, low_mu)[down]
-    return low if low == high else lon_envelope(a_lat, vp, p, scale)[down]
+    demands, answers = _grip_samples(vp, p, scale)
+    j = bisect_right(demands, a_lat)
+    if j and demands[j - 1] == a_lat:
+        return answers[j - 1][down]
+    if 0 < j < len(demands) and answers[j - 1][down] == answers[j][down]:
+        return answers[j][down]
+    answer = _grip_grid(vp, p, a_lat, scale)
+    demands.insert(j, a_lat)
+    answers.insert(j, answer)
+    # Only interior points of an already certified plateau can be discarded. Keep its
+    # outer endpoints, including an exact transition sample/nextafter neighbour.
+    for middle in (j + 1, j, j - 1):
+        if 0 < middle < len(answers) - 1 and answers[middle - 1] == answers[middle] == answers[middle + 1]:
+            del demands[middle]
+            del answers[middle]
+    return answer[down]
 
 
 def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: float = 1.5,
@@ -394,6 +416,7 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
     seg_len = np.maximum(np.hypot(seg[:, 0], seg[:, 1]), 1e-6)
     ux_l, uy_l = (seg[:, 0] / seg_len).tolist(), (seg[:, 1] / seg_len).tolist()
     px_l, py_l, sl_l = path[:, 0].tolist(), path[:, 1].tolist(), seg_len.tolist()
+    tangents = [None] * n_nodes  # the same plan node is often visited on several prediction steps
     stations = np.asarray(plan.s, float)
     speeds = np.nan_to_num(np.asarray(plan.v, float))
     kappas = np.nan_to_num(np.asarray(plan.kappa, float))
@@ -478,7 +501,9 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
             lx, ly = cq * dx + sn * dy, cq * dy - sn * dx
             kappa_pp = 2.0 * ly / max(lx * lx + ly * ly, 1.0)
             rx, ry = tx - nx, ty - ny     # arc a car sitting on the path at the projection would need
-            hx, hy = _tangent(px_l, py_l, m)
+            if tangents[m] is None:
+                tangents[m] = _tangent(px_l, py_l, m)
+            hx, hy = tangents[m]
             kappa_ideal = 2.0 * (hx * ry - hy * rx) / max(rx * rx + ry * ry, 1.0)
             kappa_ff = interp(k_l, sq + speed * ff_t)
             kappa_cmd = kappa_ff + fb_gain * (kappa_pp - kappa_ideal)

@@ -141,15 +141,32 @@ def accel_table(vehicle: VehicleParams, p: Params, v_top: float,
     a(v) = min(a_max, F_drive/m, P/(m v), a_traction) - (drag + rolling)/m and S(v) = int v / a(v) dv.
     The car is all-wheel drive, so the traction limit is set by the load on all four tyres:
     a_traction = traction_limit * mu * g (rear-wheel drive would only get the rear axle's share)."""
-    m = vehicle.mass
+    # The same vehicle/mode table is otherwise rebuilt every control step. Extract ALL
+    # numeric dependencies rather than caching mutable Params/VehicleParams identities.
+    cached = _accel_table(float(vehicle.mass), float(v_top), float(p.max_drive_force),
+                          float(p.max_power_w),
+                          float(getattr(p, "traction_limit", 0.97)),
+                          float(getattr(p, "mu_model", vehicle.mu)),
+                          _t(p, "fwd_accel_frac") * accel_scale * vehicle.max_accel,
+                          _t(p, "air_density"), float(p.drag_area), float(p.rolling_resistance))
+    # Preserve the public function's independent, writable arrays; don't expose cache storage.
+    return cached[0].copy(), cached[1].copy()
+
+
+@lru_cache(maxsize=32)
+def _accel_table(m, v_top, drive_force, power, traction_limit, mu, max_accel,
+                 air_density, drag_area, rolling_resistance):
+    """Geometry/mode-specific reachability table; identical arithmetic to accel_table."""
     v = np.linspace(0.0, v_top, 64)
-    f_drive = np.minimum(p.max_drive_force, p.max_power_w / np.maximum(v, 0.5))
-    a_traction = float(getattr(p, "traction_limit", 0.97)) * float(getattr(p, "mu_model", vehicle.mu)) * G
-    a = np.minimum(np.minimum(_t(p, "fwd_accel_frac") * accel_scale * vehicle.max_accel, f_drive / m), a_traction)
-    a -= (0.5 * _t(p, "air_density") * p.drag_area * v * v) / m + p.rolling_resistance * G
+    f_drive = np.minimum(drive_force, power / np.maximum(v, 0.5))
+    a_traction = traction_limit * mu * G
+    a = np.minimum(np.minimum(max_accel, f_drive / m), a_traction)
+    a -= (0.5 * air_density * drag_area * v * v) / m + rolling_resistance * G
     a = np.maximum(a, 0.05)
     integrand = v / a
     dist = np.concatenate(([0.0], np.cumsum(0.5 * (integrand[1:] + integrand[:-1]) * np.diff(v))))
+    v.setflags(write=False)
+    dist.setflags(write=False)
     return v, dist
 
 
