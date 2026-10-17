@@ -12,11 +12,12 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "hackuab"))
 from params import Params  # noqa: E402
-from tracker import track  # noqa: E402
+from tracker import lon_envelope, track  # noqa: E402
 
 VEHICLE = SimpleNamespace(
-    wheelbase=3.0, max_steer=math.radians(35.0), max_steer_rate=2.0, mu=0.95, max_accel=5.2,
-    max_decel=9.0, max_speed=40.0, control_dt=0.05, actuation_delay_steps=0, cg_to_rear=1.55,
+    mass=1845.0, wheelbase=3.0, cg_to_front=1.45, cg_to_rear=1.55, max_steer=math.radians(35.0),
+    max_steer_rate=2.0, mu=0.95, max_accel=5.2, max_decel=9.0, max_speed=40.0, control_dt=0.05,
+    actuation_delay_steps=0,
 )
 
 
@@ -87,6 +88,48 @@ def test_falling_profile_ahead_does_not_hold_back_a_slow_car():
     plan.v = np.linspace(17.0, 6.0, len(plan.s))     # horizon-guard ramp, car far below it
     _, thr, brk = track(plan, obs(12.0), VEHICLE, None, {})
     assert brk == 0.0 and thr > 0.9
+
+
+def axle_ok(a_x, a_lat, p, v=VEHICLE):
+    """Independent check: both axles inside their friction circles at (a_x, a_lat)."""
+    m, L, lf = v.mass, v.wheelbase, v.cg_to_front
+    lr, h, mu = L - lf, p.cg_height, v.mu * p.grip_frac
+    share = p.front_drive_fraction if a_x >= 0 else p.front_brake_fraction
+    fzf, fzr = m * (9.81 * lr - a_x * h) / L, m * (9.81 * lf + a_x * h) / L
+    ff = math.hypot(share * m * a_x, m * a_lat * lr / L) <= mu * fzf * (1 + 1e-9)
+    fr = math.hypot((1 - share) * m * a_x, m * a_lat * lf / L) <= mu * fzr * (1 + 1e-9)
+    return ff and fr
+
+
+P = Params.from_vehicle(SimpleNamespace(mu=0.95, max_decel=9.0, max_accel=5.2, width=2.16))
+
+
+def test_straight_line_braking_is_rear_axle_limited():
+    up, dn = lon_envelope(0.0, VEHICLE, P)
+    assert up == pytest.approx(VEHICLE.max_accel)      # AWD: the motor, not traction, limits drive
+    assert 6.5 < dn < 7.3                               # rear unloads under braking and saturates first
+    assert axle_ok(-dn, 0.0, P) and not axle_ok(-(dn + 0.3), 0.0, P)
+
+
+def test_envelope_shrinks_with_cornering_and_closes_at_the_grip_limit():
+    prev = (10.0, 10.0)
+    for a_lat in (0.0, 3.0, 6.0, 7.5):
+        up, dn = lon_envelope(a_lat, VEHICLE, P)
+        assert up <= prev[0] + 1e-9 and dn <= prev[1] + 1e-9
+        assert axle_ok(up, a_lat, P) and axle_ok(-dn, a_lat, P)
+        prev = (up, dn)
+    assert lon_envelope(9.5, VEHICLE, P) == (0.0, 0.0)   # corner alone exceeds grip
+
+
+def test_awd_puts_more_power_down_on_corner_exit_than_rwd():
+    rwd = SimpleNamespace(**{**vars(P), "front_drive_fraction": 0.0})
+    awd_up, _ = lon_envelope(7.0, VEHICLE, P)
+    rwd_up, _ = lon_envelope(7.0, VEHICLE, rwd)
+    assert awd_up > rwd_up
+
+
+def test_slip_estimate_shrinks_the_envelope():
+    assert lon_envelope(5.0, VEHICLE, P, 0.8)[1] < lon_envelope(5.0, VEHICLE, P, 1.0)[1]
 
 
 def test_nan_inputs_give_finite_outputs():

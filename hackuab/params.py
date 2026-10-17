@@ -36,7 +36,7 @@ class Params:
     pp_lookahead_max: float = 16.0      # m
     ff_preview_t: float = 0.2           # s, curvature feedforward is read this far ahead of the car
     fb_gain: float = 1.0                # weight of the pure-pursuit error feedback on top of the plan's curvature
-    ellipse_lat_frac: float = 0.85      # fraction of mu*g the friction ellipse treats as available
+    grip_frac: float = 0.85             # fraction of mu each axle's friction circle may use (safety margin)
     grip_cap: float = 1.05              # max commanded v^2*tan(delta)/L as a fraction of mu*g (metric flags > 1.1)
     steer_rate_margin: float = 0.95     # fraction of max_steer_rate the command may use
     speed_preview_t: float = 0.25       # s, how far ahead on the profile the speed target is read
@@ -44,7 +44,7 @@ class Params:
     ki_speed: float = 0.5
     i_limit: float = 4.0                # m/s^2, integrator clamp (CARLA needs ~3 to hold speed against drag)
     coast_band: float = 0.25            # m/s^2, small decel requests coast instead of braking
-    accel_floor: float = 0.15           # min fraction of max_accel the ellipse leaves at full lateral load
+    accel_floor: float = 0.15           # min fraction of max_accel allowed even at full lateral load
     brake_floor: float = 0.3            # min fraction of max_decel ever allowed (safety over realism)
     jerk_max: float = 40.0              # m/s^3, max change of the acceleration command
     slip_ema_alpha: float = 0.2         # low-pass on the yaw-rate understeer indicator
@@ -69,6 +69,12 @@ class Params:
     drag_area: float = 0.55                      # m^2, Cd*A
     rolling_resistance: float = 0.012
     steer_time_constant: float = 0.06            # s, first-order steering lag
+    # AWD drivetrain + brakes (Chevy Blazer EV, assumed AWD; matches the bicycle backend). Used by the
+    # tracker's per-axle friction model: each axle's drive/brake force and its share of the cornering
+    # force must fit inside that axle's friction circle, with load transfer from cg_height.
+    front_drive_fraction: float = 0.4            # share of drive force on the front axle (AWD)
+    front_brake_fraction: float = 0.6            # share of brake force on the front axle (bicycle.py default)
+    traction_limit: float = 0.97                 # TC/ABS: max |Fx| per axle as a fraction of mu*Fz
 
     # --- derived from VehicleParams in from_vehicle() ---
     a_lat: float = 0.0
