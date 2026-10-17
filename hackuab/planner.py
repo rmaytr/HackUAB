@@ -98,7 +98,7 @@ TUNABLES = {
     "rl_fade_m": 4.0, "rl_w_fade": 0.5, "rl_iters": 3, "rl_start_free_m": 1.0,
     "rl_rejoin_m": 6.0, "rl_rejoin_time": 1.0, "rl_margin": 0.5,
     "vis_hairpin_radius": 8.0, "vis_margin_m": 0.0, "fwd_accel_frac": 1.0, "fwd_seed_time": 1.0,
-    "air_density": 1.2, "verify_iters": 1, "verify_horizon_s": 1.5, "verify_use_limit": 0.95,
+    "air_density": 1.2, "verify_iters": -1, "verify_horizon_s": 1.5, "verify_use_limit": 0.95,
     "verify_grip_limit": 1.0, "verify_rear_slip_deg": 5.0, "verify_relax": 1.01,
     # Eco mode; the Params fields of the same name (params.py) are the ones to tune
     "eco_coast_m": 30.0, "eco_coast_margin": 0.03, "eco_vmax_drop": 0.35, "eco_accel_drop": 0.5,
