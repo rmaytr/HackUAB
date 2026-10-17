@@ -3,11 +3,94 @@
 **Update this file at the end of every task** (results table + what changed + next step) and commit it
 with your work, so the next agent, whether Claude, ChatGPT/Codex or a teammate's, picks up exactly where you left off.
 
-_Last updated: 2026-10-17, Rodion's lap-time optimization (`70cb357`) promoted from
-`rodion/lap-time-optimization` to `main` after validation. CARLA validation remains pending.
+_Last updated: 2026-10-17, Viraj tracking integration reviewed on `rodion/viraj-optimization-sync`.
+Main remains `96a781e` by Rodion's explicit decision; integrated tuning is NOT promoted.
+CARLA validation remains pending.
 Code freeze 5:00 PM, feature freeze 4:15 PM._
 
-## Latest validated code: lap-time optimization (Rodion)
+## Latest integration validation: Viraj tracking + current lap-time planner
+
+Integration code `2621d15` merges `origin/viraj/corner-tracking` (`3f0f6b2`, including tuning commit
+`eb8b5e0`) with main `96a781e`. Viraj changes Params `ff_preview_t` 0.2 -> 0.1 s and `fb_gain`
+1.0 -> 1.5 and adds `tools/par_sweep.py`. A final fetch also picked up tool-only follow-up
+`55fe531` (`par_robust.py` and stacked/edge robustness YAMLs), merged as `afe5523` after driving
+tests; controller code and tests are unchanged by that follow-up. Rodion's planner/predictor are byte-for-byte unchanged
+from the latest merged lap-time version. Eco mode was explicitly excluded. No other controller
+logic, grip/braking defaults or simulator files were edited.
+
+**Decision: keep this combined version on the integration branch until lap time improves.** It
+reduces path error and removes the two observed seed-4/5 obstacle hits, but is not a uniform speed
+improvement. Rodion chose not to promote it to main. A merge into this branch is not a main release.
+
+Times in seconds, same default bicycle settings. Baseline public times are main `96a781e`'s
+promotion recheck; random/holdout baselines are its identical controller code's earlier validation.
+All integrated rows have zero cones, obstacle hits, off-course events, missed gates, errors and overruns.
+
+| Course | Recorded main time | Combined time | Change (positive = slower) | Cones main -> combined |
+|---|---:|---:|---:|---:|
+| hackathon_test | 51.357 | 52.462 | +1.105 | 0 -> 0 |
+| practice_basic | 31.272 | 31.487 | +0.215 | 0 -> 0 |
+| practice_loop | 88.646 | 86.842 | -1.804 | 0 -> 0 |
+| practice_obstacles | 56.541 | 58.283 | +1.742 | 0 -> 0 |
+| practice_technical | 38.549 | 38.800 | +0.251 | 0 -> 0 |
+| Random seed 1 | 51.167 | 51.012 | -0.155 | 0 -> 0 |
+| Random seed 2 | 62.398 | 65.697 | +3.299 | 0 -> 0 |
+| Random seed 3 | 53.876 | 55.299 | +1.423 | 0 -> 0 |
+| Extra seed 4 | 58.419 | 61.133 | +2.714 | 1 -> 0 |
+| Extra seed 5 | 52.464 | 52.765 | +0.301 | 1 -> 0 |
+
+Unrounded totals: public five **266.366 -> 267.874 s** (+1.508 s / 0.57%); original eight
+**433.806 -> 439.882 s** (+6.076 s / 1.40%); all ten **544.688 -> 553.780 s** (+9.092 s / 1.67%).
+The final two baseline courses were not clean, so their total is not a clean-lap comparison.
+Technical path mean/max error improves 0.143/0.623 -> 0.060/0.291 m. Improved tracking alone does
+not establish a lap-time improvement or fix the synthetic unsafe-fallback behaviors below.
+
+All required checks executed: strict technical 38.800 s, strict obstacles 58.283 s, full five-course
+selftest, plus strict seeds 1-5 with three obstacle groups. Technical repeated at 38.800 s, clean.
+**84 tests pass** (final run 0.76 s). An initial unchanged 3 ms batch-rollout assertion failed at
+3.053 ms; isolated rerun was 2.23 ms, then subsequent full suites passed. Thresholds were not loosened.
+Both parallel tools pass CLI-help/syntax smoke checks, and both added robustness YAMLs parse;
+their perturbation sweeps were not independently executed here.
+
+Integrated initial suite total-controller p99 ranges 8.79-19.87 ms, with zero deadline overruns.
+Planner-only timers over 11,416 calls across those ten runs: mean **4.71 ms**, p99 **13.22 ms**,
+max 28.23 ms; 32.81% exceed 5 ms. Nested verification averages 3.85 ms and dominates the cost.
+These are wall times, not CPU-only timings or worst-case guarantees.
+
+Fresh serial A/B: isolated untouched main `96a781e` reproduces all five baseline lap times and
+seed 2 at 62.398 s, clean. Its public total-controller p99 was also elevated at about 14-16 ms,
+versus the old recorded 8-9 ms. Public mean technical score is 67.032 /75 for this fresh baseline
+and 66.960 for the initial integration suite (not 68.370 versus 66.960 across mismatched timing
+conditions). Timing variability and tracking behavior both matter; do not attribute the entire
+compute-score change to this two-parameter commit. All runs were serial, official one-core,
+enforce mode, no rendering; the new parallel sweep's measure/eight-core mode was not used.
+The parallel tools' claim of serial-equivalent driving is not guaranteed under load: measure
+mode disables the harness deadline enforcement, but the controller's own wall-time budget guard
+still skips planning on the following tick. Viraj should audit that distinction and include
+errors/overruns in sweep reports. Parallel tool runs are not release-timing evidence.
+
+Artifacts (ignored): `runs/viraj-sync/20261017-150644_selftest/`; strict siblings `150620` technical
+and `150630` obstacles; `random/`, `holdouts/`, and `repeat/`. Fresh baseline:
+`runs/viraj-sync/fresh-baseline/20261017-151005_selftest/` and seed-2 sibling `151102`.
+The isolated source is `runs/viraj-sync/main-baseline/`. Technical reports visually inspected.
+
+### Handoff response and future plan
+
+Read the supplied `docs/CLAUDE_REVIEW_HANDOFF.md` (historical `8acab13`) and ran Appendix A against
+the integrated revision. All six defect assertions still reproduce: invalid corridor accelerates
+on the centerline; production verification omits corridor; jerk can exceed final grip capacity
+(3.2 vs allowed 0.78 m/s^2); stale slip persists at 0.4 and drops scale to 0.75; planner YAML keys
+are ignored; physically too-narrow road remains valid. Passing these diagnostic assertions is
+confirmation of defects, not a safety pass. No proposed fix was implemented in this task.
+
+The original local handoff is preserved unchanged and was not added to Git. The self-contained
+response/proposal is [OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md), independently reader-checked
+and revised. It orders owner-coordinated correctness/fallback fixes, state/FIFO and footprint
+verification, supported config, exact shared-envelope/anytime compute work, friction-coupled
+reachable speed sets, and small closed-loop trajectory batches. It includes references, test
+commands, acceptance gates, fresh-holdout handling and explicit unproven-safety/runtime limits.
+
+## Prior main validation: lap-time optimization (Rodion, `70cb357`)
 
 Goal: lower clean completion time, not necessarily maximize every scoring category. Only Rodion's
 planner/predictor and their tests changed; tracker, horizon, controller, Params and the pinned
@@ -338,17 +421,18 @@ and `run`. Generate courses outside the submodule with `gen-track --seed 1 --obs
 ## Next tasks
 
 **Rodion (planner.py, predict.py):**
-1. Coordinate the live tracker-state and corridor-verification interfaces with Viraj/Saisi; keep
-   optimizer changes separate from the known invalid-corridor fallback risk.
-2. Have Viraj confirm this branch and any qualifying braking/lateral candidate on CARLA before
-   changing Params defaults. Historical 0.8875 is not automatically transferable to the new code.
+1. Follow OPTIMIZATION_PLAN.md: agree on blocked-corridor policy with Saisi/Viraj and state/FIFO
+   snapshot with Viraj, then implement corridor/footprint-aware prediction with a corrective response.
+2. Recover the integration branch's lap-time regression without giving back the seed-4/5 clearance
+   gains. Keep main at `96a781e` until clean timing evidence supports promotion; no blind fraction increase.
 3. Write `docs/INNOVATION.md`: racing line, physics-verified speed profile, visibility guard, AWD model.
    For each: what it is, why it matters, and the evidence (a number or a plot from `figures/`).
 
-**Viraj:** pull `main` including `70cb357` and run `compare` (bicycle vs CARLA) on the exact defaults.
-Check rear slip and obstacle clearance as well as lap time; no faster parameter preset qualified
-on this code, and the default lateral/deceleration fractions remain 0.6 / 0.4 until confirmed.
-**Saisi + Rodion:** follow up on the seed-2 invalid-corridor/centerline-fallback clearance issue separately.
+**Viraj:** coordinate final jerk/grip priority, straight-line slip recovery, supported config and
+state/FIFO contracts; compare exact approved revisions on CARLA. The integration branch is not
+promoted. Lateral/deceleration fractions remain 0.6 / 0.4.
+**Saisi + Rodion:** define physically blocked/narrow corridor states and safe degraded behavior;
+the clean integrated holdout runs do not repair the reproduced unsafe fallback policy.
 **Saisi:** fusion track (roadmap S2).
 
 ## How to verify any change (from `simulator/`, Windows)
