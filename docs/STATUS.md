@@ -11,6 +11,8 @@ _~3:40 PM: Eco mode merged into `main` together with PERFORMANCE / ECO mode sele
 
 ## Corridor-aware verifier draft (Rodion, `42918cd`)
 
+[Draft PR #9](https://github.com/rmaytr/HackUAB/pull/9), branch `rodion/corridor-verifier`.
+
 **Decision: do not merge.** Rodion chose to finish the draft with load-affected measurements
 rather than interrupt another session's export. Functional implementation and regression checks
 are complete, but the observed score/runtime/rear-slip tradeoff does NOT qualify for promotion.
