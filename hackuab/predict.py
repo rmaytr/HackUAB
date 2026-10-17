@@ -357,6 +357,18 @@ def _grip_bound(vp: _GripVehicle, p: _GripParams, a_lat: float, scale: float, do
     return low if low == high else lon_envelope(a_lat, vp, p, scale)[down]
 
 
+def corridor_braking_lead(speed: float, vp, p) -> float:
+    """Local response distance: command delay + speed preview + 3 steering time constants.
+
+    An actuator-only one-cell lead waits too long: speed changes also need to settle the
+    lateral response before the breach. Reachability passes add the actual braking distance.
+    This guard is a response heuristic, not a bound on uncertain vehicle/model error.
+    """
+    response = (vp.control_dt * (1 + vp.actuation_delay_steps) + _p(p, "speed_preview_t")
+                + 3.0 * max(_get(p, "steer_time_constant"), 0.0))
+    return max(float(speed) * response, 1.0)
+
+
 def corridor_clearance(poses: np.ndarray, corridor) -> dict:
     """Project reference points into the buffered, piecewise-linear corridor.
 
@@ -655,7 +667,7 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
             # A bounded local cap ahead of the first breach. Braking/acceleration reachability
             # is re-run by the planner, so the braking influence extends upstream as needed.
             breach = path_stations[first]
-            lead = max(float(spd[first]) * vp.control_dt * (1 + vp.actuation_delay_steps), 1.0)
+            lead = corridor_braking_lead(spd[first], vp, p)
             anchor = max(breach - lead, 0.0)
             start = max(int(np.searchsorted(stations, anchor, side="right")) - 1, 0)
             end = min(int(np.searchsorted(stations, breach + 2.0)) + 1, n_nodes)

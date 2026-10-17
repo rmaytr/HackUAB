@@ -86,7 +86,7 @@ import numpy as np
 from autocross.api import Observation, VehicleParams
 from horizon import Corridor
 from params import G, Params
-from predict import verify_plan
+from predict import corridor_braking_lead, verify_plan
 
 
 @dataclass
@@ -373,7 +373,7 @@ def _plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> P
         out, cap = _verify(out, v_cap, profile, obs, vehicle, p, c,
                            started + max(float(p.budget_ms) - 5.0, 0.0) * 1e-3)
         # Progress is measured along the centerline, not along this step's offset racing line.
-        if out.debug.get("pred_fallback", 0.0):
+        if out.debug.get("pred_clearance_fallback", 0.0):
             # A stop is a response to this observation, not a permanent zero-valued memory cap.
             _VCAP.clear()
         else:
@@ -489,19 +489,22 @@ def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: Veh
         pl = Plan(path=pl.path, s=pl.s, kappa=pl.kappa, v=v)
     r = best_res
     fallback = not r["ok"]
+    clearance_fallback = fallback and not r.get("corridor_ok", True)
     verified = True
     if fallback:
         # Stop before the first predicted clearance breach, allowing a reaction lead. No
         # acceleration on the rest of this fallback. Re-run BOTH reachability passes.
-        if not r.get("corridor_ok", True):
+        if clearance_fallback:
             breach = r["corridor_first_path_s"]
-            lead = max(float(obs.speed) * vehicle.control_dt * (1 + vehicle.actuation_delay_steps), 1.0)
+            lead = corridor_braking_lead(obs.speed, vehicle, p)
             stop = max(breach - lead - 1.0, 0.0)
             stop_cap = np.sqrt(2.0 * p.a_dec * np.maximum(stop - best.s, 0.0))
-            cap = np.minimum(best_cap, stop_cap)
+            cap = np.minimum(np.minimum(best_cap, stop_cap), max(float(obs.speed), 0.0))
         else:
-            cap = np.minimum(best_cap, best.v * np.minimum(r["v_scale"], 0.8))
-        cap = np.minimum(cap, max(float(obs.speed), 0.0))
+            # Grip-only failure: retain the existing LOCAL demand-derived caps. A blanket
+            # 20% derate adds unrelated braking and discarding these nonzero caps makes
+            # successive steps rediscover the same grip limit, causing speed oscillation.
+            cap = np.minimum(best_cap, best.v * r["v_scale"])
         best = Plan(best.path, best.s, best.kappa, profile(cap))
         best_cap = cap
         verified = False
@@ -517,6 +520,7 @@ def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: Veh
                   "pred_rear_slip_max": r["rear_slip_max_deg"], "pred_offset_max": r["lat_dev_max"],
                   "pred_demand_max": r["demand_max"], "pred_ok": float(verified and r["ok"]),
                   "pred_verified": float(verified), "pred_fallback": float(fallback),
+                  "pred_clearance_fallback": float(clearance_fallback),
                   "pred_unresolved": float(not verified or not r["ok"]),
                   "pred_budget_exhausted": float(exhausted or perf_counter() > deadline),
                   "pred_corridor_checked": float(corridor is not None),

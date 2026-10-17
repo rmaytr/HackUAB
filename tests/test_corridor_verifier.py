@@ -195,6 +195,15 @@ def test_narrow_corridor_changes_speed_plan_and_runs_reachability(monkeypatch):
     assert result.debug['pred_ok'] or result.debug['pred_unresolved']
 
 
+def test_clearance_fallback_can_be_reverified_safe_in_the_dynamic_model(monkeypatch):
+    original, result, _, calls = run_verify(.2, monkeypatch)
+    assert calls and np.any(result.v < original.v)
+    assert result.debug['pred_corridor_initial_max'] > 0
+    assert result.debug['pred_verified'] == result.debug['pred_ok'] == 1
+    assert result.debug['pred_corridor_ok'] == 1
+    assert not result.debug['pred_unresolved']
+
+
 def test_wide_corridor_preserves_speed_plan_bit_for_bit(monkeypatch):
     original, result, cap, calls = run_verify(3., monkeypatch)
     assert not calls
@@ -213,6 +222,39 @@ def test_budget_exhaustion_reports_unverified_braking_fallback(monkeypatch):
     assert result.debug['pred_fallback'] == result.debug['pred_unresolved'] == 1
     assert result.debug['pred_verified'] == result.debug['pred_ok'] == 0
     assert np.all(result.v <= obs.speed)
+
+
+def test_grip_only_fallback_does_not_blanket_derate_a_wide_corridor(monkeypatch):
+    pl, c, obs = circle_case(3.)
+    p = Params.from_vehicle(VP)
+    real = predict.verify_plan(pl, obs, VP, p, corridor=c)
+    scale = np.ones_like(pl.v)
+    scale[20] = .9
+    failed = {**real, 'ok': False, 'demand_max': 1.1, 'v_scale': scale}
+    monkeypatch.setattr(planner, 'verify_plan', lambda *a, **kw: failed)
+    monkeypatch.setitem(planner.TUNABLES, 'verify_iters', 0)
+    monkeypatch.setitem(planner.TUNABLES, 'verify_budget_ms', 0.)
+    result, _ = planner._verify(pl, pl.v.copy(), lambda cap: cap, obs, VP, p, c)
+    np.testing.assert_array_equal(result.v[:20], pl.v[:20])
+    assert result.v[20] == pytest.approx(.9 * pl.v[20])
+    assert result.debug['pred_fallback'] and not result.debug['pred_clearance_fallback']
+
+
+@pytest.mark.parametrize('clearance', [False, True])
+def test_only_clearance_stop_caps_are_excluded_from_next_step_memory(monkeypatch, clearance):
+    _, c, obs = circle_case(3.)
+    obs.road = SimpleNamespace(lateral_offset=0., heading_error=0., finish_distance=np.nan)
+    obs.step, obs.progress = 0, 0.
+    monkeypatch.setattr(planner, '_WARM', {})
+    monkeypatch.setattr(planner, '_VCAP', {})
+
+    def fallback(pl, cap, *args):
+        pl.debug = {'pred_fallback': 1., 'pred_clearance_fallback': float(clearance)}
+        return pl, cap * .9
+
+    monkeypatch.setattr(planner, '_verify', fallback)
+    planner.plan(c, obs, VP, Params.from_vehicle(VP))
+    assert bool(planner._VCAP) != clearance
 
 
 def test_production_plan_passes_original_corridor(monkeypatch):
