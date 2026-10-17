@@ -46,10 +46,11 @@ class Params:
     side_hysteresis_m: float = 0.3      # m, gaps closer than this in width are decided by where the car already is
 
     # --- speed profile (planner.py) ---
-    lat_accel_frac: float = 0.6         # fraction of mu*g used for cornering
+    lat_accel_frac: float = 0.75        # fraction of mu*g used for cornering (0.6 -> 0.75 with the tighter
+                                        # corner tracking; 0.8+ clips cones under 100 ms actuation latency)
     decel_frac: float = 0.4             # fraction of max_decel used when planning braking
     accel_frac: float = 0.5             # fraction of max_accel used when ramping the speed target up
-    v_max: float = 22.0                 # m/s
+    v_max: float = 30.0                 # m/s
     v_horizon: float = 6.0              # m/s, speed cap at the end of the visible horizon
 
     # --- Eco mode (planner.py, added by Rodion): ONE knob, 0 = today's performance controller ---
