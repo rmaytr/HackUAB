@@ -109,6 +109,36 @@ def test_eco_debug_keys_and_plan_verified():
     assert cmd.debug["pred_ok"] == 1.0
 
 
+MAIN_TECHNICAL_TIME_S = 38.70137396097199      # main at 8acab13, default config, bicycle, practice_technical
+
+
+def test_eco_weight_zero_keeps_practice_technical_lap_time(tmp_path):
+    """Full bicycle run (about 10 s): the default config must reproduce main's lap time exactly."""
+    import json
+    import re
+    import subprocess
+    from pathlib import Path
+    try:
+        import autocross
+    except ImportError:
+        pytest.skip("simulator not installed")
+    sim = Path(autocross.__file__).resolve().parents[1]
+    track = sim / "tracks" / "practice_technical.yaml"
+    if not track.exists():
+        pytest.skip("simulator tracks not found")
+    ctrl = Path(__file__).resolve().parents[1] / "hackuab" / "controller.py"
+    cfg = tmp_path / "eco0.yaml"
+    cfg.write_text("strict: true\neco_weight: 0.0\n")
+    out = subprocess.run([sys.executable, "-m", "autocross", "run", "-c", str(ctrl), "-t", str(track),
+                          "--backend", "bicycle", "--no-render", "--team", "eco0test", "--controller-config", str(cfg)],
+                         cwd=sim, capture_output=True, text=True, timeout=300).stdout
+    run = re.search(r"^\s+-> (.+)$", out, re.M).group(1).strip()
+    m = json.load(open(os.path.join(run, "summary.json")))["metrics"]
+    assert m["completion"]["finished"]
+    assert m["completion"]["time_s"] == pytest.approx(MAIN_TECHNICAL_TIME_S, abs=1e-9)
+    assert m["compute"]["errors"] == 0 and sum(m["penalties"].values()) == 0
+
+
 if __name__ == "__main__" and "--record" in sys.argv:
     os.makedirs(os.path.dirname(GOLDEN), exist_ok=True)
     np.savez(GOLDEN, **run_sequence({}))
