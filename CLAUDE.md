@@ -211,7 +211,8 @@ docs/                   ROADMAP.md, pitch, innovation write-up, demo media
 | Viraj    | `controller.py`, `params.py`, `tracker.py`, `tools/`, CARLA runs + demo footage, slides | `viraj/*` |
 
 `docs/` is shared: announce in the chat before editing a file there. **The plan, the timeline and each
-task's "how" are in [docs/ROADMAP.md](docs/ROADMAP.md). Read it before starting work.**
+task's "how" are in [docs/ROADMAP.md](docs/ROADMAP.md). Read it before starting work.** The current state, the latest
+results and the next tasks are in [docs/STATUS.md](docs/STATUS.md). Update it at the end of every task.
 
 ## Data contracts between modules
 
@@ -236,6 +237,7 @@ class Plan:
     s: np.ndarray            # (N,) arc length along the path
     kappa: np.ndarray        # (N,) signed curvature, + left
     v: np.ndarray            # (N,) target speed after the backward/forward passes
+    debug: dict = {}         # optional scalar diagnostics (pred_* from the verifier); controller merges into Command.debug
 def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Plan: ...
 
 # tracker.py
