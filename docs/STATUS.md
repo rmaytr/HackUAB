@@ -3,11 +3,11 @@
 **Update this file at the end of every task** (results table + what changed + next step) and commit it
 with your work, so the next agent, whether Claude, ChatGPT/Codex or a teammate's, picks up exactly where you left off.
 
-_Last updated: 2026-10-17, Rodion's lap-time optimization on `rodion/lap-time-optimization`,
-based on united `main` (`8acab13`). Not merged to main; CARLA validation remains pending.
+_Last updated: 2026-10-17, Rodion's lap-time optimization (`70cb357`) promoted from
+`rodion/lap-time-optimization` to `main` after validation. CARLA validation remains pending.
 Code freeze 5:00 PM, feature freeze 4:15 PM._
 
-## Latest branch: lap-time optimization (Rodion)
+## Latest validated code: lap-time optimization (Rodion)
 
 Goal: lower clean completion time, not necessarily maximize every scoring category. Only Rodion's
 planner/predictor and their tests changed; tracker, horizon, controller, Params and the pinned
@@ -49,6 +49,13 @@ do not describe this as a uniform scoring improvement. Default selected p99 is 8
 well below 50 ms, with about 34 MB memory. CPU results do not establish a universal speedup:
 memoization has cold misses and the shared AWD helper remains the predictor's dominant cost.
 
+Planner-stage wall times from 8,950 controller calls in the five public courses and seeds 1/2/3:
+including verification, mean **4.23 ms**, p99 **7.61 ms**, maximum **37.00 ms**; 23.43% exceed
+5 ms. Excluding the nested verification timer, mean is 0.88 ms and p99 1.30 ms. Thus the
+line/speed planner is comfortably under 5 ms, but the complete verified planner is only under
+5 ms on average, not at p99. These are measured bicycle timings on Rodion's machine, not a
+hard runtime guarantee or a fresh CARLA measurement.
+
 ### Extra holdouts: existing obstacle failures, not a clean-course claim
 
 Generated seeds 4/5 only after selecting the code. Both hit an unmapped obstacle cone, so neither
@@ -67,6 +74,23 @@ of general unseen-course safety. No course-specific workaround was added. Report
 the isolated baseline is `runs/optimization/baseline-main/` (all ignored).
 
 ### Verification and review
+
+Promotion recheck (2026-10-17, ~2:50 PM): fetched `origin/main` was still `8acab13`, so the
+reviewed code can be fast-forwarded without a controller-code merge. Re-ran every required
+check on `70cb357`; only this handoff documentation changed afterward.
+
+| Check | Previously recorded optimized result | Pre-merge recheck |
+|---|---:|---:|
+| Unit tests | 84 passing | 84 passing |
+| Strict technical time | 38.549 s, clean | 38.549 s, clean |
+| Strict obstacles time | 56.541 s, clean | 56.541 s, clean |
+| Full selftest | 5 clean finishes, mean 68.230 /75 | 5 clean finishes, mean 68.370 /75 |
+
+The recheck has zero cones/off-course/missed gates/controller errors/overruns, with selftest
+step p99 8.2-9.1 ms. Differences in compute scores do not imply changed controller behavior.
+Fresh reports: `runs/merge-validation/20261017-144906_selftest/`; strict runs are siblings
+`20261017-144846_controller_practice_technical` and `20261017-144855_controller_practice_obstacles`.
+The previously documented random-course evidence applies to the identical controller code.
 
 Required strict technical/obstacle runs finish cleanly in 38.549 / 56.541 s (p99 8.16 / 8.96 ms).
 Default selftest and strict random seeds 1/2/3 (`--obstacles 3`) all finish cleanly. Artifacts:
@@ -105,7 +129,7 @@ Review follow-ups requiring other owners:
 - **Viraj:** confirm the exact branch and any opt-in parameter preset on CARLA before adopting
   new grip/braking defaults. Default lateral/deceleration fractions remain 0.6 / 0.4.
 
-## United code state on `main`
+## United code state at consolidation (`8acab13`, before optimization)
 
 | Module | Owner | State |
 |---|---|---|
@@ -119,7 +143,7 @@ Review follow-ups requiring other owners:
 
 Vehicle: **all-wheel drive** (EIC Chevy Blazer EV): 40 % front drive, 60 % front brakes. See CLAUDE.md "Drivetrain".
 
-## Latest unified validation (default params, bicycle)
+## Historical consolidation validation (default params, bicycle, `8acab13`)
 
 Combined `rodion/regroup` (which already contains verifier-sync, Viraj's tracker/tools/figures and
 Saisi's corridor fix) with the remaining `chore/team-setup` architecture history. All fetched remote
@@ -321,8 +345,9 @@ and `run`. Generate courses outside the submodule with `gen-track --seed 1 --obs
 3. Write `docs/INNOVATION.md`: racing line, physics-verified speed profile, visibility guard, AWD model.
    For each: what it is, why it matters, and the evidence (a number or a plot from `figures/`).
 
-**Viraj:** pull the united `main`, run `compare` (bicycle vs CARLA), then test the revalidated lateral fraction on CARLA.
-Check rear slip and obstacle clearance as well as lap time; keep the default at 0.6 until confirmed.
+**Viraj:** pull `main` including `70cb357` and run `compare` (bicycle vs CARLA) on the exact defaults.
+Check rear slip and obstacle clearance as well as lap time; no faster parameter preset qualified
+on this code, and the default lateral/deceleration fractions remain 0.6 / 0.4 until confirmed.
 **Saisi + Rodion:** follow up on the seed-2 invalid-corridor/centerline-fallback clearance issue separately.
 **Saisi:** fusion track (roadmap S2).
 
