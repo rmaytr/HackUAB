@@ -1,0 +1,3 @@
+# Eco mode: same controller, one knob. Select with --controller-config ..\hackuabco.yaml
+# eco_weight 0 = the scored performance controller; 1 = most energy-saving. See docs/STATUS.md "Eco mode".
+eco_weight: 0.6
