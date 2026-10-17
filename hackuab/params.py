@@ -12,6 +12,26 @@ from autocross.api import VehicleParams
 
 G = 9.81
 
+# Driving modes: the same controller with a named set of overrides. Pick one with `mode:` in the
+# --controller-config YAML (hackuab/performance.yaml or hackuab/eco.yaml). No `mode` key means
+# "performance", the scored default. Keys given explicitly in the YAML win over the mode's values.
+MODES: dict[str, dict[str, float]] = {
+    "performance": {"eco_weight": 0.0},   # fastest legal lap (the scored submission)
+    "eco": {"eco_weight": 0.8},           # energy-optimal lap: Pareto knee from tools/eco_pareto.py
+}
+DEFAULT_MODE = "performance"
+
+
+def resolve_mode(config: dict[str, Any] | None) -> tuple[str, dict[str, Any]]:
+    """Split a controller config into (mode name, effective overrides). Raises ValueError for an
+    unknown mode, so a typo in a YAML fails loudly in on_start instead of silently driving the
+    wrong profile."""
+    cfg = dict(config or {})
+    mode = str(cfg.pop("mode", DEFAULT_MODE)).strip().lower()
+    if mode not in MODES:
+        raise ValueError(f"unknown mode {mode!r}; choose one of {sorted(MODES)}")
+    return mode, {**MODES[mode], **cfg}
+
 
 @dataclass
 class Params:
@@ -31,6 +51,15 @@ class Params:
     accel_frac: float = 0.5             # fraction of max_accel used when ramping the speed target up
     v_max: float = 22.0                 # m/s
     v_horizon: float = 6.0              # m/s, speed cap at the end of the visible horizon
+
+    # --- Eco mode (planner.py, added by Rodion): ONE knob, 0 = today's performance controller ---
+    eco_weight: float = 0.0             # 0 = fastest lap (default, unchanged), 1 = most energy-saving
+    eco_coast_m: float = 30.0           # m, longest lift-and-coast before a braking zone (at eco_weight 1)
+    eco_coast_margin: float = 0.03      # m/s^2, planned coast decel = (drag + rolling) / m + this
+    eco_vmax_drop: float = 0.35         # top speed cut at eco_weight 1, fraction of the horizon-guard top speed
+    eco_accel_drop: float = 0.5         # forward-pass acceleration cut at eco_weight 1 (fraction)
+    eco_seed_drop: float = 0.5          # cut of the forward-pass seed time at eco_weight 1 (less speed-PI wind-up,
+                                        #  so less overshoot braking; practice_technical eco 0.6: -3.6 % Wh, -0.4 s)
 
     # --- tracking (tracker.py) ---
     pp_lookahead_min: float = 4.0       # m
@@ -92,7 +121,9 @@ class Params:
     @classmethod
     def from_vehicle(cls, vehicle: VehicleParams, config: dict[str, Any] | None = None) -> "Params":
         names = {f.name for f in fields(cls)}
-        p = cls(**{k: float(v) for k, v in (config or {}).items() if k in names})
+        mode, config = resolve_mode(config)
+        p = cls(**{k: float(v) for k, v in config.items() if k in names})
+        p.mode = mode                                   # plain attribute (not a float field)
         p.a_lat = p.lat_accel_frac * vehicle.mu * G
         p.a_dec = p.decel_frac * vehicle.max_decel
         p.a_acc = p.accel_frac * vehicle.max_accel

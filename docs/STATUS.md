@@ -7,6 +7,131 @@ _Last updated: 2026-10-17, Viraj tracking integration reviewed on `rodion/viraj-
 Main remains `96a781e` by Rodion's explicit decision; integrated tuning is NOT promoted.
 CARLA validation remains pending.
 Code freeze 5:00 PM, feature freeze 4:15 PM._
+_~3:40 PM: Eco mode merged into `main` together with PERFORMANCE / ECO mode selection (below)._
+
+## Driving modes: PERFORMANCE (default, scored) and ECO
+
+One controller, two selectable modes. The mode is picked **only** by `mode:` in a `--controller-config` YAML
+(`params.MODES` holds each mode's values), never by course or position. No config means PERFORMANCE.
+
+| Mode | Config file | What it does | Run it (from `simulator/`) | Its tests |
+|---|---|---|---|---|
+| **PERFORMANCE** | `hackuab/performance.yaml` (or no config) | Fastest legal lap: `eco_weight 0`, the scored submission | `.venv\Scripts\python.exe ..\tools\run_mode.py performance selftest` | `.venv\Scripts\python.exe -m pytest ..\tests -m performance` |
+| **ECO** | `hackuab/eco.yaml` | Energy-optimal lap: `eco_weight 0.8` (lift-and-coast, gentler accel, lower top speed) | `.venv\Scripts\python.exe ..\tools\run_mode.py eco selftest` | `.venv\Scripts\python.exe -m pytest ..\tests -m eco` |
+
+- One lap: `..\tools\run_mode.py eco run practice_technical` (add `--view` to watch, `--strict` to re-raise errors,
+  `--backend carla` for CARLA). Any extra autocross flags pass through.
+- Fast unit tests only: `-m "eco and not sim"`. Full simulator laps are marked `sim`.
+- An unknown mode (e.g. a typo `mode: ecco`) raises in `on_start` instead of silently driving the wrong profile.
+- Keys set explicitly in the YAML override the mode's values (e.g. `mode: eco` + `eco_weight: 0.6`).
+
+Selftest at merge (bicycle, 0 cones / 0 off-course / 0 gates / 0 errors on every course in every row):
+
+| Course | No config | PERFORMANCE | ECO | `main` before the merge |
+|---|---|---|---|---|
+| hackathon_test | 51.4 s · 68.6 | 51.4 s · 68.6 | 55.5 s · 66.3 | 51.4 s · 68.6 |
+| practice_basic | 31.3 s · 70.3 | 31.3 s · 70.3 | 33.0 s · 69.0 | 31.3 s · 70.3 |
+| practice_loop | 88.6 s · 68.9 | 88.6 s · 68.9 | 96.0 s · 66.9 | 88.6 s · 68.8 |
+| practice_obstacles | 56.5 s · 68.1 | 56.5 s · 68.1 | 59.3 s · 66.8 | 56.5 s · 68.0 |
+| practice_technical | 38.5 s · 65.9 | 38.5 s · 65.8 | 41.7 s · 63.3 | 38.5 s · 65.9 |
+| **Mean technical** | **68.3** | **68.3** | **66.5** | **68.3** |
+
+Lap times are identical between no config, PERFORMANCE and pre-merge `main`. The ±0.1 differences are the compute score
+reacting to step-time noise (p99 ≈ 8–9 ms). ECO trades technical points (completion time) for energy; its
+energy numbers are in the next section. 100 tests pass (`-m performance`: 7, `-m eco`: 10, the rest are mode-independent).
+
+**For Viraj:** `params.py` gained `MODES`, `resolve_mode()` and the `mode` handling in `from_vehicle()`;
+`tools/run_mode.py` is new; `pytest.ini` (markers) is new at the repo root.
+
+## Eco mode (merged into `main`; innovation add-on for the judges)
+
+**Pitch:** same controller, one knob. `eco_weight` 0 gives the fastest legal lap and 1 the
+lowest-energy lap, and the trade-off is measured on a Pareto front. Selected only through
+`--controller-config ..\hackuab\eco.yaml` (eco_weight 0.8). The default (`eco_weight: 0.0`) is
+bit-identical to main 96a781e. `tests/test_eco.py` checks this two ways: a golden 140-step
+closed-loop command sequence recorded from main, and a full bicycle run that must reproduce main's
+38.549 s on practice_technical.
+
+**Headline (measured, bicycle):** Eco (eco_weight 0.8) uses **36 % less energy (Wh/km) for +6.2 %
+lap time** on average over practice_technical, hackathon_test and gen-track seeds 1/2/3
+(--obstacles 3), with **0 cones, 0 off-course, 0 missed gates and 0 controller errors** on all five
+courses. Per course: energy −24 % to −41 %, lap time +2.8 % to +8.2 %.
+
+What Eco does (planner.py, gated by `eco_weight > 0`; all scaled by eco_weight):
+1. **Lift-and-coast.** A coast-then-brake reachability pass (vectorised like the backward pass).
+   Before each braking zone the profile follows the car's own coast-down deceleration (drag +
+   rolling, ~0.2 m/s²) and brakes only where coasting can no longer make the corner. The coast
+   length is limited to what fits in the 40 m view, so the car never brakes just to get onto a coast line.
+2. **Gentler acceleration** (forward pass ×(1 − 0.5·w)) and a **lower top speed** (cruise ×(1 − 0.35·w)
+   of the horizon-guard top speed; drag power grows with v³). The forward-pass seed is shorter
+   (×(1 − 0.5·w)), which cuts speed-PI wind-up and the overshoot braking that follows it.
+3. Every eco plan still goes through `predict.verify_plan()`. Debug values: `dbg_eco_weight`, `dbg_coast`,
+   `dbg_regen_limited` (always 0 because regen-first braking was not built), `dbg_eco_v_cruise`, `dbg_eco_coast_m`.
+
+| eco_weight | Mean lap vs 0 | Worst lap vs 0 | Mean energy vs 0 | Clean on all 5 and within 10 % |
+|---:|---:|---:|---:|---|
+| 0 (Performance) | 0 % | 0 % | 0 % | yes |
+| 0.2 | −0.0 % | +0.6 % | −3.5 % | yes |
+| 0.4 | +0.9 % | +1.4 % | −11.8 % | yes |
+| 0.6 | +2.8 % | +4.0 % | −23.0 % | yes |
+| **0.8 (recommended)** | **+6.2 %** | **+8.2 %** | **−35.8 %** | **yes** |
+| 1.0 | +12.1 % | +15.8 % | −49.4 % | no: 1 cone on practice_technical (cone 231, t = 34 s), +15.8 % |
+
+| Course | Performance: lap / Wh/km / points | Eco 0.8: lap / Wh/km / points | Baseline PP: lap / Wh/km / penalties |
+|---|---|---|---|
+| practice_technical | 38.55 s / 675 / 65.92 | 41.71 s / 413 / 63.19 | 39.47 s / 492 / 8 |
+| hackathon_test | 51.36 s / 630 / 68.53 | 55.45 s / 374 / 66.24 | 55.98 s / 433 / 4 |
+| seed 1 | 51.19 s / 706 / 68.79 | 54.94 s / 419 / 66.77 | 56.27 s / 519 / 8 |
+| seed 2 | 62.40 s / 651 / 68.58 | 64.14 s / 494 / 67.76 | 67.96 s / 400 / 6 |
+| seed 3 | 53.88 s / 692 / 68.15 | 56.47 s / 454 / 67.32 | 58.64 s / 469 / 6 |
+
+Eco 0.8 is faster than the baseline pure pursuit on 4 of 5 courses and uses less energy on 4 of 5
+(not on seed 2). Unlike the baseline, it has no penalties. Eco costs technical points (the score
+rewards time), so **it is a demo and innovation feature, not the submission default.** Full
+per-weight table: `tools/figures/eco_pareto.md`; raw data: `tools/figures/eco_pareto_results.json`.
+
+**Energy meter (`tools/energy.py`).** It rebuilds the wheel forces from telemetry.csv exactly like
+`bicycle.substep()`: power-limited drive force, brake force, AWD 40/60 drive split, 60/40 brake split,
+and the traction-control clip `|Fx_axle| ≤ traction_limit·mu·Fz_axle` with load transfer from the
+previous tick's ax. It integrates the clipped axle forces with dt taken from column t. The plain
+longitudinal balance (E_trac − E_brake − E_drag − E_roll − ΔKE) leaves 7–13 % unexplained. That
+remainder is cornering tyre scrub, the work of the lateral tyre forces, which the meter rebuilds with
+`bicycle._lat()` from vy, yaw rate and steer angle. With it, **the balance closes to within ±0.05 % on
+every run** (tests: `tests/test_energy.py`, synthetic accelerate/cruise/brake with a known answer).
+
+**Assumptions (not Blazer EV specs; CLI flags):** eta_drive = 0.90 (battery to wheel),
+eta_regen = 0.65 (wheel to battery), P_regen_max = 60 kW. E_batt = E_trac/eta_drive − eta_regen·∫min(P_brake, P_regen_max)dt.
+The simulator has no electric drivetrain and no regen, so battery Wh are an estimate. The wheel-level
+terms (traction, drag, rolling, brake, tyre) are exact to the bicycle model. Note that ΔKE at the
+finish line counts as energy used. Performance crosses the finish of practice_technical at about 20 m/s
+(108 Wh of 335 Wh). Without that term Eco still saves 40 % there (227 → 137 Wh).
+
+**CARLA:** not measured (Viraj owns CARLA). CARLA telemetry has no pedal-to-force model we can mirror,
+so there the tractive force would have to come from m·ax + drag + rolling. That is a proxy that cannot
+separate brake heat from tyre losses.
+
+Demo figures (`tools/figures/`): `eco_pareto.png` (lap time vs energy, one line per course, the
+recommended point marked, baseline in grey), `eco_energy_breakdown.png` (where the energy goes for
+baseline / Performance / Eco on practice_technical), `eco_speed_trace.png` (Performance vs Eco speed
+with Eco's coasting stretches shaded).
+Reproduce from simulator/: `..\tools\eco_pareto.py --out <tmp>`, then
+`..\tools\eco_figures.py --results <tmp>\results.json --eco 0.8`.
+
+Verification on this branch (bicycle):
+- 91 tests pass: 84 inherited from main, 3 for the energy meter (`tests/test_energy.py`) and 4 Eco tests,
+  including the eco_weight 0 golden sequence and the lap-time regression.
+- Default selftest (`runs/20261017-150854_selftest`): times identical to main 96a781e (51.357 / 31.272 /
+  88.646 / 56.541 / 38.549 s), 0 penalties, 0 controller errors, 0 overruns, p99 8.3–9.5 ms.
+- Eco selftest with `hackuab\eco.yaml` (`runs/20261017-150952_selftest`): hackathon 55.45, basic 32.95,
+  loop 96.01, obstacles 59.30, technical 41.71 s; 0 penalties, 0 controller errors, 0 overruns.
+  Its p99 of 7.7–25 ms is machine jitter: the same eco technical run gave 14.5 ms and then 8.4 ms back to back,
+  and the Pareto sweep's eco runs measured p99 7.9–10.2 ms. The eco planner adds about 1 ms mean.
+
+Limits: lift-and-coast contributes little on its own (Eco coasts about 2 s per lap on
+practice_technical), because the 40 m view leaves little room to coast before a corner. Most of the
+saving comes from the lower top speed and gentler acceleration, which leave less kinetic energy to
+brake away. Not built: regen-first braking (b) and lowering lat_accel_frac. The eco_weight 1.0 cone
+was not investigated.
 
 ## Latest integration validation: Viraj tracking + current lap-time planner
 
