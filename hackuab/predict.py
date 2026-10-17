@@ -257,12 +257,13 @@ def rollout_dynamic(state: np.ndarray, steer_cmd: np.ndarray, accel_cmd: np.ndar
     """
     c = model_constants(vp, p)
     steer_cmd, accel_cmd = np.atleast_2d(np.asarray(steer_cmd, float)), np.atleast_2d(np.asarray(accel_cmd, float))
-    b, t = np.broadcast_shapes(steer_cmd.shape, accel_cmd.shape)
+    state = np.atleast_2d(np.nan_to_num(np.asarray(state, float)))
+    b, t = np.broadcast_shapes(steer_cmd.shape, accel_cmd.shape, (state.shape[0], 1))
     steer_cmd = np.clip(np.nan_to_num(np.broadcast_to(steer_cmd, (b, t))), -1.0, 1.0)
     accel_cmd = np.clip(np.nan_to_num(np.broadcast_to(accel_cmd, (b, t))), -1.0, 1.0)
     sc_all = steer_cmd.T.copy()                                  # (T,B): contiguous per step
     thr_all, brk_all = np.maximum(accel_cmd, 0.0).T.copy(), np.maximum(-accel_cmd, 0.0).T.copy()
-    s0 = np.broadcast_to(np.nan_to_num(np.asarray(state, float)), (b, 7))
+    s0 = np.broadcast_to(state, (b, 7))
     n = max(int(substeps), 1)
     h = dt / n
     lag = _lag_coeffs(c, h)

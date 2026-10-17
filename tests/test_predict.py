@@ -57,6 +57,8 @@ def test_shapes_and_initial_state():
     np.testing.assert_allclose(out[:, 0], np.broadcast_to(_state(10.0), (4, 7)))
     single = predict.rollout_dynamic(_state(10.0), np.zeros(6), np.zeros(6), VP, P)
     assert single.shape == (1, 7, 7)
+    many_states = predict.rollout_dynamic(np.tile(_state(10.0), (3, 1)), np.zeros(6), np.zeros(6), VP, P)
+    assert many_states.shape == (3, 7, 7)
 
 
 def test_straight_line_acceleration_matches_force_over_mass():
