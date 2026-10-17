@@ -20,7 +20,9 @@ class Params:
     min_half_width: float = 0.2         # m, never shrink the usable corridor below this per side (Phase 0 stub)
     corridor_margin: float = 0.3        # m, clearance added to the vehicle half-width on every side
     obstacle_hold_m: float = 0.5        # m, extra full-cut length before/after an obstacle, past the car half-length
-    obstacle_taper_m: float = 8.0       # m, ramp length in front of/behind the full cut, so the path shifts smoothly
+    obstacle_taper_m: float = 20.0      # m, ramp length in front of/behind the full cut, so the path shifts smoothly
+                                        # (8 -> 20: the racing line no longer pins to the ramp's corners;
+                                        #  practice_technical CARLA 42.4 -> 40.1 s, still 0 cones)
     side_hysteresis_m: float = 0.3      # m, gaps closer than this in width are decided by where the car already is
 
     # --- speed profile (planner.py) ---
@@ -43,6 +45,7 @@ class Params:
     kp_speed: float = 1.2               # (m/s^2) per (m/s)
     ki_speed: float = 0.5
     i_limit: float = 4.0                # m/s^2, integrator clamp (CARLA needs ~3 to hold speed against drag)
+    overspeed_band: float = 1.0         # m/s over the target beyond which a positive integral is ignored
     coast_band: float = 0.25            # m/s^2, small decel requests coast instead of braking
     accel_floor: float = 0.15           # min fraction of max_accel allowed even at full lateral load
     brake_floor: float = 0.3            # min fraction of max_decel ever allowed (safety over realism)
