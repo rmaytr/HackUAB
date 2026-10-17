@@ -217,6 +217,53 @@ def test_verify_plan_mirrors_the_tracker():
     assert np.abs(mirror["poses"] - ref["poses"]).max() < 0.3
 
 
+@pytest.mark.parametrize("speed,target,grip,delay", [
+    (10.0, 16.0, 0.85, 0),   # acceleration limited by the AWD front/rear circles
+    (14.0, 7.0, 0.85, 0),    # trail braking and rear unloading
+    (10.0, 16.0, 0.65, 2),   # grip_frac override and actuation delay
+    (16.0, 18.0, 0.85, 0),   # safety floors and slip adaptation at saturation
+    (0.0, 0.0, 0.85, 0),     # hold brake at rest
+])
+def test_verify_plan_pedals_match_tracker_on_same_states(monkeypatch, speed, target, grip, delay):
+    """Check the actual pedals passed to physics, at every predicted state, against track().
+
+    A steering/path-only comparison misses the old friction ellipse's different pedal command.
+    Both controllers start with the same estimated grip and empty PI/jerk history.
+    """
+    from dataclasses import replace
+    import tracker
+
+    vp = replace(VP, actuation_delay_steps=delay)
+    p = Params.from_vehicle(vp, {"grip_frac": grip})
+    p.a_lat *= 0.9
+    pl = _circle_plan(radius=30.0, v=target)
+    # Nonuniform stations and a tracking error catch differences hidden by a uniform circle.
+    pl.s = np.linspace(0.0, math.sqrt(40.0), len(pl.s)) ** 2
+    theta = pl.s / 30.0
+    pl.path = np.column_stack((30.0 * np.sin(theta), 30.0 * (1.0 - np.cos(theta)) + 0.2))
+    pl.v = np.maximum(target - 0.03 * pl.s, 0.0)
+    state = {"a_lat_scale": 0.9}
+    step = predict._step
+    checked = []
+
+    def check_pedals(xp, s, steer, throttle, brake, *args):
+        x, y, yaw, vx, vy, r, _, applied, _ = s
+        c, sn = math.cos(yaw), math.sin(yaw)
+        dx, dy = pl.path[:, 0] - x, pl.path[:, 1] - y
+        local = SimpleNamespace(path=np.column_stack((c * dx + sn * dy, c * dy - sn * dx)),
+                                s=pl.s, kappa=pl.kappa, v=pl.v)
+        obs = SimpleNamespace(speed=math.hypot(vx, vy), vx=vx, vy=vy, yaw_rate=r, steer=applied)
+        expected = tracker.track(local, obs, vp, p, state)
+        np.testing.assert_allclose((steer, throttle, brake), expected, atol=1e-11, rtol=1e-11)
+        checked.append((throttle, brake))
+        return step(xp, s, steer, throttle, brake, *args)
+
+    monkeypatch.setattr(predict, "_step", check_pedals)
+    predict.verify_plan(pl, _obs(speed), vp, p)
+    assert len(checked) == 30
+    assert all(throttle * brake == 0.0 for throttle, brake in checked)
+
+
 def test_verify_plan_corridor_and_custom_tracker():
     plan = _circle_plan(radius=1e6, v=10.0)              # straight line along x
     s = plan.s

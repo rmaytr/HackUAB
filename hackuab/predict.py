@@ -11,7 +11,7 @@ Three tools, all pure functions (no module state), numpy + stdlib only:
   harness's kinematic blend below 3 m/s. The stiff tyre modes (vy, yaw rate) use a linearly
   implicit (Rosenbrock-Euler) update, so the model stays stable at the 50 ms control step where
   the harness needs 2.5 ms sub-steps.
-* verify_plan: rolls the car out along a Plan with (a mirror of) tracker.py's control law and
+* verify_plan: rolls the car out along a Plan with a scalar version of tracker.py's control law and
   reports predicted poses, friction use, grip demand, rear slip, path deviation and a per-node
   speed scale that keeps them under their limits. planner.py uses it to verify every plan.
 
@@ -21,9 +21,13 @@ floats (one verification, ~10x faster than 1-element numpy arrays): `xp` selects
 from __future__ import annotations
 
 import math
+from bisect import bisect_right
 from typing import Callable, NamedTuple
+from types import SimpleNamespace
 
 import numpy as np
+
+from tracker import _p, _tangent, _update_slip, lon_envelope
 
 G = 9.81
 
@@ -310,8 +314,11 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
 
     The default control law mirrors tracker.track() (same Params fields): latency-compensated pose,
     curvature feedforward plus pure-pursuit error feedback, grip cap and steer slew limit, speed
-    feedforward + PI, friction ellipse, jerk limit, acceleration -> pedal mapping. Its integrator
-    starts at 0 (the planner cannot see the tracker's state). track_fn, if given, replaces it:
+    feedforward + PI, AWD per-axle friction limits, jerk limit, acceleration -> pedal mapping.
+    Grip limits, slip adaptation, defaults and tangents use the tracker's own helpers. The scalar
+    geometry/PI avoids calling the full numpy tracker 30 times per plan. Its integrator starts at
+    0 and its initial grip scale comes from p.a_lat (the planner cannot see the tracker's remaining
+    state). track_fn, if given, replaces it:
     track_fn((x, y, yaw, vx, vy, yaw_rate, steer_actual), plan, k) -> (steer, pedal).
 
     Returns a dict with
@@ -337,44 +344,37 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
     seg_len = np.maximum(np.hypot(seg[:, 0], seg[:, 1]), 1e-6)
     ux_l, uy_l = (seg[:, 0] / seg_len).tolist(), (seg[:, 1] / seg_len).tolist()
     px_l, py_l, sl_l = path[:, 0].tolist(), path[:, 1].tolist(), seg_len.tolist()
-    s_l = np.concatenate(([0.0], np.cumsum(seg_len))).tolist()
-    v_l = np.nan_to_num(np.asarray(plan.v, float)).tolist()
-    k_l = np.nan_to_num(np.asarray(plan.kappa, float)).tolist()
+    stations = np.asarray(plan.s, float)
+    speeds = np.nan_to_num(np.asarray(plan.v, float))
+    kappas = np.nan_to_num(np.asarray(plan.kappa, float))
+    s_l, v_l, k_l = stations.tolist(), speeds.tolist(), kappas.tolist()
+    path_x, path_y = path[:, 0].copy(), path[:, 1].copy()
     last, s_end = n_nodes - 2, s_l[-1]
-    # unit tangent at each node: segment headings averaged around it, extrapolated at the ends
-    # (tracker._tangent; exact on a circle, unlike the chord direction)
-    th = np.arctan2(seg[:, 1], seg[:, 0])
-    dth = (np.diff(th) + np.pi) % (2.0 * np.pi) - np.pi
-    if len(th) > 1:
-        th_n = np.concatenate(([th[0] - 0.5 * dth[0]], th[:-1] + 0.5 * dth, [th[-1] + 0.5 * dth[-1]]))
-    else:
-        th_n = np.array([th[0], th[0]])
-    hx_l, hy_l = np.cos(th_n).tolist(), np.sin(th_n).tolist()
     L, max_steer, mu_g = c.wheelbase, c.max_steer, c.mu_score * G
 
-    def g(name, default):
-        v = getattr(p, name, None)
-        return float(default if v is None else v)
+    def g(name):
+        return _p(p, name)
 
     # tracker.py gains (Params defaults if absent)
-    ld_min, ld_gain, ld_max = g("pp_lookahead_min", 4.0), g("pp_lookahead_gain", 0.32), g("pp_lookahead_max", 16.0)
-    ff_t, fb_gain, grip_cap = g("ff_preview_t", 0.2), g("fb_gain", 1.0), g("grip_cap", 1.05)
-    max_step = g("steer_rate_margin", 0.95) * c.steer_rate * dt
-    spd_t, kp, ki, i_lim = g("speed_preview_t", 0.25), g("kp_speed", 1.2), g("ki_speed", 0.5), g("i_limit", 4.0)
-    coast, acc_floor, brk_floor = g("coast_band", 0.25), g("accel_floor", 0.15), g("brake_floor", 0.3)
-    jerk = g("jerk_max", 40.0) * dt
+    ld_min, ld_gain, ld_max = g("pp_lookahead_min"), g("pp_lookahead_gain"), g("pp_lookahead_max")
+    ff_t, fb_gain, grip_cap = g("ff_preview_t"), g("fb_gain"), g("grip_cap")
+    max_step = g("steer_rate_margin") * c.steer_rate * vp.control_dt
+    spd_t, kp, ki, i_lim = g("speed_preview_t"), g("kp_speed"), g("ki_speed"), g("i_limit")
+    coast, acc_floor, brk_floor = g("coast_band"), g("accel_floor"), g("brake_floor")
+    jerk = g("jerk_max") * vp.control_dt
     max_acc, max_dec = float(vp.max_accel), float(vp.max_decel)
     # grip estimate the controller applied to p.a_lat (= a_lat_base * a_lat_scale)
-    base = g("lat_accel_frac", 0.0) * mu_g
-    scale = min(max(g("a_lat", base) / base, 0.5), 1.0) if base > 0.0 else 1.0
-    a_lat_max = max(g("ellipse_lat_frac", 0.85) * mu_g * scale, 1e-3)
-    t_pred = dt * (1 + int(getattr(vp, "actuation_delay_steps", 0) or 0))
+    base = g("lat_accel_frac") * mu_g
+    scale = min(max(g("a_lat") / base, g("slip_scale_min")), 1.0) if base > 0.0 else 1.0
+    slip_state = {"a_lat_scale": scale}
+    predicted_obs = SimpleNamespace()
+    t_pred = vp.control_dt * (1 + int(getattr(vp, "actuation_delay_steps", 0) or 0))
 
-    def seg_at(sq, j):
-        """Segment index containing station sq, walking forward from j."""
-        while j < last and s_l[j + 1] < sq:
-            j += 1
-        return j
+    def interp(values, station):
+        """Scalar np.interp equivalent without per-call numpy conversion/dispatch."""
+        j = min(max(bisect_right(s_l, station) - 1, 0), last)
+        f = min(max((station - s_l[j]) / (s_l[j + 1] - s_l[j]), 0.0), 1.0)
+        return values[j] + f * (values[j + 1] - values[j])
 
     def project(x, y, j):
         """Monotonic projection onto the path: (segment, distance along it clamped to the segment)."""
@@ -389,7 +389,7 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
     s = (0.0, 0.0, 0.0, max(float(np.nan_to_num(obs.vx)), 0.0), float(np.nan_to_num(obs.vy)),
          float(np.nan_to_num(obs.yaw_rate)), app * max_steer, app, float(np.nan_to_num(obs.ax)))
     steer_prev, i_err, a_prev = app, 0.0, None
-    i = iq = 0
+    i = 0
     xs, ys, yaws, spd, rates, devs, nodes, rears = [], [], [], [], [], [], [], []
     uses, demands = [], []
     for k in range(t_steps + 1):
@@ -407,17 +407,19 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
             steer, pedal = track_fn(tuple(s[:7]), plan, k)
             steer, pedal = min(max(float(steer), -1.0), 1.0), min(max(float(pedal), -1.0), 1.0)
         else:
+            predicted_obs.vx, predicted_obs.vy = vx, vy
+            predicted_obs.yaw_rate, predicted_obs.steer = r, s[7]
+            scale = _update_slip(predicted_obs, vp, p, slip_state, speed)
             # latency compensation: track from where the car is when the command lands
             half, d = 0.5 * r * t_pred, speed * t_pred
             xq, yq, yawq = x + d * math.cos(yaw + half), y + d * math.sin(yaw + half), yaw + r * t_pred
-            iq, aq = project(xq, yq, max(iq, i))
-            m = iq if aq < 0.5 * sl_l[iq] else iq + 1          # nearest node, as the tracker uses
+            # Use the tracker's nearest-node rule, including on nonuniform/curved paths.
+            m = int(np.argmin((path_x - xq) ** 2 + (path_y - yq) ** 2))
             sq, nx, ny = s_l[m], px_l[m], py_l[m]
             # pure-pursuit target ld ahead along the path (extended past its end)
             s_t = sq + min(max(ld_min + ld_gain * speed, ld_min), ld_max)
             if s_t <= s_end:
-                j = seg_at(s_t, iq)
-                tx, ty = px_l[j] + ux_l[j] * (s_t - s_l[j]), py_l[j] + uy_l[j] * (s_t - s_l[j])
+                tx, ty = interp(px_l, s_t), interp(py_l, s_t)
             else:
                 tx, ty = px_l[-1] + ux_l[last] * (s_t - s_end), py_l[-1] + uy_l[last] * (s_t - s_end)
             cq, sn = math.cos(yawq), math.sin(yawq)
@@ -425,36 +427,34 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
             lx, ly = cq * dx + sn * dy, cq * dy - sn * dx
             kappa_pp = 2.0 * ly / max(lx * lx + ly * ly, 1.0)
             rx, ry = tx - nx, ty - ny     # arc a car sitting on the path at the projection would need
-            kappa_ideal = 2.0 * (hx_l[m] * ry - hy_l[m] * rx) / max(rx * rx + ry * ry, 1.0)
-            sf = min(sq + speed * ff_t, s_end)
-            j = seg_at(sf, iq)
-            f = min(max((sf - s_l[j]) / sl_l[j], 0.0), 1.0)
-            kappa_ff = k_l[j] + f * (k_l[j + 1] - k_l[j])
+            hx, hy = _tangent(px_l, py_l, m)
+            kappa_ideal = 2.0 * (hx * ry - hy * rx) / max(rx * rx + ry * ry, 1.0)
+            kappa_ff = interp(k_l, sq + speed * ff_t)
             kappa_cmd = kappa_ff + fb_gain * (kappa_pp - kappa_ideal)
             tan_cap = grip_cap * mu_g * L / max(speed * speed, 1e-3)
             steer_raw = math.atan(min(max(L * kappa_cmd, -tan_cap), tan_cap)) / max_steer
             steer = min(max(min(max(steer_raw, steer_prev - max_step), steer_prev + max_step), -1.0), 1.0)
             steer_prev = steer
-            # speed: feedforward from the profile + PI, friction ellipse, jerk limit
+            # Speed: same PI and pedal mapping, with the shared AWD friction envelope.
             v0 = v_l[m]
             s1 = sq + max(speed * spd_t, 1.0)
-            j = seg_at(s1, iq)
-            f = min(max((s1 - s_l[j]) / sl_l[j], 0.0), 1.0)
-            v1 = v_l[j] + f * (v_l[j + 1] - v_l[j])
+            v1 = interp(v_l, s1)
             a_ff = (v1 * v1 - v0 * v0) / (2.0 * (s1 - sq))
             err = v0 - speed
             if err > 0.0:
                 a_ff = max(a_ff, 0.0)
-            i_err = min(max(i_err + ki * err * dt, -i_lim), i_lim)
+            i_err = min(max(i_err + ki * err * vp.control_dt, -i_lim), i_lim)
             a_cmd = a_ff + kp * err + i_err
             a_lat = speed * speed * max(abs(math.tan(steer * max_steer)) / L, abs(kappa_ff))
-            r2 = min(a_lat / a_lat_max, 1.0) ** 2
-            a_cmd = min(max(a_cmd, -max_dec * max(1.0 - r2, brk_floor)), max_acc * max(math.sqrt(1.0 - r2), acc_floor))
+            env_up, env_dn = lon_envelope(a_lat, vp, p, scale)
+            a_cmd = min(max(a_cmd, -max(env_dn, max_dec * brk_floor)), max(env_up, max_acc * acc_floor))
             if a_prev is not None:
                 a_cmd = min(max(a_cmd, a_prev - jerk), a_prev + jerk)
             a_prev = a_cmd
             pedal = (min(a_cmd / max_acc, 1.0) if a_cmd >= 0.0 else
                      0.0 if a_cmd > -coast else max(a_cmd / max_dec, -1.0))
+            if pedal == 0.0 and speed < 0.5 and v0 < 0.5:
+                pedal = -0.3  # tracker holds the car when the plan says stop
         thr, brk = (pedal, 0.0) if pedal >= 0.0 else (0.0, -pedal)
         demands.append(speed * speed * abs(math.tan(steer * max_steer)) / L / mu_g)
         s, use = _step(_Scalar, s, steer, thr, brk, c, dt, lag, True)
