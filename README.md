@@ -2,6 +2,15 @@
 
 A map-free controller that plans a racing line from 40 m of visible road, checks predicted tyre loads with an AWD vehicle model, and controls steering and pedals every 50 ms.
 
+## Demo
+
+| | |
+|---|---|
+| **Demo video (3 min)** | [youtu.be/a-963WiK0cQ](https://youtu.be/a-963WiK0cQ) |
+| **Interactive visualizer** | [uab-track-sync.base44.app](https://uab-track-sync.base44.app): replays every lap step by step, compares PERFORMANCE vs ECO, shows the Pareto front |
+
+[![Watch the HackUAB demo video](https://i.ytimg.com/vi/a-963WiK0cQ/hqdefault.jpg)](https://youtu.be/a-963WiK0cQ)
+
 **Final selected result:** verifier-enabled code `e3b8a28`, promoted to `main` at Rodion's request on 2026-10-17. PERFORMANCE is the submission default; ECO is selected through its config. The simulator remains pinned and unchanged.
 
 ![Final practice_technical bicycle report: racing line, speed, path error and compute time](docs/media/final-technical-bicycle.png)
