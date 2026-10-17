@@ -68,6 +68,8 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1     # needs Python 3.
 ```powershell
 # watch it drive
 python -m autocross run -c ..\hackuab\controller.py -t tracks\practice_technical.yaml --backend bicycle --view
+# while developing: re-raise module errors instead of silently using the fallback
+python -m autocross run -c ..\hackuab\controller.py --controller-config ..\tools\strict.yaml -t tracks\practice_technical.yaml --backend bicycle
 # compare with the baseline
 python -m autocross run -c controllers\baseline_pure_pursuit.py -t tracks\practice_technical.yaml --backend bicycle
 # random unseen course (catches overfitting); try several seeds
