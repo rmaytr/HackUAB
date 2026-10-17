@@ -74,6 +74,12 @@ tested on RTX 30-series cards. Plan for it:
 - **Plan A:** if Saisi's or Viraj's laptop has an NVIDIA GPU, run the CARLA *server* there. Rodion runs the harness
   against it with `--set carla.host=<their LAN IP>` (ports 2000–2002 must be reachable; hackathon Wi-Fi may block
   them, so try a phone hotspot).
+- **Plan A2: cloud GPU VM** (works without anyone's GPU): rent an AWS `g4dn.xlarge` (NVIDIA T4, about $0.53/hr)
+  with the "Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 22.04)" image, open only SSH (port 22), SSH in, and run
+  `curl -fsSLO https://raw.githubusercontent.com/rmaytr/HackUAB/main/tools/carla_remote_setup.sh && bash carla_remote_setup.sh`.
+  The script sets up Docker + headless CARLA + our repo and runs check + baseline + our lap on CARLA. The **whole
+  harness runs on the VM**; we copy `runs/` back with `scp`. First check that the account's EC2 quota for
+  "Running On-Demand G and VT instances" is ≥ 4 vCPUs, because a raise can take hours. **Stop the VM when idle.**
 - **Plan B:** run on the Iris Xe with `scripts\start_carla.ps1 -Headless` (Low quality) and `--set carla.render=false`.
   It's slow but fine for scoring runs.
 - **Plan C (decide by 2:30):** bicycle only. CARLA is half the official score, but the judges run it themselves.
