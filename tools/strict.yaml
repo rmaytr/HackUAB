@@ -1,0 +1,3 @@
+# Dev only: re-raise module errors instead of using the fallback.
+# python -m autocross run -c ..\hackuab\controller.py --controller-config ..	ools\strict.yaml ...
+strict: true

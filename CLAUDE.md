@@ -68,6 +68,8 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1     # needs Python 3.
 ```powershell
 # watch it drive
 python -m autocross run -c ..\hackuab\controller.py -t tracks\practice_technical.yaml --backend bicycle --view
+# while developing: re-raise module errors instead of silently using the fallback
+python -m autocross run -c ..\hackuab\controller.py --controller-config ..\tools\strict.yaml -t tracks\practice_technical.yaml --backend bicycle
 # compare with the baseline
 python -m autocross run -c controllers\baseline_pure_pursuit.py -t tracks\practice_technical.yaml --backend bicycle
 # random unseen course (catches overfitting); try several seeds
@@ -169,6 +171,10 @@ obs ─▶ horizon.py (~5 ms) ─▶ planner.py (~20 ms) ─▶ tracker.py (~10 
 4. Online understeer/slip adaptation: compare expected yaw rate `v/L·tan δ` with `obs.yaw_rate`,
    and lower `a_lat,max` when slip exceeds a threshold. Recover it slowly.
 5. Obstacle-aware corridor reshaping (obstacles are not on any map; they only appear in perception).
+6. **Physics-based prediction** (`predict.py`): a vectorised dynamic bicycle rollout that verifies every plan
+   (friction use, corridor containment) before we commit to it, and compensates actuation delay and steering lag.
+7. **Sensor-fusion tool** (`fusion/`, outside the scored controller): fast lidar + radar + camera fusion with
+   a composite visualisation, whose output feeds our planner as cone detections.
 
 ## Folder ownership
 
@@ -176,23 +182,25 @@ Edit only inside the files you own. Shared files need a heads-up in the team cha
 
 ```
 hackuab/                ← submission folder (judges copy it into teams/)
-  controller.py         shared: integration, fallback, timing (keep it thin)
-  params.py             shared: tunables (accel fractions, buffers, lookahead gains)
-  horizon.py            corridor + obstacles
-  planner.py            racing line + speed profile
-  tracker.py            steering + throttle/brake + friction ellipse
-tools/                  dev-only scripts (parameter sweeps, plotting); NOT submitted
-docs/                   pitch, innovation write-up, screenshots for the demo
+  controller.py         integration, fallback, per-stage timing (keep it thin)
+  params.py             tunables + bicycle-model constants copied from simulator/config/sim.yaml
+  horizon.py            safe corridor + obstacle avoidance
+  planner.py            min-curvature racing line + speed profile + visibility guard
+  predict.py            vectorised dynamic bicycle model: rollouts for prediction / verification
+  tracker.py            delay compensation, steering, throttle/brake, friction ellipse, slip adaptation
+tools/                  dev-only scripts (eval tables, plots, sweeps); NOT submitted
+fusion/                 standalone lidar + radar + camera fusion tool; NOT submitted, may use CARLA
+docs/                   ROADMAP.md, pitch, innovation write-up, demo media
 ```
 
 | Teammate | Owns | Branch prefix |
 | -------- | ---- | ------------- |
-| Rodion   | _TBD_ | `rodion/*` |
-| Saisi    | _TBD_ | `saisi/*` |
-| Viraj    | _TBD_ | `viraj/*` |
+| Rodion   | `planner.py`, `predict.py` | `rodion/*` |
+| Saisi    | `horizon.py`, `fusion/` | `saisi/*` |
+| Viraj    | `controller.py`, `params.py`, `tracker.py`, `tools/`, CARLA runs + demo footage, slides | `viraj/*` |
 
-**Ownership is not assigned yet.** Until this table is filled in, ask your human which files
-they're working on before editing anything outside the files you create.
+`docs/` is shared: announce in the chat before editing a file there. **The plan, the timeline and each
+task's "how" are in [docs/ROADMAP.md](docs/ROADMAP.md). Read it before starting work.**
 
 ## Data contracts between modules
 

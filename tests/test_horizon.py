@@ -123,8 +123,21 @@ def test_nan_inputs_give_finite_output():
 
 
 def test_params_override_margin():
-    c = build_corridor(road(), VEHICLE, SimpleNamespace(corridor_margin=0.5))
+    c = build_corridor(road(), VEHICLE, SimpleNamespace(cone_margin=0.5))
     np.testing.assert_allclose(c.left, 2.75 - VEHICLE.width / 2 - 0.5)
+
+
+def test_team_params_object_works():
+    from params import Params
+    p = Params.from_vehicle(VEHICLE)
+    c = build_corridor(road(obstacles=[obstacle(20.0, -1.7, -1.0)]), VEHICLE, p)
+    assert c.valid and -at(c, 20.0)[1] == pytest.approx(-1.0 + VEHICLE.width / 2 + p.cone_margin)
+
+
+def test_very_narrow_road_keeps_min_half_width():
+    c = build_corridor(road(half_width=1.4), VEHICLE, P)
+    np.testing.assert_allclose(c.left, 0.2)
+    np.testing.assert_allclose(c.right, 0.2)
 
 
 def test_fast_enough():
