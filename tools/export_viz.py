@@ -10,8 +10,8 @@ against; it is described in viz/data/README.md and checked by tests/test_viz_exp
 
 Grid: practice_technical, hackathon_test, practice_obstacles, practice_basic and gen-track seeds 1/2/3
 (--obstacles 3, generated into a temp folder, never committed). Per course: the baseline pure-pursuit
-controller, ours at every eco_weight in ECO_WEIGHTS (lat_accel_frac at its default) and ours at each extra
-lat_accel_frac at eco_weight 0. Strict mode is off (the scored configuration). A run that crashes is
+controller, ours at every eco_weight in ECO_WEIGHTS (lat_accel_frac at its params.py default) and ours at each
+other lat_accel_frac at eco_weight 0. Strict mode is off (the scored configuration). A run that crashes is
 recorded under index.json "failures" and skipped; it never stops the export.
 
 Parallel runs: the harness pins every controller process to the LAST logical core, so parallel laps would
@@ -51,8 +51,7 @@ SCHEMA_VERSION = 1
 PUBLIC = ["practice_technical", "hackathon_test", "practice_obstacles", "practice_basic"]
 SEEDS = [1, 2, 3]
 ECO_WEIGHTS = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-LAT_FRACS = [0.6, 0.75, 0.85]          # 0.6 is params.py's default, so its run is the eco_weight 0 run
-LAT_DEFAULT = 0.6
+LAT_FRACS = [0.6, 0.75, 0.85]          # the one equal to params.py's default is the eco_weight sweep's own run
 PRESETS = {"performance": {"eco_weight": 0.0}, "eco": {"eco_weight": 0.8}}
 DT_OUT = 0.1                           # 10 Hz time series
 SERIES = ["t", "x", "y", "yaw", "speed", "target_speed", "throttle", "brake", "steer", "ax", "ay", "progress",
@@ -126,17 +125,26 @@ def run_id(course: str, mode: str, ew, laf) -> str:
     return f"{course}__baseline" if mode == "baseline" else f"{course}__{mode}__ew{fmt(ew)}__laf{fmt(laf)}"
 
 
-def grid(courses: list[str], lat: bool) -> list[dict]:
+def lat_default(sim: Path) -> float:
+    """lat_accel_frac's default in hackuab/params.py (the value the presets drive with)."""
+    import dataclasses
+    sys.path.insert(0, str(sim))
+    sys.path.insert(0, str(ROOT / "hackuab"))
+    import params
+    return float(next(f.default for f in dataclasses.fields(params.Params) if f.name == "lat_accel_frac"))
+
+
+def grid(courses: list[str], lat: bool, lat_def: float) -> list[dict]:
     jobs = []
     for c in courses:
         jobs.append({"id": run_id(c, "baseline", None, None), "course": c, "mode": "baseline",
                      "params": {"eco_weight": None, "lat_accel_frac": None}})
         for w in ECO_WEIGHTS:
             mode = "performance" if w == 0.0 else "eco"
-            jobs.append({"id": run_id(c, mode, w, LAT_DEFAULT), "course": c, "mode": mode,
-                         "params": {"eco_weight": w, "lat_accel_frac": LAT_DEFAULT}})
+            jobs.append({"id": run_id(c, mode, w, lat_def), "course": c, "mode": mode,
+                         "params": {"eco_weight": w, "lat_accel_frac": lat_def}})
         for f in LAT_FRACS if lat else []:
-            if f != LAT_DEFAULT:
+            if abs(f - lat_def) > 1e-9:
                 jobs.append({"id": run_id(c, "performance", 0.0, f), "course": c, "mode": "performance",
                              "params": {"eco_weight": 0.0, "lat_accel_frac": f}})
     return jobs
@@ -334,7 +342,9 @@ def main() -> int:
             print(f"track {cid} failed: {ex!r}", flush=True)
             courses.pop(cid)
 
-    jobs = grid(list(courses), lat=not a.no_lat)
+    lat_def = lat_default(sim)
+    print(f"lat_accel_frac default (params.py): {lat_def:g}", flush=True)
+    jobs = grid(list(courses), lat=not a.no_lat, lat_def=lat_def)
     slots: queue.Queue = queue.Queue()
     for i in range(max(a.jobs, 1)):
         slots.put(i)
@@ -420,7 +430,8 @@ def main() -> int:
              "assumptions": {"eta_drive": energy.ETA_DRIVE, "eta_regen": energy.ETA_REGEN,
                              "p_regen_max_kw": energy.P_REGEN_MAX / 1e3,
                              "note": "assumed values, not Blazer EV specifications"},
-             "param_axes": {"eco_weight": ECO_WEIGHTS, "lat_accel_frac": LAT_FRACS if not a.no_lat else [LAT_DEFAULT]},
+             "param_axes": {"eco_weight": ECO_WEIGHTS, "lat_accel_frac": sorted(set(LAT_FRACS) | {lat_def}) if not a.no_lat
+                                                                     else [lat_def]},
              "presets": PRESETS, "courses": course_list, "runs": runs, "failures": failures}
     (out / "index.json").write_text(json.dumps(index, indent=1, allow_nan=False))
     shutil.rmtree(tmp, ignore_errors=True)

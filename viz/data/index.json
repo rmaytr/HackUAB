@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
- "generated_at": "2026-10-17T20:45:22+00:00",
- "commit": "1d93fac",
+ "generated_at": "2026-10-17T21:13:31+00:00",
+ "commit": "bad18cd",
  "backend_note": "Bicycle backend only: the harness's dynamic bicycle model (AWD, 40/60 drive split, per-axle traction limit), 20 Hz control. CARLA is half of the official score but is not in this dataset. Energy is rebuilt from telemetry by tools/energy.py; the simulator itself has no battery or regen.",
  "assumptions": {
   "eta_drive": 0.9,
@@ -132,7 +132,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 3.022,
+    "p99_step_ms": 1.176,
     "energy_wh": 245.687,
     "wh_per_km": 492.255,
     "peak_power_kw": 93.291,
@@ -150,270 +150,6 @@
    "file": "runs/practice_technical__baseline.json"
   },
   {
-   "id": "practice_technical__performance__ew0.00__laf0.60",
-   "course": "practice_technical",
-   "mode": "performance",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 38.549,
-    "adjusted_time_s": 38.549,
-    "technical_points": 65.21,
-    "category_scores": {
-     "completion_time": 74.29,
-     "deviation": 95.17,
-     "compute": 91.01,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 11.743,
-    "energy_wh": 335.459,
-    "wh_per_km": 674.852,
-    "peak_power_kw": 198.983,
-    "rms_jerk": 28.899,
-    "energy_breakdown_wh": {
-     "drag": 8.683,
-     "rolling": 29.99,
-     "brake_dissipated": 242.09,
-     "regen_recovered": 126.096,
-     "tyre_scrub": 25.327,
-     "drive_loss": 46.155
-    },
-    "energy_balance_residual_pct": -0.002
-   },
-   "file": "runs/practice_technical__performance__ew0.00__laf0.60.json"
-  },
-  {
-   "id": "practice_technical__eco__ew0.20__laf0.60",
-   "course": "practice_technical",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.2,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 38.236,
-    "adjusted_time_s": 38.236,
-    "technical_points": 65.61,
-    "category_scores": {
-     "completion_time": 75.23,
-     "deviation": 95.79,
-     "compute": 91.15,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 11.637,
-    "energy_wh": 334.596,
-    "wh_per_km": 673.445,
-    "peak_power_kw": 179.117,
-    "rms_jerk": 30.595,
-    "energy_breakdown_wh": {
-     "drag": 8.729,
-     "rolling": 29.975,
-     "brake_dissipated": 248.432,
-     "regen_recovered": 128.893,
-     "tyre_scrub": 26.71,
-     "drive_loss": 46.349
-    },
-    "energy_balance_residual_pct": -0.001
-   },
-   "file": "runs/practice_technical__eco__ew0.20__laf0.60.json"
-  },
-  {
-   "id": "practice_technical__eco__ew0.40__laf0.60",
-   "course": "practice_technical",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.4,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 39.071,
-    "adjusted_time_s": 39.071,
-    "technical_points": 64.73,
-    "category_scores": {
-     "completion_time": 72.71,
-     "deviation": 95.65,
-     "compute": 90.44,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 12.171,
-    "energy_wh": 289.787,
-    "wh_per_km": 582.926,
-    "peak_power_kw": 164.195,
-    "rms_jerk": 28.014,
-    "energy_breakdown_wh": {
-     "drag": 8.166,
-     "rolling": 29.992,
-     "brake_dissipated": 208.097,
-     "regen_recovered": 116.285,
-     "tyre_scrub": 25.494,
-     "drive_loss": 40.607
-    },
-    "energy_balance_residual_pct": -0.003
-   },
-   "file": "runs/practice_technical__eco__ew0.40__laf0.60.json"
-  },
-  {
-   "id": "practice_technical__eco__ew0.60__laf0.60",
-   "course": "practice_technical",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.6,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 40.079,
-    "adjusted_time_s": 40.079,
-    "technical_points": 63.91,
-    "category_scores": {
-     "completion_time": 69.67,
-     "deviation": 96.79,
-     "compute": 89.89,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 12.579,
-    "energy_wh": 249.402,
-    "wh_per_km": 501.988,
-    "peak_power_kw": 143.999,
-    "rms_jerk": 26.206,
-    "energy_breakdown_wh": {
-     "drag": 7.504,
-     "rolling": 29.974,
-     "brake_dissipated": 169.321,
-     "regen_recovered": 99.441,
-     "tyre_scrub": 24.678,
-     "drive_loss": 34.884
-    },
-    "energy_balance_residual_pct": 0.0
-   },
-   "file": "runs/practice_technical__eco__ew0.60__laf0.60.json"
-  },
-  {
-   "id": "practice_technical__eco__ew0.80__laf0.60",
-   "course": "practice_technical",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.8,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 41.709,
-    "adjusted_time_s": 41.709,
-    "technical_points": 63.1,
-    "category_scores": {
-     "completion_time": 64.76,
-     "deviation": 96.98,
-     "compute": 94.13,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.402,
-    "energy_wh": 205.197,
-    "wh_per_km": 412.872,
-    "peak_power_kw": 136.164,
-    "rms_jerk": 24.696,
-    "energy_breakdown_wh": {
-     "drag": 6.712,
-     "rolling": 29.985,
-     "brake_dissipated": 124.515,
-     "regen_recovered": 75.968,
-     "tyre_scrub": 23.292,
-     "drive_loss": 28.116
-    },
-    "energy_balance_residual_pct": 0.006
-   },
-   "file": "runs/practice_technical__eco__ew0.80__laf0.60.json"
-  },
-  {
-   "id": "practice_technical__eco__ew1.00__laf0.60",
-   "course": "practice_technical",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 1.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 44.656,
-    "adjusted_time_s": 46.656,
-    "technical_points": 58.47,
-    "category_scores": {
-     "completion_time": 55.88,
-     "deviation": 97.08,
-     "compute": 94.3,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 1,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.279,
-    "energy_wh": 158.846,
-    "wh_per_km": 319.658,
-    "peak_power_kw": 100.106,
-    "rms_jerk": 19.188,
-    "energy_breakdown_wh": {
-     "drag": 5.742,
-     "rolling": 29.98,
-     "brake_dissipated": 72.036,
-     "regen_recovered": 44.795,
-     "tyre_scrub": 20.029,
-     "drive_loss": 20.364
-    },
-    "energy_balance_residual_pct": 0.005
-   },
-   "file": "runs/practice_technical__eco__ew1.00__laf0.60.json"
-  },
-  {
    "id": "practice_technical__performance__ew0.00__laf0.75",
    "course": "practice_technical",
    "mode": "performance",
@@ -425,13 +161,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 36.461,
-    "adjusted_time_s": 36.461,
-    "technical_points": 67.24,
+    "lap_time_s": 36.733,
+    "adjusted_time_s": 36.733,
+    "technical_points": 66.93,
     "category_scores": {
-     "completion_time": 80.58,
-     "deviation": 94.76,
-     "compute": 92.37,
+     "completion_time": 79.76,
+     "deviation": 100.0,
+     "compute": 86.67,
      "dynamics": 100.0
     },
     "penalties": {
@@ -440,22 +176,286 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 10.72,
-    "energy_wh": 336.82,
-    "wh_per_km": 677.671,
-    "peak_power_kw": 194.141,
-    "rms_jerk": 27.199,
+    "p99_step_ms": 15.0,
+    "energy_wh": 358.378,
+    "wh_per_km": 716.54,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 30.289,
     "energy_breakdown_wh": {
-     "drag": 9.536,
-     "rolling": 29.986,
-     "brake_dissipated": 209.378,
-     "regen_recovered": 105.276,
-     "tyre_scrub": 34.909,
-     "drive_loss": 44.21
+     "drag": 9.747,
+     "rolling": 30.175,
+     "brake_dissipated": 226.462,
+     "regen_recovered": 111.607,
+     "tyre_scrub": 39.537,
+     "drive_loss": 46.999
     },
-    "energy_balance_residual_pct": 0.001
+    "energy_balance_residual_pct": -0.014
    },
    "file": "runs/practice_technical__performance__ew0.00__laf0.75.json"
+  },
+  {
+   "id": "practice_technical__eco__ew0.20__laf0.75",
+   "course": "practice_technical",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.2,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 37.264,
+    "adjusted_time_s": 37.264,
+    "technical_points": 66.51,
+    "category_scores": {
+     "completion_time": 78.16,
+     "deviation": 100.0,
+     "compute": 87.05,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.711,
+    "energy_wh": 351.019,
+    "wh_per_km": 702.023,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 30.387,
+    "energy_breakdown_wh": {
+     "drag": 9.47,
+     "rolling": 30.166,
+     "brake_dissipated": 226.16,
+     "regen_recovered": 115.17,
+     "tyre_scrub": 37.216,
+     "drive_loss": 46.619
+    },
+    "energy_balance_residual_pct": -0.017
+   },
+   "file": "runs/practice_technical__eco__ew0.20__laf0.75.json"
+  },
+  {
+   "id": "practice_technical__eco__ew0.40__laf0.75",
+   "course": "practice_technical",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.4,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 37.873,
+    "adjusted_time_s": 37.873,
+    "technical_points": 65.87,
+    "category_scores": {
+     "completion_time": 76.32,
+     "deviation": 100.0,
+     "compute": 86.49,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 15.134,
+    "energy_wh": 319.372,
+    "wh_per_km": 638.363,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 28.482,
+    "energy_breakdown_wh": {
+     "drag": 8.982,
+     "rolling": 30.184,
+     "brake_dissipated": 192.481,
+     "regen_recovered": 105.982,
+     "tyre_scrub": 35.037,
+     "drive_loss": 42.535
+    },
+    "energy_balance_residual_pct": -0.016
+   },
+   "file": "runs/practice_technical__eco__ew0.40__laf0.75.json"
+  },
+  {
+   "id": "practice_technical__eco__ew0.60__laf0.75",
+   "course": "practice_technical",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.6,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 38.662,
+    "adjusted_time_s": 38.662,
+    "technical_points": 64.36,
+    "category_scores": {
+     "completion_time": 73.94,
+     "deviation": 100.0,
+     "compute": 81.15,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 19.141,
+    "energy_wh": 282.89,
+    "wh_per_km": 565.488,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 24.477,
+    "energy_breakdown_wh": {
+     "drag": 8.34,
+     "rolling": 30.181,
+     "brake_dissipated": 139.25,
+     "regen_recovered": 80.866,
+     "tyre_scrub": 33.672,
+     "drive_loss": 36.376
+    },
+    "energy_balance_residual_pct": -0.017
+   },
+   "file": "runs/practice_technical__eco__ew0.60__laf0.75.json"
+  },
+  {
+   "id": "practice_technical__eco__ew0.80__laf0.75",
+   "course": "practice_technical",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 40.591,
+    "adjusted_time_s": 40.591,
+    "technical_points": 63.57,
+    "category_scores": {
+     "completion_time": 68.13,
+     "deviation": 100.0,
+     "compute": 87.57,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.324,
+    "energy_wh": 244.202,
+    "wh_per_km": 488.517,
+    "peak_power_kw": 193.109,
+    "rms_jerk": 21.233,
+    "energy_breakdown_wh": {
+     "drag": 7.34,
+     "rolling": 30.159,
+     "brake_dissipated": 92.679,
+     "regen_recovered": 55.891,
+     "tyre_scrub": 30.518,
+     "drive_loss": 30.009
+    },
+    "energy_balance_residual_pct": -0.013
+   },
+   "file": "runs/practice_technical__eco__ew0.80__laf0.75.json"
+  },
+  {
+   "id": "practice_technical__eco__ew1.00__laf0.75",
+   "course": "practice_technical",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 1.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 42.884,
+    "adjusted_time_s": 42.884,
+    "technical_points": 61.37,
+    "category_scores": {
+     "completion_time": 61.22,
+     "deviation": 100.0,
+     "compute": 86.72,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.962,
+    "energy_wh": 205.504,
+    "wh_per_km": 411.052,
+    "peak_power_kw": 176.527,
+    "rms_jerk": 14.257,
+    "energy_breakdown_wh": {
+     "drag": 6.413,
+     "rolling": 30.162,
+     "brake_dissipated": 54.444,
+     "regen_recovered": 33.942,
+     "tyre_scrub": 28.003,
+     "drive_loss": 23.945
+    },
+    "energy_balance_residual_pct": -0.01
+   },
+   "file": "runs/practice_technical__eco__ew1.00__laf0.75.json"
+  },
+  {
+   "id": "practice_technical__performance__ew0.00__laf0.60",
+   "course": "practice_technical",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.6
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 38.57,
+    "adjusted_time_s": 38.57,
+    "technical_points": 63.97,
+    "category_scores": {
+     "completion_time": 74.22,
+     "deviation": 94.62,
+     "compute": 83.52,
+     "dynamics": 99.9
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 16.245,
+    "energy_wh": 343.377,
+    "wh_per_km": 686.503,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 29.371,
+    "energy_breakdown_wh": {
+     "drag": 8.979,
+     "rolling": 30.177,
+     "brake_dissipated": 231.507,
+     "regen_recovered": 115.313,
+     "tyre_scrub": 30.3,
+     "drive_loss": 45.869
+    },
+    "energy_balance_residual_pct": -0.007
+   },
+   "file": "runs/practice_technical__performance__ew0.00__laf0.60.json"
   },
   {
    "id": "practice_technical__performance__ew0.00__laf0.85",
@@ -469,13 +469,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 35.475,
-    "adjusted_time_s": 35.475,
-    "technical_points": 66.2,
+    "lap_time_s": 35.828,
+    "adjusted_time_s": 35.828,
+    "technical_points": 68.43,
     "category_scores": {
-     "completion_time": 83.55,
-     "deviation": 94.83,
-     "compute": 79.36,
+     "completion_time": 82.49,
+     "deviation": 100.0,
+     "compute": 91.25,
      "dynamics": 100.0
     },
     "penalties": {
@@ -484,20 +484,20 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 20.477,
-    "energy_wh": 347.49,
-    "wh_per_km": 698.42,
-    "peak_power_kw": 191.309,
-    "rms_jerk": 26.126,
+    "p99_step_ms": 11.562,
+    "energy_wh": 350.051,
+    "wh_per_km": 700.171,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 28.069,
     "energy_breakdown_wh": {
-     "drag": 10.101,
-     "rolling": 30.017,
-     "brake_dissipated": 213.799,
-     "regen_recovered": 106.94,
-     "tyre_scrub": 40.472,
-     "drive_loss": 45.443
+     "drag": 10.07,
+     "rolling": 30.163,
+     "brake_dissipated": 201.837,
+     "regen_recovered": 96.403,
+     "tyre_scrub": 45.0,
+     "drive_loss": 44.645
     },
-    "energy_balance_residual_pct": -0.006
+    "energy_balance_residual_pct": -0.015
    },
    "file": "runs/practice_technical__performance__ew0.00__laf0.85.json"
   },
@@ -528,7 +528,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 1.085,
+    "p99_step_ms": 2.134,
     "energy_wh": 290.036,
     "wh_per_km": 433.47,
     "peak_power_kw": 93.035,
@@ -546,270 +546,6 @@
    "file": "runs/hackathon_test__baseline.json"
   },
   {
-   "id": "hackathon_test__performance__ew0.00__laf0.60",
-   "course": "hackathon_test",
-   "mode": "performance",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 51.357,
-    "adjusted_time_s": 51.357,
-    "technical_points": 68.18,
-    "category_scores": {
-     "completion_time": 82.39,
-     "deviation": 96.87,
-     "compute": 92.88,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.339,
-    "energy_wh": 419.509,
-    "wh_per_km": 630.442,
-    "peak_power_kw": 197.517,
-    "rms_jerk": 29.478,
-    "energy_breakdown_wh": {
-     "drag": 11.193,
-     "rolling": 40.146,
-     "brake_dissipated": 339.36,
-     "regen_recovered": 177.748,
-     "tyre_scrub": 44.208,
-     "drive_loss": 59.726
-    },
-    "energy_balance_residual_pct": -0.007
-   },
-   "file": "runs/hackathon_test__performance__ew0.00__laf0.60.json"
-  },
-  {
-   "id": "hackathon_test__eco__ew0.20__laf0.60",
-   "course": "hackathon_test",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.2,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 51.69,
-    "adjusted_time_s": 51.69,
-    "technical_points": 67.92,
-    "category_scores": {
-     "completion_time": 81.69,
-     "deviation": 96.83,
-     "compute": 92.6,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.548,
-    "energy_wh": 413.531,
-    "wh_per_km": 621.605,
-    "peak_power_kw": 193.912,
-    "rms_jerk": 29.144,
-    "energy_breakdown_wh": {
-     "drag": 11.037,
-     "rolling": 40.136,
-     "brake_dissipated": 331.548,
-     "regen_recovered": 171.285,
-     "tyre_scrub": 42.6,
-     "drive_loss": 58.482
-    },
-    "energy_balance_residual_pct": -0.005
-   },
-   "file": "runs/hackathon_test__eco__ew0.20__laf0.60.json"
-  },
-  {
-   "id": "hackathon_test__eco__ew0.40__laf0.60",
-   "course": "hackathon_test",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.4,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 52.032,
-    "adjusted_time_s": 52.032,
-    "technical_points": 67.7,
-    "category_scores": {
-     "completion_time": 80.97,
-     "deviation": 97.16,
-     "compute": 92.24,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.819,
-    "energy_wh": 376.028,
-    "wh_per_km": 565.137,
-    "peak_power_kw": 172.096,
-    "rms_jerk": 27.501,
-    "energy_breakdown_wh": {
-     "drag": 10.784,
-     "rolling": 40.143,
-     "brake_dissipated": 292.546,
-     "regen_recovered": 157.772,
-     "tyre_scrub": 42.803,
-     "drive_loss": 53.38
-    },
-    "energy_balance_residual_pct": -0.007
-   },
-   "file": "runs/hackathon_test__eco__ew0.40__laf0.60.json"
-  },
-  {
-   "id": "hackathon_test__eco__ew0.60__laf0.60",
-   "course": "hackathon_test",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.6,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 53.253,
-    "adjusted_time_s": 53.253,
-    "technical_points": 67.46,
-    "category_scores": {
-     "completion_time": 78.4,
-     "deviation": 97.78,
-     "compute": 95.12,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 8.656,
-    "energy_wh": 310.247,
-    "wh_per_km": 466.356,
-    "peak_power_kw": 153.645,
-    "rms_jerk": 24.829,
-    "energy_breakdown_wh": {
-     "drag": 10.089,
-     "rolling": 40.136,
-     "brake_dissipated": 213.047,
-     "regen_recovered": 122.995,
-     "tyre_scrub": 41.035,
-     "drive_loss": 43.324
-    },
-    "energy_balance_residual_pct": -0.005
-   },
-   "file": "runs/hackathon_test__eco__ew0.60__laf0.60.json"
-  },
-  {
-   "id": "hackathon_test__eco__ew0.80__laf0.60",
-   "course": "hackathon_test",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.8,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 55.453,
-    "adjusted_time_s": 55.453,
-    "technical_points": 65.81,
-    "category_scores": {
-     "completion_time": 73.77,
-     "deviation": 98.47,
-     "compute": 92.74,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.444,
-    "energy_wh": 249.006,
-    "wh_per_km": 374.206,
-    "peak_power_kw": 135.756,
-    "rms_jerk": 22.184,
-    "energy_breakdown_wh": {
-     "drag": 9.075,
-     "rolling": 40.146,
-     "brake_dissipated": 141.466,
-     "regen_recovered": 84.093,
-     "tyre_scrub": 36.71,
-     "drive_loss": 33.31
-    },
-    "energy_balance_residual_pct": -0.002
-   },
-   "file": "runs/hackathon_test__eco__ew0.80__laf0.60.json"
-  },
-  {
-   "id": "hackathon_test__eco__ew1.00__laf0.60",
-   "course": "hackathon_test",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 1.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 58.869,
-    "adjusted_time_s": 58.869,
-    "technical_points": 63.81,
-    "category_scores": {
-     "completion_time": 66.59,
-     "deviation": 98.87,
-     "compute": 93.34,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.993,
-    "energy_wh": 190.856,
-    "wh_per_km": 287.07,
-    "peak_power_kw": 119.321,
-    "rms_jerk": 17.01,
-    "energy_breakdown_wh": {
-     "drag": 7.84,
-     "rolling": 40.111,
-     "brake_dissipated": 76.589,
-     "regen_recovered": 47.504,
-     "tyre_scrub": 31.307,
-     "drive_loss": 23.836
-    },
-    "energy_balance_residual_pct": -0.003
-   },
-   "file": "runs/hackathon_test__eco__ew1.00__laf0.60.json"
-  },
-  {
    "id": "hackathon_test__performance__ew0.00__laf0.75",
    "course": "hackathon_test",
    "mode": "performance",
@@ -821,13 +557,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 48.925,
-    "adjusted_time_s": 48.925,
-    "technical_points": 69.03,
+    "lap_time_s": 49.772,
+    "adjusted_time_s": 49.772,
+    "technical_points": 68.58,
     "category_scores": {
-     "completion_time": 87.51,
-     "deviation": 95.66,
-     "compute": 89.53,
+     "completion_time": 85.73,
+     "deviation": 100.0,
+     "compute": 85.74,
      "dynamics": 100.0
     },
     "penalties": {
@@ -836,22 +572,286 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 12.849,
-    "energy_wh": 422.994,
-    "wh_per_km": 635.311,
-    "peak_power_kw": 198.615,
-    "rms_jerk": 28.032,
+    "p99_step_ms": 14.821,
+    "energy_wh": 403.377,
+    "wh_per_km": 602.213,
+    "peak_power_kw": 198.294,
+    "rms_jerk": 25.705,
     "energy_breakdown_wh": {
-     "drag": 12.406,
-     "rolling": 40.169,
-     "brake_dissipated": 322.566,
-     "regen_recovered": 169.801,
-     "tyre_scrub": 54.611,
-     "drive_loss": 59.28
+     "drag": 12.214,
+     "rolling": 40.412,
+     "brake_dissipated": 282.182,
+     "regen_recovered": 156.82,
+     "tyre_scrub": 65.953,
+     "drive_loss": 56.02
+    },
+    "energy_balance_residual_pct": -0.011
+   },
+   "file": "runs/hackathon_test__performance__ew0.00__laf0.75.json"
+  },
+  {
+   "id": "hackathon_test__eco__ew0.20__laf0.75",
+   "course": "hackathon_test",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.2,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 49.819,
+    "adjusted_time_s": 49.819,
+    "technical_points": 68.83,
+    "category_scores": {
+     "completion_time": 85.63,
+     "deviation": 100.0,
+     "compute": 87.59,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.304,
+    "energy_wh": 403.72,
+    "wh_per_km": 602.572,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 25.263,
+    "energy_breakdown_wh": {
+     "drag": 12.182,
+     "rolling": 40.422,
+     "brake_dissipated": 281.313,
+     "regen_recovered": 157.123,
+     "tyre_scrub": 65.055,
+     "drive_loss": 56.084
+    },
+    "energy_balance_residual_pct": -0.013
+   },
+   "file": "runs/hackathon_test__eco__ew0.20__laf0.75.json"
+  },
+  {
+   "id": "hackathon_test__eco__ew0.40__laf0.75",
+   "course": "hackathon_test",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.4,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 50.475,
+    "adjusted_time_s": 50.475,
+    "technical_points": 68.63,
+    "category_scores": {
+     "completion_time": 84.25,
+     "deviation": 100.0,
+     "compute": 89.05,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 13.211,
+    "energy_wh": 371.641,
+    "wh_per_km": 554.874,
+    "peak_power_kw": 197.781,
+    "rms_jerk": 24.741,
+    "energy_breakdown_wh": {
+     "drag": 11.754,
+     "rolling": 40.409,
+     "brake_dissipated": 243.457,
+     "regen_recovered": 140.002,
+     "tyre_scrub": 61.977,
+     "drive_loss": 51.164
+    },
+    "energy_balance_residual_pct": -0.012
+   },
+   "file": "runs/hackathon_test__eco__ew0.40__laf0.75.json"
+  },
+  {
+   "id": "hackathon_test__eco__ew0.60__laf0.75",
+   "course": "hackathon_test",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.6,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 51.706,
+    "adjusted_time_s": 51.706,
+    "technical_points": 67.6,
+    "category_scores": {
+     "completion_time": 81.66,
+     "deviation": 100.0,
+     "compute": 87.34,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.071,
+    "energy_wh": 329.409,
+    "wh_per_km": 492.372,
+    "peak_power_kw": 198.926,
+    "rms_jerk": 21.863,
+    "energy_breakdown_wh": {
+     "drag": 10.932,
+     "rolling": 40.363,
+     "brake_dissipated": 171.311,
+     "regen_recovered": 98.548,
+     "tyre_scrub": 58.457,
+     "drive_loss": 42.796
     },
     "energy_balance_residual_pct": -0.008
    },
-   "file": "runs/hackathon_test__performance__ew0.00__laf0.75.json"
+   "file": "runs/hackathon_test__eco__ew0.60__laf0.75.json"
+  },
+  {
+   "id": "hackathon_test__eco__ew0.80__laf0.75",
+   "course": "hackathon_test",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 54.053,
+    "adjusted_time_s": 54.053,
+    "technical_points": 66.06,
+    "category_scores": {
+     "completion_time": 76.72,
+     "deviation": 100.0,
+     "compute": 87.04,
+     "dynamics": 99.93
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.313,
+    "energy_wh": 279.535,
+    "wh_per_km": 417.418,
+    "peak_power_kw": 198.198,
+    "rms_jerk": 19.074,
+    "energy_breakdown_wh": {
+     "drag": 9.794,
+     "rolling": 40.403,
+     "brake_dissipated": 101.847,
+     "regen_recovered": 61.289,
+     "tyre_scrub": 50.071,
+     "drive_loss": 34.082
+    },
+    "energy_balance_residual_pct": -0.006
+   },
+   "file": "runs/hackathon_test__eco__ew0.80__laf0.75.json"
+  },
+  {
+   "id": "hackathon_test__eco__ew1.00__laf0.75",
+   "course": "hackathon_test",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 1.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 57.643,
+    "adjusted_time_s": 57.643,
+    "technical_points": 63.93,
+    "category_scores": {
+     "completion_time": 69.17,
+     "deviation": 100.0,
+     "compute": 87.89,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.081,
+    "energy_wh": 226.857,
+    "wh_per_km": 339.12,
+    "peak_power_kw": 178.247,
+    "rms_jerk": 14.289,
+    "energy_breakdown_wh": {
+     "drag": 8.439,
+     "rolling": 40.359,
+     "brake_dissipated": 41.543,
+     "regen_recovered": 25.834,
+     "tyre_scrub": 41.073,
+     "drive_loss": 25.269
+    },
+    "energy_balance_residual_pct": -0.008
+   },
+   "file": "runs/hackathon_test__eco__ew1.00__laf0.75.json"
+  },
+  {
+   "id": "hackathon_test__performance__ew0.00__laf0.60",
+   "course": "hackathon_test",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.6
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 52.462,
+    "adjusted_time_s": 52.462,
+    "technical_points": 66.97,
+    "category_scores": {
+     "completion_time": 80.07,
+     "deviation": 100.0,
+     "compute": 86.34,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 15.248,
+    "energy_wh": 423.645,
+    "wh_per_km": 632.943,
+    "peak_power_kw": 197.511,
+    "rms_jerk": 28.838,
+    "energy_breakdown_wh": {
+     "drag": 11.113,
+     "rolling": 40.381,
+     "brake_dissipated": 340.842,
+     "regen_recovered": 179.032,
+     "tyre_scrub": 47.475,
+     "drive_loss": 60.268
+    },
+    "energy_balance_residual_pct": -0.011
+   },
+   "file": "runs/hackathon_test__performance__ew0.00__laf0.60.json"
   },
   {
    "id": "hackathon_test__performance__ew0.00__laf0.85",
@@ -865,13 +865,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 47.62,
-    "adjusted_time_s": 47.62,
-    "technical_points": 70.38,
+    "lap_time_s": 48.22,
+    "adjusted_time_s": 48.22,
+    "technical_points": 70.0,
     "category_scores": {
-     "completion_time": 90.26,
-     "deviation": 95.4,
-     "compute": 93.27,
+     "completion_time": 89.0,
+     "deviation": 100.0,
+     "compute": 88.65,
      "dynamics": 100.0
     },
     "penalties": {
@@ -880,20 +880,20 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 10.051,
-    "energy_wh": 417.396,
-    "wh_per_km": 626.341,
-    "peak_power_kw": 200.0,
-    "rms_jerk": 28.227,
+    "p99_step_ms": 13.516,
+    "energy_wh": 404.977,
+    "wh_per_km": 604.362,
+    "peak_power_kw": 199.683,
+    "rms_jerk": 26.31,
     "energy_breakdown_wh": {
-     "drag": 13.07,
-     "rolling": 40.205,
-     "brake_dissipated": 294.057,
-     "regen_recovered": 159.057,
-     "tyre_scrub": 63.262,
-     "drive_loss": 57.645
+     "drag": 12.923,
+     "rolling": 40.428,
+     "brake_dissipated": 251.061,
+     "regen_recovered": 136.148,
+     "tyre_scrub": 77.77,
+     "drive_loss": 54.112
     },
-    "energy_balance_residual_pct": -0.01
+    "energy_balance_residual_pct": -0.018
    },
    "file": "runs/hackathon_test__performance__ew0.00__laf0.85.json"
   },
@@ -924,7 +924,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 1.201,
+    "p99_step_ms": 2.38,
     "energy_wh": 308.578,
     "wh_per_km": 462.681,
     "peak_power_kw": 92.708,
@@ -942,270 +942,6 @@
    "file": "runs/practice_obstacles__baseline.json"
   },
   {
-   "id": "practice_obstacles__performance__ew0.00__laf0.60",
-   "course": "practice_obstacles",
-   "mode": "performance",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 56.541,
-    "adjusted_time_s": 56.541,
-    "technical_points": 67.79,
-    "category_scores": {
-     "completion_time": 82.49,
-     "deviation": 94.09,
-     "compute": 92.84,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.367,
-    "energy_wh": 412.696,
-    "wh_per_km": 619.678,
-    "peak_power_kw": 187.164,
-    "rms_jerk": 30.095,
-    "energy_breakdown_wh": {
-     "drag": 9.624,
-     "rolling": 40.18,
-     "brake_dissipated": 327.372,
-     "regen_recovered": 178.433,
-     "tyre_scrub": 50.448,
-     "drive_loss": 59.113
-    },
-    "energy_balance_residual_pct": 0.005
-   },
-   "file": "runs/practice_obstacles__performance__ew0.00__laf0.60.json"
-  },
-  {
-   "id": "practice_obstacles__eco__ew0.20__laf0.60",
-   "course": "practice_obstacles",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.2,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 56.765,
-    "adjusted_time_s": 56.765,
-    "technical_points": 67.68,
-    "category_scores": {
-     "completion_time": 82.06,
-     "deviation": 93.99,
-     "compute": 93.1,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.178,
-    "energy_wh": 397.132,
-    "wh_per_km": 596.33,
-    "peak_power_kw": 180.819,
-    "rms_jerk": 30.449,
-    "energy_breakdown_wh": {
-     "drag": 9.497,
-     "rolling": 40.178,
-     "brake_dissipated": 320.231,
-     "regen_recovered": 177.586,
-     "tyre_scrub": 49.567,
-     "drive_loss": 57.472
-    },
-    "energy_balance_residual_pct": 0.005
-   },
-   "file": "runs/practice_obstacles__eco__ew0.20__laf0.60.json"
-  },
-  {
-   "id": "practice_obstacles__eco__ew0.40__laf0.60",
-   "course": "practice_obstacles",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.4,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 56.921,
-    "adjusted_time_s": 56.921,
-    "technical_points": 67.58,
-    "category_scores": {
-     "completion_time": 81.76,
-     "deviation": 94.65,
-     "compute": 92.38,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.717,
-    "energy_wh": 375.074,
-    "wh_per_km": 562.998,
-    "peak_power_kw": 163.434,
-    "rms_jerk": 30.527,
-    "energy_breakdown_wh": {
-     "drag": 9.389,
-     "rolling": 40.193,
-     "brake_dissipated": 306.158,
-     "regen_recovered": 173.459,
-     "tyre_scrub": 48.739,
-     "drive_loss": 54.853
-    },
-    "energy_balance_residual_pct": 0.004
-   },
-   "file": "runs/practice_obstacles__eco__ew0.40__laf0.60.json"
-  },
-  {
-   "id": "practice_obstacles__eco__ew0.60__laf0.60",
-   "course": "practice_obstacles",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.6,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 57.929,
-    "adjusted_time_s": 57.929,
-    "technical_points": 67.13,
-    "category_scores": {
-     "completion_time": 79.84,
-     "deviation": 94.78,
-     "compute": 93.05,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.213,
-    "energy_wh": 346.169,
-    "wh_per_km": 519.71,
-    "peak_power_kw": 129.285,
-    "rms_jerk": 31.002,
-    "energy_breakdown_wh": {
-     "drag": 9.031,
-     "rolling": 40.186,
-     "brake_dissipated": 286.712,
-     "regen_recovered": 168.272,
-     "tyre_scrub": 47.202,
-     "drive_loss": 51.444
-    },
-    "energy_balance_residual_pct": 0.008
-   },
-   "file": "runs/practice_obstacles__eco__ew0.60__laf0.60.json"
-  },
-  {
-   "id": "practice_obstacles__eco__ew0.80__laf0.60",
-   "course": "practice_obstacles",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.8,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 59.863,
-    "adjusted_time_s": 59.863,
-    "technical_points": 65.91,
-    "category_scores": {
-     "completion_time": 76.14,
-     "deviation": 95.21,
-     "compute": 91.89,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 11.085,
-    "energy_wh": 299.614,
-    "wh_per_km": 449.748,
-    "peak_power_kw": 108.909,
-    "rms_jerk": 26.63,
-    "energy_breakdown_wh": {
-     "drag": 8.251,
-     "rolling": 40.192,
-     "brake_dissipated": 248.546,
-     "regen_recovered": 154.255,
-     "tyre_scrub": 43.354,
-     "drive_loss": 45.387
-    },
-    "energy_balance_residual_pct": 0.02
-   },
-   "file": "runs/practice_obstacles__eco__ew0.80__laf0.60.json"
-  },
-  {
-   "id": "practice_obstacles__eco__ew1.00__laf0.60",
-   "course": "practice_obstacles",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 1.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 62.162,
-    "adjusted_time_s": 62.162,
-    "technical_points": 64.84,
-    "category_scores": {
-     "completion_time": 71.75,
-     "deviation": 95.34,
-     "compute": 93.43,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.929,
-    "energy_wh": 237.928,
-    "wh_per_km": 357.628,
-    "peak_power_kw": 98.533,
-    "rms_jerk": 20.472,
-    "energy_breakdown_wh": {
-     "drag": 7.376,
-     "rolling": 40.138,
-     "brake_dissipated": 169.898,
-     "regen_recovered": 105.578,
-     "tyre_scrub": 35.213,
-     "drive_loss": 34.351
-    },
-    "energy_balance_residual_pct": 0.016
-   },
-   "file": "runs/practice_obstacles__eco__ew1.00__laf0.60.json"
-  },
-  {
    "id": "practice_obstacles__performance__ew0.00__laf0.75",
    "course": "practice_obstacles",
    "mode": "performance",
@@ -1217,37 +953,301 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 53.546,
-    "adjusted_time_s": 55.546,
-    "technical_points": 66.81,
+    "lap_time_s": 54.329,
+    "adjusted_time_s": 54.329,
+    "technical_points": 68.35,
     "category_scores": {
-     "completion_time": 88.21,
-     "deviation": 91.45,
-     "compute": 90.87,
+     "completion_time": 86.71,
+     "deviation": 100.0,
+     "compute": 82.23,
      "dynamics": 100.0
     },
     "penalties": {
-     "cone_hits": 1,
+     "cone_hits": 0,
      "off_course": 0,
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 11.845,
-    "energy_wh": 427.465,
-    "wh_per_km": 641.216,
-    "peak_power_kw": 194.138,
-    "rms_jerk": 27.665,
+    "p99_step_ms": 18.329,
+    "energy_wh": 450.356,
+    "wh_per_km": 671.14,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 28.732,
     "energy_breakdown_wh": {
-     "drag": 10.662,
-     "rolling": 40.22,
-     "brake_dissipated": 314.627,
-     "regen_recovered": 173.332,
-     "tyre_scrub": 65.77,
-     "drive_loss": 60.08
+     "drag": 10.769,
+     "rolling": 40.484,
+     "brake_dissipated": 300.486,
+     "regen_recovered": 155.138,
+     "tyre_scrub": 71.599,
+     "drive_loss": 60.549
     },
-    "energy_balance_residual_pct": -0.011
+    "energy_balance_residual_pct": -0.03
    },
    "file": "runs/practice_obstacles__performance__ew0.00__laf0.75.json"
+  },
+  {
+   "id": "practice_obstacles__eco__ew0.20__laf0.75",
+   "course": "practice_obstacles",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.2,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 54.94,
+    "adjusted_time_s": 54.94,
+    "technical_points": 66.82,
+    "category_scores": {
+     "completion_time": 85.55,
+     "deviation": 94.17,
+     "compute": 80.19,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 19.855,
+    "energy_wh": 430.244,
+    "wh_per_km": 641.048,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 27.649,
+    "energy_breakdown_wh": {
+     "drag": 10.573,
+     "rolling": 40.492,
+     "brake_dissipated": 281.902,
+     "regen_recovered": 153.72,
+     "tyre_scrub": 71.754,
+     "drive_loss": 58.396
+    },
+    "energy_balance_residual_pct": -0.016
+   },
+   "file": "runs/practice_obstacles__eco__ew0.20__laf0.75.json"
+  },
+  {
+   "id": "practice_obstacles__eco__ew0.40__laf0.75",
+   "course": "practice_obstacles",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.4,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 55.107,
+    "adjusted_time_s": 55.107,
+    "technical_points": 69.03,
+    "category_scores": {
+     "completion_time": 85.23,
+     "deviation": 100.0,
+     "compute": 89.73,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 12.705,
+    "energy_wh": 440.72,
+    "wh_per_km": 656.708,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 27.914,
+    "energy_breakdown_wh": {
+     "drag": 10.489,
+     "rolling": 40.489,
+     "brake_dissipated": 295.267,
+     "regen_recovered": 155.416,
+     "tyre_scrub": 69.029,
+     "drive_loss": 59.614
+    },
+    "energy_balance_residual_pct": -0.029
+   },
+   "file": "runs/practice_obstacles__eco__ew0.40__laf0.75.json"
+  },
+  {
+   "id": "practice_obstacles__eco__ew0.60__laf0.75",
+   "course": "practice_obstacles",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.6,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 56.178,
+    "adjusted_time_s": 56.178,
+    "technical_points": 68.45,
+    "category_scores": {
+     "completion_time": 83.18,
+     "deviation": 100.0,
+     "compute": 89.97,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 12.521,
+    "energy_wh": 394.569,
+    "wh_per_km": 588.008,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 27.674,
+    "energy_breakdown_wh": {
+     "drag": 9.99,
+     "rolling": 40.484,
+     "brake_dissipated": 247.67,
+     "regen_recovered": 144.178,
+     "tyre_scrub": 65.629,
+     "drive_loss": 53.875
+    },
+    "energy_balance_residual_pct": -0.026
+   },
+   "file": "runs/practice_obstacles__eco__ew0.60__laf0.75.json"
+  },
+  {
+   "id": "practice_obstacles__eco__ew0.80__laf0.75",
+   "course": "practice_obstacles",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 57.761,
+    "adjusted_time_s": 57.761,
+    "technical_points": 67.47,
+    "category_scores": {
+     "completion_time": 80.16,
+     "deviation": 100.0,
+     "compute": 89.51,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 12.868,
+    "energy_wh": 344.446,
+    "wh_per_km": 513.412,
+    "peak_power_kw": 194.752,
+    "rms_jerk": 24.268,
+    "energy_breakdown_wh": {
+     "drag": 9.184,
+     "rolling": 40.476,
+     "brake_dissipated": 195.801,
+     "regen_recovered": 119.481,
+     "tyre_scrub": 57.014,
+     "drive_loss": 46.393
+    },
+    "energy_balance_residual_pct": -0.027
+   },
+   "file": "runs/practice_obstacles__eco__ew0.80__laf0.75.json"
+  },
+  {
+   "id": "practice_obstacles__eco__ew1.00__laf0.75",
+   "course": "practice_obstacles",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 1.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 60.392,
+    "adjusted_time_s": 60.392,
+    "technical_points": 62.17,
+    "category_scores": {
+     "completion_time": 75.13,
+     "deviation": 89.86,
+     "compute": 74.34,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 23.521,
+    "energy_wh": 282.313,
+    "wh_per_km": 421.333,
+    "peak_power_kw": 175.988,
+    "rms_jerk": 21.012,
+    "energy_breakdown_wh": {
+     "drag": 8.082,
+     "rolling": 40.425,
+     "brake_dissipated": 133.025,
+     "regen_recovered": 83.271,
+     "tyre_scrub": 47.886,
+     "drive_loss": 36.558
+    },
+    "energy_balance_residual_pct": -0.016
+   },
+   "file": "runs/practice_obstacles__eco__ew1.00__laf0.75.json"
+  },
+  {
+   "id": "practice_obstacles__performance__ew0.00__laf0.60",
+   "course": "practice_obstacles",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.6
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 58.0,
+    "adjusted_time_s": 58.0,
+    "technical_points": 67.83,
+    "category_scores": {
+     "completion_time": 79.7,
+     "deviation": 100.0,
+     "compute": 92.83,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 10.381,
+    "energy_wh": 434.811,
+    "wh_per_km": 647.958,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 30.301,
+    "energy_breakdown_wh": {
+     "drag": 9.622,
+     "rolling": 40.485,
+     "brake_dissipated": 310.09,
+     "regen_recovered": 159.837,
+     "tyre_scrub": 55.319,
+     "drive_loss": 59.465
+    },
+    "energy_balance_residual_pct": -0.028
+   },
+   "file": "runs/practice_obstacles__performance__ew0.00__laf0.60.json"
   },
   {
    "id": "practice_obstacles__performance__ew0.00__laf0.85",
@@ -1261,13 +1261,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 52.341,
-    "adjusted_time_s": 52.341,
-    "technical_points": 68.83,
+    "lap_time_s": 53.201,
+    "adjusted_time_s": 53.201,
+    "technical_points": 69.67,
     "category_scores": {
-     "completion_time": 90.51,
-     "deviation": 90.65,
-     "compute": 87.23,
+     "completion_time": 88.87,
+     "deviation": 100.0,
+     "compute": 86.73,
      "dynamics": 100.0
     },
     "penalties": {
@@ -1276,20 +1276,20 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 14.578,
-    "energy_wh": 431.656,
-    "wh_per_km": 647.801,
+    "p99_step_ms": 14.951,
+    "energy_wh": 442.086,
+    "wh_per_km": 658.76,
     "peak_power_kw": 200.0,
-    "rms_jerk": 26.844,
+    "rms_jerk": 26.669,
     "energy_breakdown_wh": {
-     "drag": 11.159,
-     "rolling": 40.201,
-     "brake_dissipated": 293.41,
-     "regen_recovered": 159.871,
-     "tyre_scrub": 71.853,
-     "drive_loss": 59.153
+     "drag": 11.13,
+     "rolling": 40.488,
+     "brake_dissipated": 272.339,
+     "regen_recovered": 140.339,
+     "tyre_scrub": 78.565,
+     "drive_loss": 58.242
     },
-    "energy_balance_residual_pct": -0.013
+    "energy_balance_residual_pct": -0.023
    },
    "file": "runs/practice_obstacles__performance__ew0.00__laf0.85.json"
   },
@@ -1320,7 +1320,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 2.594,
+    "p99_step_ms": 2.049,
     "energy_wh": 177.0,
     "wh_per_km": 447.717,
     "peak_power_kw": 77.125,
@@ -1338,270 +1338,6 @@
    "file": "runs/practice_basic__baseline.json"
   },
   {
-   "id": "practice_basic__performance__ew0.00__laf0.60",
-   "course": "practice_basic",
-   "mode": "performance",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 31.272,
-    "adjusted_time_s": 31.272,
-    "technical_points": 69.71,
-    "category_scores": {
-     "completion_time": 88.91,
-     "deviation": 96.37,
-     "compute": 90.55,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 12.088,
-    "energy_wh": 288.552,
-    "wh_per_km": 730.353,
-    "peak_power_kw": 185.649,
-    "rms_jerk": 29.866,
-    "energy_breakdown_wh": {
-     "drag": 6.196,
-     "rolling": 23.836,
-     "brake_dissipated": 197.596,
-     "regen_recovered": 100.772,
-     "tyre_scrub": 28.528,
-     "drive_loss": 38.932
-    },
-    "energy_balance_residual_pct": -0.007
-   },
-   "file": "runs/practice_basic__performance__ew0.00__laf0.60.json"
-  },
-  {
-   "id": "practice_basic__eco__ew0.20__laf0.60",
-   "course": "practice_basic",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.2,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 31.133,
-    "adjusted_time_s": 31.133,
-    "technical_points": 70.07,
-    "category_scores": {
-     "completion_time": 89.36,
-     "deviation": 96.32,
-     "compute": 92.08,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.94,
-    "energy_wh": 285.962,
-    "wh_per_km": 724.167,
-    "peak_power_kw": 175.619,
-    "rms_jerk": 29.885,
-    "energy_breakdown_wh": {
-     "drag": 6.258,
-     "rolling": 23.824,
-     "brake_dissipated": 194.617,
-     "regen_recovered": 98.479,
-     "tyre_scrub": 28.694,
-     "drive_loss": 38.444
-    },
-    "energy_balance_residual_pct": -0.007
-   },
-   "file": "runs/practice_basic__eco__ew0.20__laf0.60.json"
-  },
-  {
-   "id": "practice_basic__eco__ew0.40__laf0.60",
-   "course": "practice_basic",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.4,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 31.239,
-    "adjusted_time_s": 31.239,
-    "technical_points": 69.76,
-    "category_scores": {
-     "completion_time": 89.01,
-     "deviation": 96.48,
-     "compute": 90.53,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 12.105,
-    "energy_wh": 277.013,
-    "wh_per_km": 701.814,
-    "peak_power_kw": 169.994,
-    "rms_jerk": 28.551,
-    "energy_breakdown_wh": {
-     "drag": 6.185,
-     "rolling": 23.813,
-     "brake_dissipated": 189.394,
-     "regen_recovered": 99.313,
-     "tyre_scrub": 28.015,
-     "drive_loss": 37.633
-    },
-    "energy_balance_residual_pct": -0.009
-   },
-   "file": "runs/practice_basic__eco__ew0.40__laf0.60.json"
-  },
-  {
-   "id": "practice_basic__eco__ew0.60__laf0.60",
-   "course": "practice_basic",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.6,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 31.826,
-    "adjusted_time_s": 31.826,
-    "technical_points": 69.72,
-    "category_scores": {
-     "completion_time": 87.1,
-     "deviation": 96.97,
-     "compute": 93.6,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.804,
-    "energy_wh": 241.758,
-    "wh_per_km": 612.408,
-    "peak_power_kw": 146.504,
-    "rms_jerk": 26.358,
-    "energy_breakdown_wh": {
-     "drag": 5.926,
-     "rolling": 23.817,
-     "brake_dissipated": 155.674,
-     "regen_recovered": 85.873,
-     "tyre_scrub": 26.533,
-     "drive_loss": 32.763
-    },
-    "energy_balance_residual_pct": -0.006
-   },
-   "file": "runs/practice_basic__eco__ew0.60__laf0.60.json"
-  },
-  {
-   "id": "practice_basic__eco__ew0.80__laf0.60",
-   "course": "practice_basic",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.8,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 32.953,
-    "adjusted_time_s": 32.953,
-    "technical_points": 68.78,
-    "category_scores": {
-     "completion_time": 83.44,
-     "deviation": 97.51,
-     "compute": 94.1,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.424,
-    "energy_wh": 190.67,
-    "wh_per_km": 482.852,
-    "peak_power_kw": 110.027,
-    "rms_jerk": 21.914,
-    "energy_breakdown_wh": {
-     "drag": 5.377,
-     "rolling": 23.824,
-     "brake_dissipated": 103.025,
-     "regen_recovered": 59.483,
-     "tyre_scrub": 24.558,
-     "drive_loss": 25.015
-    },
-    "energy_balance_residual_pct": -0.003
-   },
-   "file": "runs/practice_basic__eco__ew0.80__laf0.60.json"
-  },
-  {
-   "id": "practice_basic__eco__ew1.00__laf0.60",
-   "course": "practice_basic",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 1.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 34.517,
-    "adjusted_time_s": 34.517,
-    "technical_points": 67.37,
-    "category_scores": {
-     "completion_time": 78.37,
-     "deviation": 97.93,
-     "compute": 94.5,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.126,
-    "energy_wh": 149.239,
-    "wh_per_km": 378.439,
-    "peak_power_kw": 100.105,
-    "rms_jerk": 19.735,
-    "energy_breakdown_wh": {
-     "drag": 4.735,
-     "rolling": 23.792,
-     "brake_dissipated": 61.021,
-     "regen_recovered": 36.301,
-     "tyre_scrub": 21.887,
-     "drive_loss": 18.554
-    },
-    "energy_balance_residual_pct": -0.001
-   },
-   "file": "runs/practice_basic__eco__ew1.00__laf0.60.json"
-  },
-  {
    "id": "practice_basic__performance__ew0.00__laf0.75",
    "course": "practice_basic",
    "mode": "performance",
@@ -1613,13 +1349,145 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 29.954,
-    "adjusted_time_s": 29.954,
+    "lap_time_s": 30.227,
+    "adjusted_time_s": 30.227,
+    "technical_points": 69.73,
+    "category_scores": {
+     "completion_time": 92.3,
+     "deviation": 100.0,
+     "compute": 84.08,
+     "dynamics": 96.17
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 16.94,
+    "energy_wh": 294.311,
+    "wh_per_km": 740.366,
+    "peak_power_kw": 194.115,
+    "rms_jerk": 30.548,
+    "energy_breakdown_wh": {
+     "drag": 6.815,
+     "rolling": 23.983,
+     "brake_dissipated": 182.879,
+     "regen_recovered": 96.44,
+     "tyre_scrub": 38.884,
+     "drive_loss": 39.075
+    },
+    "energy_balance_residual_pct": -0.015
+   },
+   "file": "runs/practice_basic__performance__ew0.00__laf0.75.json"
+  },
+  {
+   "id": "practice_basic__eco__ew0.20__laf0.75",
+   "course": "practice_basic",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.2,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 30.287,
+    "adjusted_time_s": 30.287,
     "technical_points": 70.58,
     "category_scores": {
-     "completion_time": 93.19,
-     "deviation": 96.77,
-     "compute": 87.41,
+     "completion_time": 92.1,
+     "deviation": 100.0,
+     "compute": 87.3,
+     "dynamics": 99.04
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.524,
+    "energy_wh": 294.96,
+    "wh_per_km": 742.391,
+    "peak_power_kw": 194.732,
+    "rms_jerk": 30.072,
+    "energy_breakdown_wh": {
+     "drag": 6.773,
+     "rolling": 23.97,
+     "brake_dissipated": 183.289,
+     "regen_recovered": 95.167,
+     "tyre_scrub": 37.352,
+     "drive_loss": 39.013
+    },
+    "energy_balance_residual_pct": -0.02
+   },
+   "file": "runs/practice_basic__eco__ew0.20__laf0.75.json"
+  },
+  {
+   "id": "practice_basic__eco__ew0.40__laf0.75",
+   "course": "practice_basic",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.4,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 30.27,
+    "adjusted_time_s": 30.27,
+    "technical_points": 70.29,
+    "category_scores": {
+     "completion_time": 92.16,
+     "deviation": 100.0,
+     "compute": 86.52,
+     "dynamics": 97.77
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 15.108,
+    "energy_wh": 285.332,
+    "wh_per_km": 717.552,
+    "peak_power_kw": 194.307,
+    "rms_jerk": 29.44,
+    "energy_breakdown_wh": {
+     "drag": 6.765,
+     "rolling": 23.991,
+     "brake_dissipated": 165.805,
+     "regen_recovered": 86.049,
+     "tyre_scrub": 38.381,
+     "drive_loss": 37.138
+    },
+    "energy_balance_residual_pct": -0.019
+   },
+   "file": "runs/practice_basic__eco__ew0.40__laf0.75.json"
+  },
+  {
+   "id": "practice_basic__eco__ew0.60__laf0.75",
+   "course": "practice_basic",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.6,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 30.977,
+    "adjusted_time_s": 30.977,
+    "technical_points": 70.27,
+    "category_scores": {
+     "completion_time": 89.86,
+     "deviation": 100.0,
+     "compute": 88.71,
      "dynamics": 100.0
     },
     "penalties": {
@@ -1628,22 +1496,154 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 14.439,
-    "energy_wh": 296.785,
-    "wh_per_km": 751.407,
-    "peak_power_kw": 190.21,
-    "rms_jerk": 26.814,
+    "p99_step_ms": 13.465,
+    "energy_wh": 253.197,
+    "wh_per_km": 637.477,
+    "peak_power_kw": 192.479,
+    "rms_jerk": 25.179,
     "energy_breakdown_wh": {
-     "drag": 6.682,
-     "rolling": 23.829,
-     "brake_dissipated": 189.621,
-     "regen_recovered": 96.797,
-     "tyre_scrub": 33.917,
-     "drive_loss": 39.358
+     "drag": 6.35,
+     "rolling": 23.963,
+     "brake_dissipated": 137.815,
+     "regen_recovered": 80.417,
+     "tyre_scrub": 34.65,
+     "drive_loss": 33.361
+    },
+    "energy_balance_residual_pct": -0.012
+   },
+   "file": "runs/practice_basic__eco__ew0.60__laf0.75.json"
+  },
+  {
+   "id": "practice_basic__eco__ew0.80__laf0.75",
+   "course": "practice_basic",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 32.272,
+    "adjusted_time_s": 32.272,
+    "technical_points": 68.78,
+    "category_scores": {
+     "completion_time": 85.66,
+     "deviation": 100.0,
+     "compute": 87.2,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.599,
+    "energy_wh": 215.07,
+    "wh_per_km": 541.603,
+    "peak_power_kw": 192.264,
+    "rms_jerk": 19.971,
+    "energy_breakdown_wh": {
+     "drag": 5.779,
+     "rolling": 23.957,
+     "brake_dissipated": 79.332,
+     "regen_recovered": 47.935,
+     "tyre_scrub": 30.366,
+     "drive_loss": 26.3
+    },
+    "energy_balance_residual_pct": -0.01
+   },
+   "file": "runs/practice_basic__eco__ew0.80__laf0.75.json"
+  },
+  {
+   "id": "practice_basic__eco__ew1.00__laf0.75",
+   "course": "practice_basic",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 1.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 34.054,
+    "adjusted_time_s": 34.054,
+    "technical_points": 67.76,
+    "category_scores": {
+     "completion_time": 79.87,
+     "deviation": 100.0,
+     "compute": 92.01,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 10.993,
+    "energy_wh": 181.234,
+    "wh_per_km": 456.217,
+    "peak_power_kw": 176.472,
+    "rms_jerk": 15.612,
+    "energy_breakdown_wh": {
+     "drag": 5.13,
+     "rolling": 23.967,
+     "brake_dissipated": 34.815,
+     "regen_recovered": 21.762,
+     "tyre_scrub": 25.305,
+     "drive_loss": 20.3
     },
     "energy_balance_residual_pct": -0.013
    },
-   "file": "runs/practice_basic__performance__ew0.00__laf0.75.json"
+   "file": "runs/practice_basic__eco__ew1.00__laf0.75.json"
+  },
+  {
+   "id": "practice_basic__performance__ew0.00__laf0.60",
+   "course": "practice_basic",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.6
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 31.487,
+    "adjusted_time_s": 31.487,
+    "technical_points": 68.79,
+    "category_scores": {
+     "completion_time": 88.21,
+     "deviation": 100.0,
+     "compute": 82.18,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 18.365,
+    "energy_wh": 299.936,
+    "wh_per_km": 755.04,
+    "peak_power_kw": 187.907,
+    "rms_jerk": 32.03,
+    "energy_breakdown_wh": {
+     "drag": 6.3,
+     "rolling": 23.966,
+     "brake_dissipated": 210.085,
+     "regen_recovered": 104.539,
+     "tyre_scrub": 30.796,
+     "drive_loss": 40.448
+    },
+    "energy_balance_residual_pct": -0.019
+   },
+   "file": "runs/practice_basic__performance__ew0.00__laf0.60.json"
   },
   {
    "id": "practice_basic__performance__ew0.00__laf0.85",
@@ -1657,14 +1657,14 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 28.913,
-    "adjusted_time_s": 28.913,
-    "technical_points": 69.37,
+    "lap_time_s": 29.488,
+    "adjusted_time_s": 29.488,
+    "technical_points": 70.12,
     "category_scores": {
-     "completion_time": 96.57,
-     "deviation": 94.06,
-     "compute": 82.43,
-     "dynamics": 92.83
+     "completion_time": 94.7,
+     "deviation": 100.0,
+     "compute": 84.76,
+     "dynamics": 93.3
     },
     "penalties": {
      "cone_hits": 0,
@@ -1672,20 +1672,20 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 18.178,
-    "energy_wh": 319.827,
-    "wh_per_km": 809.866,
-    "peak_power_kw": 200.0,
-    "rms_jerk": 25.924,
+    "p99_step_ms": 16.428,
+    "energy_wh": 302.946,
+    "wh_per_km": 762.582,
+    "peak_power_kw": 197.605,
+    "rms_jerk": 26.32,
     "energy_breakdown_wh": {
-     "drag": 7.243,
-     "rolling": 23.826,
-     "brake_dissipated": 188.345,
-     "regen_recovered": 95.091,
-     "tyre_scrub": 43.959,
-     "drive_loss": 41.492
+     "drag": 7.128,
+     "rolling": 23.968,
+     "brake_dissipated": 168.876,
+     "regen_recovered": 85.447,
+     "tyre_scrub": 46.864,
+     "drive_loss": 38.839
     },
-    "energy_balance_residual_pct": -0.015
+    "energy_balance_residual_pct": -0.01
    },
    "file": "runs/practice_basic__performance__ew0.00__laf0.85.json"
   },
@@ -1716,7 +1716,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 0.971,
+    "p99_step_ms": 2.182,
     "energy_wh": 341.096,
     "wh_per_km": 519.4,
     "peak_power_kw": 93.074,
@@ -1734,270 +1734,6 @@
    "file": "runs/seed1__baseline.json"
   },
   {
-   "id": "seed1__performance__ew0.00__laf0.60",
-   "course": "seed1",
-   "mode": "performance",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 51.167,
-    "adjusted_time_s": 51.167,
-    "technical_points": 68.77,
-    "category_scores": {
-     "completion_time": 83.33,
-     "deviation": 97.37,
-     "compute": 94.4,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.197,
-    "energy_wh": 460.527,
-    "wh_per_km": 705.716,
-    "peak_power_kw": 200.0,
-    "rms_jerk": 29.446,
-    "energy_breakdown_wh": {
-     "drag": 10.894,
-     "rolling": 39.37,
-     "brake_dissipated": 347.638,
-     "regen_recovered": 176.257,
-     "tyre_scrub": 38.418,
-     "drive_loss": 63.678
-    },
-    "energy_balance_residual_pct": 0.007
-   },
-   "file": "runs/seed1__performance__ew0.00__laf0.60.json"
-  },
-  {
-   "id": "seed1__eco__ew0.20__laf0.60",
-   "course": "seed1",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.2,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 51.387,
-    "adjusted_time_s": 51.387,
-    "technical_points": 65.77,
-    "category_scores": {
-     "completion_time": 82.87,
-     "deviation": 97.16,
-     "compute": 75.57,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 23.323,
-    "energy_wh": 440.087,
-    "wh_per_km": 674.441,
-    "peak_power_kw": 187.132,
-    "rms_jerk": 29.545,
-    "energy_breakdown_wh": {
-     "drag": 10.743,
-     "rolling": 39.368,
-     "brake_dissipated": 348.654,
-     "regen_recovered": 176.615,
-     "tyre_scrub": 37.832,
-     "drive_loss": 61.67
-    },
-    "energy_balance_residual_pct": 0.008
-   },
-   "file": "runs/seed1__eco__ew0.20__laf0.60.json"
-  },
-  {
-   "id": "seed1__eco__ew0.40__laf0.60",
-   "course": "seed1",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.4,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 51.766,
-    "adjusted_time_s": 51.766,
-    "technical_points": 68.39,
-    "category_scores": {
-     "completion_time": 82.08,
-     "deviation": 97.3,
-     "compute": 94.52,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.113,
-    "energy_wh": 397.314,
-    "wh_per_km": 608.917,
-    "peak_power_kw": 168.428,
-    "rms_jerk": 29.999,
-    "energy_breakdown_wh": {
-     "drag": 10.419,
-     "rolling": 39.366,
-     "brake_dissipated": 319.611,
-     "regen_recovered": 168.904,
-     "tyre_scrub": 38.001,
-     "drive_loss": 56.622
-    },
-    "energy_balance_residual_pct": 0.012
-   },
-   "file": "runs/seed1__eco__ew0.40__laf0.60.json"
-  },
-  {
-   "id": "seed1__eco__ew0.60__laf0.60",
-   "course": "seed1",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.6,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 52.795,
-    "adjusted_time_s": 52.795,
-    "technical_points": 67.78,
-    "category_scores": {
-     "completion_time": 79.92,
-     "deviation": 97.73,
-     "compute": 94.29,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.283,
-    "energy_wh": 340.576,
-    "wh_per_km": 521.833,
-    "peak_power_kw": 147.633,
-    "rms_jerk": 27.598,
-    "energy_breakdown_wh": {
-     "drag": 9.78,
-     "rolling": 39.376,
-     "brake_dissipated": 265.108,
-     "regen_recovered": 145.444,
-     "tyre_scrub": 36.439,
-     "drive_loss": 48.602
-    },
-    "energy_balance_residual_pct": 0.012
-   },
-   "file": "runs/seed1__eco__ew0.60__laf0.60.json"
-  },
-  {
-   "id": "seed1__eco__ew0.80__laf0.60",
-   "course": "seed1",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.8,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 54.939,
-    "adjusted_time_s": 54.939,
-    "technical_points": 66.5,
-    "category_scores": {
-     "completion_time": 75.43,
-     "deviation": 98.15,
-     "compute": 94.3,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.277,
-    "energy_wh": 273.129,
-    "wh_per_km": 418.563,
-    "peak_power_kw": 135.968,
-    "rms_jerk": 22.949,
-    "energy_breakdown_wh": {
-     "drag": 8.844,
-     "rolling": 39.369,
-     "brake_dissipated": 193.026,
-     "regen_recovered": 112.827,
-     "tyre_scrub": 33.423,
-     "drive_loss": 38.596
-    },
-    "energy_balance_residual_pct": 0.029
-   },
-   "file": "runs/seed1__eco__ew0.80__laf0.60.json"
-  },
-  {
-   "id": "seed1__eco__ew1.00__laf0.60",
-   "course": "seed1",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 1.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 58.38,
-    "adjusted_time_s": 58.38,
-    "technical_points": 64.44,
-    "category_scores": {
-     "completion_time": 68.23,
-     "deviation": 98.57,
-     "compute": 94.56,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.078,
-    "energy_wh": 212.553,
-    "wh_per_km": 325.747,
-    "peak_power_kw": 122.794,
-    "rms_jerk": 18.115,
-    "energy_breakdown_wh": {
-     "drag": 7.617,
-     "rolling": 39.367,
-     "brake_dissipated": 127.041,
-     "regen_recovered": 77.635,
-     "tyre_scrub": 29.088,
-     "drive_loss": 29.019
-    },
-    "energy_balance_residual_pct": 0.038
-   },
-   "file": "runs/seed1__eco__ew1.00__laf0.60.json"
-  },
-  {
    "id": "seed1__performance__ew0.00__laf0.75",
    "course": "seed1",
    "mode": "performance",
@@ -2009,13 +1745,13 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 48.692,
-    "adjusted_time_s": 48.692,
-    "technical_points": 69.58,
+    "lap_time_s": 48.481,
+    "adjusted_time_s": 48.481,
+    "technical_points": 69.36,
     "category_scores": {
-     "completion_time": 88.51,
-     "deviation": 97.02,
-     "compute": 89.79,
+     "completion_time": 88.96,
+     "deviation": 100.0,
+     "compute": 84.5,
      "dynamics": 100.0
     },
     "penalties": {
@@ -2024,22 +1760,286 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 12.658,
-    "energy_wh": 457.735,
-    "wh_per_km": 700.793,
+    "p99_step_ms": 16.176,
+    "energy_wh": 491.631,
+    "wh_per_km": 749.622,
     "peak_power_kw": 200.0,
-    "rms_jerk": 25.14,
+    "rms_jerk": 27.543,
     "energy_breakdown_wh": {
-     "drag": 11.829,
-     "rolling": 39.407,
-     "brake_dissipated": 315.336,
-     "regen_recovered": 151.429,
-     "tyre_scrub": 50.39,
-     "drive_loss": 60.916
+     "drag": 12.411,
+     "rolling": 39.568,
+     "brake_dissipated": 317.223,
+     "regen_recovered": 146.178,
+     "tyre_scrub": 54.78,
+     "drive_loss": 63.781
     },
-    "energy_balance_residual_pct": -0.0
+    "energy_balance_residual_pct": -0.006
    },
    "file": "runs/seed1__performance__ew0.00__laf0.75.json"
+  },
+  {
+   "id": "seed1__eco__ew0.20__laf0.75",
+   "course": "seed1",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.2,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 48.602,
+    "adjusted_time_s": 48.602,
+    "technical_points": 69.29,
+    "category_scores": {
+     "completion_time": 88.7,
+     "deviation": 100.0,
+     "compute": 84.52,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 16.606,
+    "energy_wh": 479.55,
+    "wh_per_km": 730.684,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 27.535,
+    "energy_breakdown_wh": {
+     "drag": 12.301,
+     "rolling": 39.596,
+     "brake_dissipated": 311.201,
+     "regen_recovered": 149.997,
+     "tyre_scrub": 53.958,
+     "drive_loss": 62.955
+    },
+    "energy_balance_residual_pct": -0.007
+   },
+   "file": "runs/seed1__eco__ew0.20__laf0.75.json"
+  },
+  {
+   "id": "seed1__eco__ew0.40__laf0.75",
+   "course": "seed1",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.4,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 49.162,
+    "adjusted_time_s": 49.162,
+    "technical_points": 68.94,
+    "category_scores": {
+     "completion_time": 87.53,
+     "deviation": 100.0,
+     "compute": 84.55,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 16.585,
+    "energy_wh": 448.23,
+    "wh_per_km": 683.342,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 27.775,
+    "energy_breakdown_wh": {
+     "drag": 11.854,
+     "rolling": 39.574,
+     "brake_dissipated": 273.584,
+     "regen_recovered": 137.869,
+     "tyre_scrub": 52.84,
+     "drive_loss": 58.61
+    },
+    "energy_balance_residual_pct": -0.006
+   },
+   "file": "runs/seed1__eco__ew0.40__laf0.75.json"
+  },
+  {
+   "id": "seed1__eco__ew0.60__laf0.75",
+   "course": "seed1",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.6,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 50.103,
+    "adjusted_time_s": 50.103,
+    "technical_points": 68.86,
+    "category_scores": {
+     "completion_time": 85.56,
+     "deviation": 100.0,
+     "compute": 87.97,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.019,
+    "energy_wh": 395.825,
+    "wh_per_km": 603.502,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 23.839,
+    "energy_breakdown_wh": {
+     "drag": 11.244,
+     "rolling": 39.57,
+     "brake_dissipated": 212.394,
+     "regen_recovered": 114.339,
+     "tyre_scrub": 50.519,
+     "drive_loss": 51.016
+    },
+    "energy_balance_residual_pct": -0.013
+   },
+   "file": "runs/seed1__eco__ew0.60__laf0.75.json"
+  },
+  {
+   "id": "seed1__eco__ew0.80__laf0.75",
+   "course": "seed1",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 52.592,
+    "adjusted_time_s": 52.592,
+    "technical_points": 66.94,
+    "category_scores": {
+     "completion_time": 80.35,
+     "deviation": 100.0,
+     "compute": 85.55,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 15.84,
+    "energy_wh": 309.081,
+    "wh_per_km": 471.315,
+    "peak_power_kw": 194.568,
+    "rms_jerk": 17.763,
+    "energy_breakdown_wh": {
+     "drag": 10.007,
+     "rolling": 39.564,
+     "brake_dissipated": 122.798,
+     "regen_recovered": 72.03,
+     "tyre_scrub": 42.578,
+     "drive_loss": 38.111
+    },
+    "energy_balance_residual_pct": -0.01
+   },
+   "file": "runs/seed1__eco__ew0.80__laf0.75.json"
+  },
+  {
+   "id": "seed1__eco__ew1.00__laf0.75",
+   "course": "seed1",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 1.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 56.02,
+    "adjusted_time_s": 56.02,
+    "technical_points": 65.02,
+    "category_scores": {
+     "completion_time": 73.17,
+     "deviation": 100.0,
+     "compute": 87.12,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.662,
+    "energy_wh": 244.41,
+    "wh_per_km": 372.767,
+    "peak_power_kw": 177.181,
+    "rms_jerk": 14.004,
+    "energy_breakdown_wh": {
+     "drag": 8.593,
+     "rolling": 39.557,
+     "brake_dissipated": 66.101,
+     "regen_recovered": 40.432,
+     "tyre_scrub": 37.565,
+     "drive_loss": 28.484
+    },
+    "energy_balance_residual_pct": 0.005
+   },
+   "file": "runs/seed1__eco__ew1.00__laf0.75.json"
+  },
+  {
+   "id": "seed1__performance__ew0.00__laf0.60",
+   "course": "seed1",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.6
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 51.389,
+    "adjusted_time_s": 51.389,
+    "technical_points": 68.43,
+    "category_scores": {
+     "completion_time": 82.87,
+     "deviation": 100.0,
+     "compute": 90.46,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 12.157,
+    "energy_wh": 486.254,
+    "wh_per_km": 741.233,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 30.91,
+    "energy_breakdown_wh": {
+     "drag": 11.29,
+     "rolling": 39.578,
+     "brake_dissipated": 342.732,
+     "regen_recovered": 164.05,
+     "tyre_scrub": 41.22,
+     "drive_loss": 65.03
+    },
+    "energy_balance_residual_pct": -0.011
+   },
+   "file": "runs/seed1__performance__ew0.00__laf0.60.json"
   },
   {
    "id": "seed1__performance__ew0.00__laf0.85",
@@ -2053,14 +2053,14 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 47.451,
-    "adjusted_time_s": 47.451,
-    "technical_points": 70.25,
+    "lap_time_s": 47.345,
+    "adjusted_time_s": 47.345,
+    "technical_points": 69.52,
     "category_scores": {
-     "completion_time": 91.11,
-     "deviation": 96.74,
-     "compute": 89.77,
-     "dynamics": 99.59
+     "completion_time": 91.33,
+     "deviation": 100.0,
+     "compute": 85.25,
+     "dynamics": 95.56
     },
     "penalties": {
      "cone_hits": 0,
@@ -2068,20 +2068,20 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 12.673,
-    "energy_wh": 465.661,
-    "wh_per_km": 712.213,
+    "p99_step_ms": 16.06,
+    "energy_wh": 491.587,
+    "wh_per_km": 748.453,
     "peak_power_kw": 200.0,
-    "rms_jerk": 26.219,
+    "rms_jerk": 25.805,
     "energy_breakdown_wh": {
-     "drag": 12.495,
-     "rolling": 39.446,
-     "brake_dissipated": 303.087,
-     "regen_recovered": 143.732,
-     "tyre_scrub": 57.36,
-     "drive_loss": 60.939
+     "drag": 12.898,
+     "rolling": 39.626,
+     "brake_dissipated": 293.207,
+     "regen_recovered": 132.908,
+     "tyre_scrub": 64.879,
+     "drive_loss": 62.45
     },
-    "energy_balance_residual_pct": -0.004
+    "energy_balance_residual_pct": -0.006
    },
    "file": "runs/seed1__performance__ew0.00__laf0.85.json"
   },
@@ -2112,7 +2112,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 1.753,
+    "p99_step_ms": 1.313,
     "energy_wh": 268.366,
     "wh_per_km": 400.048,
     "peak_power_kw": 92.808,
@@ -2130,270 +2130,6 @@
    "file": "runs/seed2__baseline.json"
   },
   {
-   "id": "seed2__performance__ew0.00__laf0.60",
-   "course": "seed2",
-   "mode": "performance",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 62.398,
-    "adjusted_time_s": 62.398,
-    "technical_points": 68.28,
-    "category_scores": {
-     "completion_time": 84.74,
-     "deviation": 92.84,
-     "compute": 92.89,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.336,
-    "energy_wh": 433.997,
-    "wh_per_km": 651.304,
-    "peak_power_kw": 200.0,
-    "rms_jerk": 31.535,
-    "energy_breakdown_wh": {
-     "drag": 8.214,
-     "rolling": 40.202,
-     "brake_dissipated": 315.268,
-     "regen_recovered": 180.217,
-     "tyre_scrub": 56.788,
-     "drive_loss": 61.421
-    },
-    "energy_balance_residual_pct": -0.013
-   },
-   "file": "runs/seed2__performance__ew0.00__laf0.60.json"
-  },
-  {
-   "id": "seed2__eco__ew0.20__laf0.60",
-   "course": "seed2",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.2,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 62.264,
-    "adjusted_time_s": 62.264,
-    "technical_points": 68.41,
-    "category_scores": {
-     "completion_time": 84.96,
-     "deviation": 93.11,
-     "compute": 93.06,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.205,
-    "energy_wh": 415.396,
-    "wh_per_km": 623.726,
-    "peak_power_kw": 194.064,
-    "rms_jerk": 31.551,
-    "energy_breakdown_wh": {
-     "drag": 8.195,
-     "rolling": 40.18,
-     "brake_dissipated": 312.542,
-     "regen_recovered": 180.628,
-     "tyre_scrub": 57.876,
-     "drive_loss": 59.602
-    },
-    "energy_balance_residual_pct": -0.013
-   },
-   "file": "runs/seed2__eco__ew0.20__laf0.60.json"
-  },
-  {
-   "id": "seed2__eco__ew0.40__laf0.60",
-   "course": "seed2",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.4,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 62.631,
-    "adjusted_time_s": 62.631,
-    "technical_points": 68.1,
-    "category_scores": {
-     "completion_time": 84.34,
-     "deviation": 92.16,
-     "compute": 93.14,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.146,
-    "energy_wh": 391.168,
-    "wh_per_km": 587.079,
-    "peak_power_kw": 178.035,
-    "rms_jerk": 32.484,
-    "energy_breakdown_wh": {
-     "drag": 7.983,
-     "rolling": 40.199,
-     "brake_dissipated": 308.494,
-     "regen_recovered": 181.88,
-     "tyre_scrub": 57.994,
-     "drive_loss": 57.305
-    },
-    "energy_balance_residual_pct": -0.022
-   },
-   "file": "runs/seed2__eco__ew0.40__laf0.60.json"
-  },
-  {
-   "id": "seed2__eco__ew0.60__laf0.60",
-   "course": "seed2",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.6,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 63.369,
-    "adjusted_time_s": 63.369,
-    "technical_points": 68.12,
-    "category_scores": {
-     "completion_time": 83.09,
-     "deviation": 93.68,
-     "compute": 94.27,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.299,
-    "energy_wh": 370.358,
-    "wh_per_km": 555.916,
-    "peak_power_kw": 158.388,
-    "rms_jerk": 31.489,
-    "energy_breakdown_wh": {
-     "drag": 7.711,
-     "rolling": 40.194,
-     "brake_dissipated": 300.312,
-     "regen_recovered": 175.113,
-     "tyre_scrub": 55.701,
-     "drive_loss": 54.547
-    },
-    "energy_balance_residual_pct": -0.004
-   },
-   "file": "runs/seed2__eco__ew0.60__laf0.60.json"
-  },
-  {
-   "id": "seed2__eco__ew0.80__laf0.60",
-   "course": "seed2",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.8,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 64.139,
-    "adjusted_time_s": 64.139,
-    "technical_points": 67.51,
-    "category_scores": {
-     "completion_time": 81.79,
-     "deviation": 92.54,
-     "compute": 93.95,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.535,
-    "energy_wh": 329.073,
-    "wh_per_km": 494.031,
-    "peak_power_kw": 137.175,
-    "rms_jerk": 29.846,
-    "energy_breakdown_wh": {
-     "drag": 7.274,
-     "rolling": 40.187,
-     "brake_dissipated": 264.765,
-     "regen_recovered": 159.985,
-     "tyre_scrub": 55.033,
-     "drive_loss": 48.906
-    },
-    "energy_balance_residual_pct": -0.005
-   },
-   "file": "runs/seed2__eco__ew0.80__laf0.60.json"
-  },
-  {
-   "id": "seed2__eco__ew1.00__laf0.60",
-   "course": "seed2",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 1.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 65.951,
-    "adjusted_time_s": 65.951,
-    "technical_points": 66.77,
-    "category_scores": {
-     "completion_time": 78.72,
-     "deviation": 93.26,
-     "compute": 94.42,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.184,
-    "energy_wh": 271.411,
-    "wh_per_km": 407.45,
-    "peak_power_kw": 125.519,
-    "rms_jerk": 29.251,
-    "energy_breakdown_wh": {
-     "drag": 6.657,
-     "rolling": 40.188,
-     "brake_dissipated": 195.123,
-     "regen_recovered": 120.281,
-     "tyre_scrub": 50.608,
-     "drive_loss": 39.169
-    },
-    "energy_balance_residual_pct": 0.003
-   },
-   "file": "runs/seed2__eco__ew1.00__laf0.60.json"
-  },
-  {
    "id": "seed2__performance__ew0.00__laf0.75",
    "course": "seed2",
    "mode": "performance",
@@ -2405,13 +2141,57 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 59.145,
-    "adjusted_time_s": 59.145,
-    "technical_points": 69.47,
+    "lap_time_s": 61.587,
+    "adjusted_time_s": 61.587,
+    "technical_points": 68.51,
     "category_scores": {
-     "completion_time": 90.25,
-     "deviation": 92.4,
-     "compute": 90.22,
+     "completion_time": 86.11,
+     "deviation": 100.0,
+     "compute": 86.25,
+     "dynamics": 98.24
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 15.315,
+    "energy_wh": 448.012,
+    "wh_per_km": 661.758,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 31.218,
+    "energy_breakdown_wh": {
+     "drag": 9.089,
+     "rolling": 40.845,
+     "brake_dissipated": 293.237,
+     "regen_recovered": 165.238,
+     "tyre_scrub": 73.157,
+     "drive_loss": 61.325
+    },
+    "energy_balance_residual_pct": -0.026
+   },
+   "file": "runs/seed2__performance__ew0.00__laf0.75.json"
+  },
+  {
+   "id": "seed2__eco__ew0.20__laf0.75",
+   "course": "seed2",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.2,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 61.282,
+    "adjusted_time_s": 61.282,
+    "technical_points": 68.72,
+    "category_scores": {
+     "completion_time": 86.63,
+     "deviation": 100.0,
+     "compute": 84.88,
      "dynamics": 100.0
     },
     "penalties": {
@@ -2420,22 +2200,242 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 12.336,
-    "energy_wh": 451.268,
-    "wh_per_km": 677.39,
+    "p99_step_ms": 16.344,
+    "energy_wh": 446.151,
+    "wh_per_km": 659.902,
     "peak_power_kw": 200.0,
-    "rms_jerk": 25.86,
+    "rms_jerk": 29.965,
     "energy_breakdown_wh": {
-     "drag": 9.049,
-     "rolling": 40.192,
-     "brake_dissipated": 306.66,
-     "regen_recovered": 170.036,
-     "tyre_scrub": 70.871,
-     "drive_loss": 62.13
+     "drag": 9.089,
+     "rolling": 40.789,
+     "brake_dissipated": 288.879,
+     "regen_recovered": 162.555,
+     "tyre_scrub": 72.982,
+     "drive_loss": 60.871
     },
-    "energy_balance_residual_pct": -0.032
+    "energy_balance_residual_pct": -0.026
    },
-   "file": "runs/seed2__performance__ew0.00__laf0.75.json"
+   "file": "runs/seed2__eco__ew0.20__laf0.75.json"
+  },
+  {
+   "id": "seed2__eco__ew0.40__laf0.75",
+   "course": "seed2",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.4,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 61.348,
+    "adjusted_time_s": 61.348,
+    "technical_points": 69.52,
+    "category_scores": {
+     "completion_time": 86.52,
+     "deviation": 100.0,
+     "compute": 90.42,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 12.183,
+    "energy_wh": 440.127,
+    "wh_per_km": 651.302,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 29.254,
+    "energy_breakdown_wh": {
+     "drag": 9.041,
+     "rolling": 40.77,
+     "brake_dissipated": 282.318,
+     "regen_recovered": 160.563,
+     "tyre_scrub": 73.242,
+     "drive_loss": 60.069
+    },
+    "energy_balance_residual_pct": -0.024
+   },
+   "file": "runs/seed2__eco__ew0.40__laf0.75.json"
+  },
+  {
+   "id": "seed2__eco__ew0.60__laf0.75",
+   "course": "seed2",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.6,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 62.489,
+    "adjusted_time_s": 62.489,
+    "technical_points": 68.42,
+    "category_scores": {
+     "completion_time": 84.58,
+     "deviation": 100.0,
+     "compute": 86.97,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.773,
+    "energy_wh": 412.308,
+    "wh_per_km": 608.34,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 30.51,
+    "energy_breakdown_wh": {
+     "drag": 8.738,
+     "rolling": 40.89,
+     "brake_dissipated": 254.754,
+     "regen_recovered": 153.995,
+     "tyre_scrub": 69.289,
+     "drive_loss": 56.63
+    },
+    "energy_balance_residual_pct": -0.022
+   },
+   "file": "runs/seed2__eco__ew0.60__laf0.75.json"
+  },
+  {
+   "id": "seed2__eco__ew0.80__laf0.75",
+   "course": "seed2",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 63.936,
+    "adjusted_time_s": 63.936,
+    "technical_points": 67.56,
+    "category_scores": {
+     "completion_time": 82.13,
+     "deviation": 100.0,
+     "compute": 86.15,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 15.386,
+    "energy_wh": 390.577,
+    "wh_per_km": 576.67,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 28.794,
+    "energy_breakdown_wh": {
+     "drag": 8.124,
+     "rolling": 40.862,
+     "brake_dissipated": 235.057,
+     "regen_recovered": 142.345,
+     "tyre_scrub": 65.806,
+     "drive_loss": 53.292
+    },
+    "energy_balance_residual_pct": -0.023
+   },
+   "file": "runs/seed2__eco__ew0.80__laf0.75.json"
+  },
+  {
+   "id": "seed2__eco__ew1.00__laf0.75",
+   "course": "seed2",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 1.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 65.752,
+    "adjusted_time_s": 65.752,
+    "technical_points": 66.47,
+    "category_scores": {
+     "completion_time": 79.05,
+     "deviation": 100.0,
+     "compute": 85.02,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 15.566,
+    "energy_wh": 321.773,
+    "wh_per_km": 475.624,
+    "peak_power_kw": 178.688,
+    "rms_jerk": 25.868,
+    "energy_breakdown_wh": {
+     "drag": 7.377,
+     "rolling": 40.816,
+     "brake_dissipated": 172.314,
+     "regen_recovered": 108.438,
+     "tyre_scrub": 59.375,
+     "drive_loss": 43.021
+    },
+    "energy_balance_residual_pct": -0.006
+   },
+   "file": "runs/seed2__eco__ew1.00__laf0.75.json"
+  },
+  {
+   "id": "seed2__performance__ew0.00__laf0.60",
+   "course": "seed2",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.6
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 65.679,
+    "adjusted_time_s": 65.679,
+    "technical_points": 66.86,
+    "category_scores": {
+     "completion_time": 79.18,
+     "deviation": 100.0,
+     "compute": 87.4,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 14.45,
+    "energy_wh": 454.774,
+    "wh_per_km": 670.391,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 33.713,
+    "energy_breakdown_wh": {
+     "drag": 8.128,
+     "rolling": 40.927,
+     "brake_dissipated": 328.687,
+     "regen_recovered": 177.064,
+     "tyre_scrub": 54.571,
+     "drive_loss": 63.184
+    },
+    "energy_balance_residual_pct": -0.026
+   },
+   "file": "runs/seed2__performance__ew0.00__laf0.60.json"
   },
   {
    "id": "seed2__performance__ew0.00__laf0.85",
@@ -2449,14 +2449,14 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 57.77,
-    "adjusted_time_s": 57.77,
-    "technical_points": 69.83,
+    "lap_time_s": 59.839,
+    "adjusted_time_s": 59.839,
+    "technical_points": 69.37,
     "category_scores": {
-     "completion_time": 92.58,
-     "deviation": 91.81,
-     "compute": 88.76,
-     "dynamics": 99.83
+     "completion_time": 89.07,
+     "deviation": 100.0,
+     "compute": 87.95,
+     "dynamics": 96.39
     },
     "penalties": {
      "cone_hits": 0,
@@ -2464,20 +2464,20 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 13.429,
-    "energy_wh": 451.105,
-    "wh_per_km": 674.311,
+    "p99_step_ms": 14.039,
+    "energy_wh": 449.415,
+    "wh_per_km": 665.316,
     "peak_power_kw": 200.0,
-    "rms_jerk": 26.114,
+    "rms_jerk": 26.256,
     "energy_breakdown_wh": {
-     "drag": 9.561,
-     "rolling": 40.361,
-     "brake_dissipated": 283.287,
-     "regen_recovered": 158.128,
-     "tyre_scrub": 80.752,
-     "drive_loss": 60.923
+     "drag": 9.462,
+     "rolling": 40.753,
+     "brake_dissipated": 268.686,
+     "regen_recovered": 150.677,
+     "tyre_scrub": 85.686,
+     "drive_loss": 60.009
     },
-    "energy_balance_residual_pct": -0.026
+    "energy_balance_residual_pct": -0.025
    },
    "file": "runs/seed2__performance__ew0.00__laf0.85.json"
   },
@@ -2508,7 +2508,7 @@
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 1.71,
+    "p99_step_ms": 2.315,
     "energy_wh": 303.916,
     "wh_per_km": 469.408,
     "peak_power_kw": 92.19,
@@ -2526,270 +2526,6 @@
    "file": "runs/seed3__baseline.json"
   },
   {
-   "id": "seed3__performance__ew0.00__laf0.60",
-   "course": "seed3",
-   "mode": "performance",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 53.876,
-    "adjusted_time_s": 53.876,
-    "technical_points": 67.38,
-    "category_scores": {
-     "completion_time": 83.3,
-     "deviation": 95.31,
-     "compute": 87.28,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 14.543,
-    "energy_wh": 447.257,
-    "wh_per_km": 692.463,
-    "peak_power_kw": 196.485,
-    "rms_jerk": 27.221,
-    "energy_breakdown_wh": {
-     "drag": 9.946,
-     "rolling": 38.968,
-     "brake_dissipated": 315.454,
-     "regen_recovered": 157.125,
-     "tyre_scrub": 50.109,
-     "drive_loss": 60.438
-    },
-    "energy_balance_residual_pct": -0.003
-   },
-   "file": "runs/seed3__performance__ew0.00__laf0.60.json"
-  },
-  {
-   "id": "seed3__eco__ew0.20__laf0.60",
-   "course": "seed3",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.2,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 54.223,
-    "adjusted_time_s": 54.223,
-    "technical_points": 67.39,
-    "category_scores": {
-     "completion_time": 82.61,
-     "deviation": 95.5,
-     "compute": 88.56,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 12.369,
-    "energy_wh": 421.503,
-    "wh_per_km": 652.716,
-    "peak_power_kw": 178.097,
-    "rms_jerk": 28.437,
-    "energy_breakdown_wh": {
-     "drag": 9.658,
-     "rolling": 38.96,
-     "brake_dissipated": 312.259,
-     "regen_recovered": 165.314,
-     "tyre_scrub": 50.262,
-     "drive_loss": 58.682
-    },
-    "energy_balance_residual_pct": 0.001
-   },
-   "file": "runs/seed3__eco__ew0.20__laf0.60.json"
-  },
-  {
-   "id": "seed3__eco__ew0.40__laf0.60",
-   "course": "seed3",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.4,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 54.331,
-    "adjusted_time_s": 54.331,
-    "technical_points": 68.03,
-    "category_scores": {
-     "completion_time": 82.39,
-     "deviation": 95.42,
-     "compute": 93.35,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 9.988,
-    "energy_wh": 389.891,
-    "wh_per_km": 603.89,
-    "peak_power_kw": 163.026,
-    "rms_jerk": 26.558,
-    "energy_breakdown_wh": {
-     "drag": 9.509,
-     "rolling": 38.952,
-     "brake_dissipated": 291.98,
-     "regen_recovered": 154.025,
-     "tyre_scrub": 48.044,
-     "drive_loss": 54.392
-    },
-    "energy_balance_residual_pct": -0.001
-   },
-   "file": "runs/seed3__eco__ew0.40__laf0.60.json"
-  },
-  {
-   "id": "seed3__eco__ew0.60__laf0.60",
-   "course": "seed3",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.6,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 54.86,
-    "adjusted_time_s": 54.86,
-    "technical_points": 67.59,
-    "category_scores": {
-     "completion_time": 81.34,
-     "deviation": 95.71,
-     "compute": 92.24,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 10.822,
-    "energy_wh": 344.994,
-    "wh_per_km": 534.322,
-    "peak_power_kw": 151.125,
-    "rms_jerk": 25.921,
-    "energy_breakdown_wh": {
-     "drag": 9.112,
-     "rolling": 38.954,
-     "brake_dissipated": 259.193,
-     "regen_recovered": 143.756,
-     "tyre_scrub": 47.008,
-     "drive_loss": 48.875
-    },
-    "energy_balance_residual_pct": 0.007
-   },
-   "file": "runs/seed3__eco__ew0.60__laf0.60.json"
-  },
-  {
-   "id": "seed3__eco__ew0.80__laf0.60",
-   "course": "seed3",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 0.8,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 56.454,
-    "adjusted_time_s": 56.454,
-    "technical_points": 65.64,
-    "category_scores": {
-     "completion_time": 78.17,
-     "deviation": 90.48,
-     "compute": 90.79,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 11.904,
-    "energy_wh": 291.578,
-    "wh_per_km": 451.962,
-    "peak_power_kw": 135.403,
-    "rms_jerk": 23.55,
-    "energy_breakdown_wh": {
-     "drag": 8.305,
-     "rolling": 38.922,
-     "brake_dissipated": 211.084,
-     "regen_recovered": 121.198,
-     "tyre_scrub": 42.773,
-     "drive_loss": 41.278
-    },
-    "energy_balance_residual_pct": 0.01
-   },
-   "file": "runs/seed3__eco__ew0.80__laf0.60.json"
-  },
-  {
-   "id": "seed3__eco__ew1.00__laf0.60",
-   "course": "seed3",
-   "mode": "eco",
-   "backend": "bicycle",
-   "params": {
-    "eco_weight": 1.0,
-    "lat_accel_frac": 0.6
-   },
-   "metrics": {
-    "finished": true,
-    "result": "finished",
-    "lap_time_s": 59.283,
-    "adjusted_time_s": 59.283,
-    "technical_points": 62.93,
-    "category_scores": {
-     "completion_time": 72.54,
-     "deviation": 96.9,
-     "compute": 77.53,
-     "dynamics": 100.0
-    },
-    "penalties": {
-     "cone_hits": 0,
-     "off_course": 0,
-     "missed_gates": 0,
-     "controller_errors": 0
-    },
-    "p99_step_ms": 21.856,
-    "energy_wh": 229.375,
-    "wh_per_km": 355.628,
-    "peak_power_kw": 104.708,
-    "rms_jerk": 20.466,
-    "energy_breakdown_wh": {
-     "drag": 7.282,
-     "rolling": 38.913,
-     "brake_dissipated": 142.671,
-     "regen_recovered": 85.637,
-     "tyre_scrub": 37.065,
-     "drive_loss": 31.501
-    },
-    "energy_balance_residual_pct": 0.016
-   },
-   "file": "runs/seed3__eco__ew1.00__laf0.60.json"
-  },
-  {
    "id": "seed3__performance__ew0.00__laf0.75",
    "course": "seed3",
    "mode": "performance",
@@ -2801,37 +2537,301 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 51.683,
-    "adjusted_time_s": 53.683,
-    "technical_points": 67.02,
+    "lap_time_s": 52.497,
+    "adjusted_time_s": 52.497,
+    "technical_points": 68.54,
     "category_scores": {
-     "completion_time": 87.66,
-     "deviation": 94.55,
-     "compute": 90.25,
+     "completion_time": 86.04,
+     "deviation": 100.0,
+     "compute": 84.88,
      "dynamics": 100.0
     },
     "penalties": {
-     "cone_hits": 1,
+     "cone_hits": 0,
      "off_course": 0,
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 12.311,
-    "energy_wh": 451.023,
-    "wh_per_km": 698.698,
-    "peak_power_kw": 196.028,
-    "rms_jerk": 25.843,
+    "p99_step_ms": 16.338,
+    "energy_wh": 476.065,
+    "wh_per_km": 731.434,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 29.97,
     "energy_breakdown_wh": {
-     "drag": 10.582,
-     "rolling": 38.945,
-     "brake_dissipated": 312.91,
-     "regen_recovered": 161.805,
-     "tyre_scrub": 58.601,
-     "drive_loss": 61.283
+     "drag": 10.734,
+     "rolling": 39.268,
+     "brake_dissipated": 302.893,
+     "regen_recovered": 155.673,
+     "tyre_scrub": 64.598,
+     "drive_loss": 63.174
     },
-    "energy_balance_residual_pct": -0.008
+    "energy_balance_residual_pct": -0.014
    },
    "file": "runs/seed3__performance__ew0.00__laf0.75.json"
+  },
+  {
+   "id": "seed3__eco__ew0.20__laf0.75",
+   "course": "seed3",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.2,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 52.505,
+    "adjusted_time_s": 52.505,
+    "technical_points": 68.41,
+    "category_scores": {
+     "completion_time": 86.03,
+     "deviation": 100.0,
+     "compute": 83.99,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 17.007,
+    "energy_wh": 468.037,
+    "wh_per_km": 719.604,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 28.704,
+    "energy_breakdown_wh": {
+     "drag": 10.67,
+     "rolling": 39.24,
+     "brake_dissipated": 290.554,
+     "regen_recovered": 150.255,
+     "tyre_scrub": 64.932,
+     "drive_loss": 61.829
+    },
+    "energy_balance_residual_pct": -0.011
+   },
+   "file": "runs/seed3__eco__ew0.20__laf0.75.json"
+  },
+  {
+   "id": "seed3__eco__ew0.40__laf0.75",
+   "course": "seed3",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.4,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 53.001,
+    "adjusted_time_s": 53.001,
+    "technical_points": 68.19,
+    "category_scores": {
+     "completion_time": 85.04,
+     "deviation": 99.55,
+     "compute": 84.94,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 16.295,
+    "energy_wh": 457.547,
+    "wh_per_km": 702.778,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 28.738,
+    "energy_breakdown_wh": {
+     "drag": 10.562,
+     "rolling": 39.279,
+     "brake_dissipated": 276.606,
+     "regen_recovered": 144.517,
+     "tyre_scrub": 63.798,
+     "drive_loss": 60.206
+    },
+    "energy_balance_residual_pct": -0.01
+   },
+   "file": "runs/seed3__eco__ew0.40__laf0.75.json"
+  },
+  {
+   "id": "seed3__eco__ew0.60__laf0.75",
+   "course": "seed3",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.6,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 53.614,
+    "adjusted_time_s": 53.614,
+    "technical_points": 66.99,
+    "category_scores": {
+     "completion_time": 83.82,
+     "deviation": 100.0,
+     "compute": 78.94,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 20.798,
+    "energy_wh": 416.728,
+    "wh_per_km": 640.126,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 25.859,
+    "energy_breakdown_wh": {
+     "drag": 10.148,
+     "rolling": 39.276,
+     "brake_dissipated": 237.646,
+     "regen_recovered": 134.172,
+     "tyre_scrub": 60.295,
+     "drive_loss": 55.09
+    },
+    "energy_balance_residual_pct": -0.006
+   },
+   "file": "runs/seed3__eco__ew0.60__laf0.75.json"
+  },
+  {
+   "id": "seed3__eco__ew0.80__laf0.75",
+   "course": "seed3",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.8,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 55.181,
+    "adjusted_time_s": 55.181,
+    "technical_points": 65.68,
+    "category_scores": {
+     "completion_time": 80.7,
+     "deviation": 100.0,
+     "compute": 76.45,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 22.664,
+    "energy_wh": 348.572,
+    "wh_per_km": 535.64,
+    "peak_power_kw": 194.578,
+    "rms_jerk": 22.65,
+    "energy_breakdown_wh": {
+     "drag": 9.309,
+     "rolling": 39.261,
+     "brake_dissipated": 175.262,
+     "regen_recovered": 104.367,
+     "tyre_scrub": 53.887,
+     "drive_loss": 45.294
+    },
+    "energy_balance_residual_pct": -0.004
+   },
+   "file": "runs/seed3__eco__ew0.80__laf0.75.json"
+  },
+  {
+   "id": "seed3__eco__ew1.00__laf0.75",
+   "course": "seed3",
+   "mode": "eco",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 1.0,
+    "lat_accel_frac": 0.75
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 57.942,
+    "adjusted_time_s": 57.942,
+    "technical_points": 63.87,
+    "category_scores": {
+     "completion_time": 75.21,
+     "deviation": 100.0,
+     "compute": 75.37,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 23.47,
+    "energy_wh": 274.442,
+    "wh_per_km": 422.149,
+    "peak_power_kw": 177.366,
+    "rms_jerk": 18.617,
+    "energy_breakdown_wh": {
+     "drag": 8.106,
+     "rolling": 39.222,
+     "brake_dissipated": 106.678,
+     "regen_recovered": 65.344,
+     "tyre_scrub": 46.366,
+     "drive_loss": 33.979
+    },
+    "energy_balance_residual_pct": 0.004
+   },
+   "file": "runs/seed3__eco__ew1.00__laf0.75.json"
+  },
+  {
+   "id": "seed3__performance__ew0.00__laf0.60",
+   "course": "seed3",
+   "mode": "performance",
+   "backend": "bicycle",
+   "params": {
+    "eco_weight": 0.0,
+    "lat_accel_frac": 0.6
+   },
+   "metrics": {
+    "finished": true,
+    "result": "finished",
+    "lap_time_s": 55.341,
+    "adjusted_time_s": 55.341,
+    "technical_points": 67.46,
+    "category_scores": {
+     "completion_time": 80.38,
+     "deviation": 100.0,
+     "compute": 88.99,
+     "dynamics": 100.0
+    },
+    "penalties": {
+     "cone_hits": 0,
+     "off_course": 0,
+     "missed_gates": 0,
+     "controller_errors": 0
+    },
+    "p99_step_ms": 13.259,
+    "energy_wh": 464.209,
+    "wh_per_km": 713.569,
+    "peak_power_kw": 200.0,
+    "rms_jerk": 29.979,
+    "energy_breakdown_wh": {
+     "drag": 9.973,
+     "rolling": 39.248,
+     "brake_dissipated": 318.881,
+     "regen_recovered": 166.952,
+     "tyre_scrub": 50.725,
+     "drive_loss": 63.116
+    },
+    "energy_balance_residual_pct": -0.017
+   },
+   "file": "runs/seed3__performance__ew0.00__laf0.60.json"
   },
   {
    "id": "seed3__performance__ew0.00__laf0.85",
@@ -2845,35 +2845,35 @@
    "metrics": {
     "finished": true,
     "result": "finished",
-    "lap_time_s": 49.918,
-    "adjusted_time_s": 51.918,
-    "technical_points": 68.3,
+    "lap_time_s": 50.793,
+    "adjusted_time_s": 50.793,
+    "technical_points": 68.9,
     "category_scores": {
-     "completion_time": 91.17,
-     "deviation": 94.3,
-     "compute": 92.42,
-     "dynamics": 99.61
+     "completion_time": 89.43,
+     "deviation": 100.0,
+     "compute": 87.15,
+     "dynamics": 93.35
     },
     "penalties": {
-     "cone_hits": 1,
+     "cone_hits": 0,
      "off_course": 0,
      "missed_gates": 0,
      "controller_errors": 0
     },
-    "p99_step_ms": 10.685,
-    "energy_wh": 461.336,
-    "wh_per_km": 714.112,
+    "p99_step_ms": 14.637,
+    "energy_wh": 486.43,
+    "wh_per_km": 747.488,
     "peak_power_kw": 200.0,
-    "rms_jerk": 26.24,
+    "rms_jerk": 26.795,
     "energy_breakdown_wh": {
-     "drag": 11.224,
-     "rolling": 38.976,
-     "brake_dissipated": 308.293,
-     "regen_recovered": 163.05,
-     "tyre_scrub": 67.225,
-     "drive_loss": 62.439
+     "drag": 11.194,
+     "rolling": 39.261,
+     "brake_dissipated": 283.06,
+     "regen_recovered": 139.685,
+     "tyre_scrub": 79.133,
+     "drive_loss": 62.612
     },
-    "energy_balance_residual_pct": -0.008
+    "energy_balance_residual_pct": -0.015
    },
    "file": "runs/seed3__performance__ew0.00__laf0.85.json"
   }

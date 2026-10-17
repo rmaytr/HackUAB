@@ -33,7 +33,7 @@ renamed or removed. A new key can be added without a version bump, so the app sh
 | `generated_at`, `commit` | UTC time of the export and the git commit of the code that drove the laps |
 | `backend_note` | One sentence on what was simulated |
 | `assumptions` | `eta_drive`, `eta_regen` and `p_regen_max_kw` used for the energy figures. **They are assumed values for a generic EV, not Blazer EV specifications.** The simulator has no battery or regen, so energy is rebuilt from the wheel forces in telemetry. |
-| `param_axes` | Every value in the grid: `eco_weight` (0 = fastest lap, 1 = most energy-saving) and `lat_accel_frac` (the fraction of tyre grip the planner uses for cornering; 0.6 is the default) |
+| `param_axes` | Every value in the grid: `eco_weight` (0 = fastest lap, 1 = most energy-saving) and `lat_accel_frac` (the fraction of tyre grip the planner uses for cornering). The eco_weight sweep and both presets use the `hackuab/params.py` default (currently 0.75); the other values are run at eco_weight 0 only. |
 | `presets` | The two driving modes as parameter values: `performance` = `eco_weight 0` (the scored submission), `eco` = `eco_weight 0.8` |
 | `courses` | One entry per course (see below) |
 | `runs` | One entry per lap (see below) |
@@ -47,7 +47,7 @@ scorer's reference lap time), `closed` (a loop instead of point-to-point), `laps
 
 | Key | Meaning |
 |---|---|
-| `id` | `<course>__baseline` or `<course>__<mode>__ew<eco_weight>__laf<lat_accel_frac>`, e.g. `practice_technical__eco__ew0.80__laf0.60` |
+| `id` | `<course>__baseline` or `<course>__<mode>__ew<eco_weight>__laf<lat_accel_frac>`, e.g. `practice_technical__eco__ew0.80__laf0.75` |
 | `course` | A `courses[].id` |
 | `mode` | `"baseline"` (the organisers' pure-pursuit example controller), `"performance"` (ours, eco_weight 0) or `"eco"` (ours, eco_weight > 0; 0.8 is the eco preset) |
 | `backend` | `"bicycle"` |
