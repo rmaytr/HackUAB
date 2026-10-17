@@ -69,12 +69,13 @@ class Params:
     drag_area: float = 0.55                      # m^2, Cd*A
     rolling_resistance: float = 0.012
     steer_time_constant: float = 0.06            # s, first-order steering lag
-    # AWD drivetrain + brakes (Chevy Blazer EV, assumed AWD; matches the bicycle backend). Used by the
-    # tracker's per-axle friction model: each axle's drive/brake force and its share of the cornering
-    # force must fit inside that axle's friction circle, with load transfer from cg_height.
-    front_drive_fraction: float = 0.4            # share of drive force on the front axle (AWD)
-    front_brake_fraction: float = 0.6            # share of brake force on the front axle (bicycle.py default)
-    traction_limit: float = 0.97                 # TC/ABS: max |Fx| per axle as a fraction of mu*Fz
+    # Drivetrain: the car is ALL-WHEEL DRIVE (both axles driven), as in the harness's bicycle backend.
+    # Traction is limited by the load on all four tyres, and drive force also uses front-tyre grip
+    # in corners (power-on understeer). Don't model it as rear- or front-wheel drive anywhere.
+    # The tracker's per-axle friction model (tracker.lon_envelope) uses these with cg_height.
+    front_drive_fraction: float = 0.4            # front share of drive force (rear gets 0.6)
+    front_brake_fraction: float = 0.6            # front share of brake force
+    traction_limit: float = 0.97                 # TC/ABS: |Fx| per axle <= traction_limit * mu * Fz
 
     # --- derived from VehicleParams in from_vehicle() ---
     a_lat: float = 0.0
