@@ -111,7 +111,10 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
     s1 = s0 + max(v * _p(p, "speed_preview_t"), 1.0)
     v0, v1 = float(np.interp(s0, s, vp)), float(np.interp(s1, s, vp))
     a_ff = (v1 * v1 - v0 * v0) / (2.0 * (s1 - s0))
-    v_ref = v1
+    # Target the profile where the (predicted) car is; braking ahead comes in through a_ff.
+    # Reading the target ahead instead left the car ~0.7 m/s under the planner on every straight,
+    # because the profile always falls toward the horizon-end guard.
+    v_ref = v0
     err = v_ref - v
     if err > 0.0:
         # Below the profile its downward slope is not a demand: the profile always falls toward
@@ -124,14 +127,15 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
 
     # friction ellipse: grip used laterally is not available longitudinally. Lateral load is the
     # larger of what the steering asks now and what the path asks just ahead (corner entry).
-    # lon_frac = 1 - (a_lat/a_lat_max)^2 sits inside the true ellipse sqrt(1 - r^2): braking
+    # Throttle uses the true ellipse sqrt(1 - r^2). Braking uses 1 - r^2, inside it: braking
     # scales against max_decel, which is above the lateral limit, and the rear axle of this car
     # lets go first under combined braking and cornering.
     delta = steer * vehicle.max_steer
     a_lat = max(v * v * abs(math.tan(delta)) / L, v * v * abs(kappa_ff))
-    lon_frac = max(0.0, 1.0 - min(a_lat / max(a_lat_max, 1e-3), 1.0) ** 2)
+    r2 = min(a_lat / max(a_lat_max, 1e-3), 1.0) ** 2
+    lon_frac = math.sqrt(1.0 - r2)
     a_up = vehicle.max_accel * max(lon_frac, _p(p, "accel_floor"))
-    a_dn = vehicle.max_decel * max(lon_frac, _p(p, "brake_floor"))
+    a_dn = vehicle.max_decel * max(1.0 - r2, _p(p, "brake_floor"))
     a_cmd = float(np.clip(a_cmd, -a_dn, a_up))
 
     # jerk limit: ramp the pedals so load transfer does not unsettle the rear
