@@ -1,0 +1,7 @@
+# ECO mode: energy-optimal lap. Same controller, eco_weight 0.8 (set in params.MODES["eco"], the
+# knee point from tools/eco_pareto.py): lift-and-coast before braking zones, gentler acceleration,
+# lower top speed. Results are in docs/STATUS.md, section "Eco mode".
+#   python ..\tools\run_mode.py eco selftest
+#   python -m autocross run -c ..\hackuab\controller.py --controller-config ..\hackuab\eco.yaml -t tracks\practice_technical.yaml --backend bicycle
+# Any Params field added below overrides the mode's values, e.g. `eco_weight: 0.6`.
+mode: eco

@@ -65,6 +65,11 @@ powershell -ExecutionPolicy Bypass -File scripts\setup.ps1     # needs Python 3.
 
 ### Everyday commands (run from inside `simulator/`)
 
+**Two driving modes, one controller:** PERFORMANCE (fastest lap, the scored default; `hackuab/performance.yaml`
+or no config) and ECO (energy-optimal lap; `hackuab/eco.yaml`). Run one with
+`python ..\tools\run_mode.py <performance|eco> <selftest|run TRACK>` and test one with
+`python -m pytest ..\tests -m performance` or `-m eco`. Details are in docs/STATUS.md, "Driving modes".
+
 ```powershell
 # watch it drive
 python -m autocross run -c ..\hackuab\controller.py -t tracks\practice_technical.yaml --backend bicycle --view

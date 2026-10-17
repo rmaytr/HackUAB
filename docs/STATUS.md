@@ -3,10 +3,289 @@
 **Update this file at the end of every task** (results table + what changed + next step) and commit it
 with your work, so the next agent, whether Claude, ChatGPT/Codex or a teammate's, picks up exactly where you left off.
 
-_Last updated: 2026-10-17, ~1:45 PM, team consolidation on `rodion/team-sync`, promoted to `main`
-after validation. Code freeze 5:00 PM, feature freeze 4:15 PM._
+_Last updated: 2026-10-17, Rodion's lap-time optimization (`70cb357`) promoted from
+`rodion/lap-time-optimization` to `main` after validation. CARLA validation remains pending.
+Code freeze 5:00 PM, feature freeze 4:15 PM._
+_~3:40 PM: Eco mode merged into `main` together with PERFORMANCE / ECO mode selection (below)._
 
-## United code state on `main`
+## Regression baselines re-recorded for PR #7 defaults (~4:00 PM)
+
+PR #7 (lat_accel_frac 0.6 → 0.75, v_max 22 → 30, corner-tracking tracker) intentionally changed the default
+behaviour, so the "same as before" tests were re-baselined at `d35176d`:
+- `tests/data/eco0_golden.npz` re-recorded (deterministic on repeat).
+- `MAIN_TECHNICAL_TIME_S` = **36.83951304188144 s** (PERFORMANCE, practice_technical, bicycle; identical on 3 runs, 0 overruns).
+- Lap tests compare exactly only when the controller's compute-budget guard never tripped (`dbg_n_over_budget` = 0).
+  When it did (a loaded machine: the verifier occasionally spikes to 30–36 ms), they allow ±0.1 s, because one
+  cheap-plan step shifts the lap by a few ms. That isn't a behaviour regression.
+- ECO lap bound per course: ≤ 12 % slower than PERFORMANCE (practice_technical is +10.2 %: 40.59 s vs 36.84 s;
+  all 5 public courses together are +7.8 %, inside the 10 % Eco budget). Consider re-running `tools/eco_pareto.py`
+  on the new defaults to re-pick the Eco knee point.
+- `test_batch_rollout_is_fast` passes on an idle machine (2.5–2.8 ms vs 3 ms) and fails under load. Run it on its own.
+- `viz/data` (branch `rodion/viz-data`) was generated before PR #7. Re-run `tools/export_viz.py` to refresh it.
+
+## Fixed: blocked corridor (~3:45 PM, `rodion/blocked-corridor`)
+
+When an obstacle leaves no gap the car fits through (`build_corridor` returns `valid=False`), the planner
+used to return a normal, accelerating centerline plan: full throttle at the obstacle, target 18 m/s,
+fallback 0, in both modes (review finding 1 in docs/CLAUDE_REVIEW_HANDOFF.md, reproduced on `1d93fac`).
+Now `planner._blocked_plan` brakes to `blocked_creep_speed` (2 m/s, so a transient blockage or a cone wall
+can't cause the 8 s "stuck" DNF; set 0 for a true stop) at a stop point `blocked_stop_margin` (1 m) before
+the car's nose reaches the first blocked station, and the speed target never exceeds the current speed.
+Logged as `dbg_blocked` / `dbg_blocked_s`. Tests: `tests/test_blocked.py` (final Command in both modes,
+closed-loop slow-down, gap control case).
+The blocked plan never triggers on any public course (0 of ~11k steps, both modes), so lap times are
+unchanged (PERFORMANCE identical; ECO practice_obstacles 59.30 s = before, with 0 overruns).
+Still open from the same review: the verifier doesn't receive the corridor (finding 2), the jerk limit can undo
+the grip clamp (3), the stale understeer estimate on straights (4), unknown YAML keys silently ignored (5),
+and narrow-road clamping (6).
+
+## Driving modes: PERFORMANCE (default, scored) and ECO
+
+One controller, two selectable modes. The mode is picked **only** by `mode:` in a `--controller-config` YAML
+(`params.MODES` holds each mode's values), never by course or position. No config means PERFORMANCE.
+
+| Mode | Config file | What it does | Run it (from `simulator/`) | Its tests |
+|---|---|---|---|---|
+| **PERFORMANCE** | `hackuab/performance.yaml` (or no config) | Fastest legal lap: `eco_weight 0`, the scored submission | `.venv\Scripts\python.exe ..\tools\run_mode.py performance selftest` | `.venv\Scripts\python.exe -m pytest ..\tests -m performance` |
+| **ECO** | `hackuab/eco.yaml` | Energy-optimal lap: `eco_weight 0.8` (lift-and-coast, gentler accel, lower top speed) | `.venv\Scripts\python.exe ..\tools\run_mode.py eco selftest` | `.venv\Scripts\python.exe -m pytest ..\tests -m eco` |
+
+- One lap: `..\tools\run_mode.py eco run practice_technical` (add `--view` to watch, `--strict` to re-raise errors,
+  `--backend carla` for CARLA). Any extra autocross flags pass through.
+- Fast unit tests only: `-m "eco and not sim"`. Full simulator laps are marked `sim`.
+- An unknown mode (e.g. a typo `mode: ecco`) raises in `on_start` instead of silently driving the wrong profile.
+- Keys set explicitly in the YAML override the mode's values (e.g. `mode: eco` + `eco_weight: 0.6`).
+
+Selftest at merge (bicycle, 0 cones / 0 off-course / 0 gates / 0 errors on every course in every row):
+
+| Course | No config | PERFORMANCE | ECO | `main` before the merge |
+|---|---|---|---|---|
+| hackathon_test | 51.4 s · 68.6 | 51.4 s · 68.6 | 55.5 s · 66.3 | 51.4 s · 68.6 |
+| practice_basic | 31.3 s · 70.3 | 31.3 s · 70.3 | 33.0 s · 69.0 | 31.3 s · 70.3 |
+| practice_loop | 88.6 s · 68.9 | 88.6 s · 68.9 | 96.0 s · 66.9 | 88.6 s · 68.8 |
+| practice_obstacles | 56.5 s · 68.1 | 56.5 s · 68.1 | 59.3 s · 66.8 | 56.5 s · 68.0 |
+| practice_technical | 38.5 s · 65.9 | 38.5 s · 65.8 | 41.7 s · 63.3 | 38.5 s · 65.9 |
+| **Mean technical** | **68.3** | **68.3** | **66.5** | **68.3** |
+
+Lap times are identical between no config, PERFORMANCE and pre-merge `main`. The ±0.1 differences are the compute score
+reacting to step-time noise (p99 ≈ 8–9 ms). ECO trades technical points (completion time) for energy; its
+energy numbers are in the next section. 100 tests pass (`-m performance`: 7, `-m eco`: 10, the rest are mode-independent).
+
+**For Viraj:** `params.py` gained `MODES`, `resolve_mode()` and the `mode` handling in `from_vehicle()`;
+`tools/run_mode.py` is new; `pytest.ini` (markers) is new at the repo root.
+
+## Eco mode (merged into `main`; innovation add-on for the judges)
+
+**Pitch:** same controller, one knob. `eco_weight` 0 gives the fastest legal lap and 1 the
+lowest-energy lap, and the trade-off is measured on a Pareto front. Selected only through
+`--controller-config ..\hackuab\eco.yaml` (eco_weight 0.8). The default (`eco_weight: 0.0`) is
+bit-identical to main 96a781e. `tests/test_eco.py` checks this two ways: a golden 140-step
+closed-loop command sequence recorded from main, and a full bicycle run that must reproduce main's
+38.549 s on practice_technical.
+
+**Headline (measured, bicycle):** Eco (eco_weight 0.8) uses **36 % less energy (Wh/km) for +6.2 %
+lap time** on average over practice_technical, hackathon_test and gen-track seeds 1/2/3
+(--obstacles 3), with **0 cones, 0 off-course, 0 missed gates and 0 controller errors** on all five
+courses. Per course: energy −24 % to −41 %, lap time +2.8 % to +8.2 %.
+
+What Eco does (planner.py, gated by `eco_weight > 0`; all scaled by eco_weight):
+1. **Lift-and-coast.** A coast-then-brake reachability pass (vectorised like the backward pass).
+   Before each braking zone the profile follows the car's own coast-down deceleration (drag +
+   rolling, ~0.2 m/s²) and brakes only where coasting can no longer make the corner. The coast
+   length is limited to what fits in the 40 m view, so the car never brakes just to get onto a coast line.
+2. **Gentler acceleration** (forward pass ×(1 − 0.5·w)) and a **lower top speed** (cruise ×(1 − 0.35·w)
+   of the horizon-guard top speed; drag power grows with v³). The forward-pass seed is shorter
+   (×(1 − 0.5·w)), which cuts speed-PI wind-up and the overshoot braking that follows it.
+3. Every eco plan still goes through `predict.verify_plan()`. Debug values: `dbg_eco_weight`, `dbg_coast`,
+   `dbg_regen_limited` (always 0 because regen-first braking was not built), `dbg_eco_v_cruise`, `dbg_eco_coast_m`.
+
+| eco_weight | Mean lap vs 0 | Worst lap vs 0 | Mean energy vs 0 | Clean on all 5 and within 10 % |
+|---:|---:|---:|---:|---|
+| 0 (Performance) | 0 % | 0 % | 0 % | yes |
+| 0.2 | −0.0 % | +0.6 % | −3.5 % | yes |
+| 0.4 | +0.9 % | +1.4 % | −11.8 % | yes |
+| 0.6 | +2.8 % | +4.0 % | −23.0 % | yes |
+| **0.8 (recommended)** | **+6.2 %** | **+8.2 %** | **−35.8 %** | **yes** |
+| 1.0 | +12.1 % | +15.8 % | −49.4 % | no: 1 cone on practice_technical (cone 231, t = 34 s), +15.8 % |
+
+| Course | Performance: lap / Wh/km / points | Eco 0.8: lap / Wh/km / points | Baseline PP: lap / Wh/km / penalties |
+|---|---|---|---|
+| practice_technical | 38.55 s / 675 / 65.92 | 41.71 s / 413 / 63.19 | 39.47 s / 492 / 8 |
+| hackathon_test | 51.36 s / 630 / 68.53 | 55.45 s / 374 / 66.24 | 55.98 s / 433 / 4 |
+| seed 1 | 51.19 s / 706 / 68.79 | 54.94 s / 419 / 66.77 | 56.27 s / 519 / 8 |
+| seed 2 | 62.40 s / 651 / 68.58 | 64.14 s / 494 / 67.76 | 67.96 s / 400 / 6 |
+| seed 3 | 53.88 s / 692 / 68.15 | 56.47 s / 454 / 67.32 | 58.64 s / 469 / 6 |
+
+Eco 0.8 is faster than the baseline pure pursuit on 4 of 5 courses and uses less energy on 4 of 5
+(not on seed 2). Unlike the baseline, it has no penalties. Eco costs technical points (the score
+rewards time), so **it is a demo and innovation feature, not the submission default.** Full
+per-weight table: `tools/figures/eco_pareto.md`; raw data: `tools/figures/eco_pareto_results.json`.
+
+**Energy meter (`tools/energy.py`).** It rebuilds the wheel forces from telemetry.csv exactly like
+`bicycle.substep()`: power-limited drive force, brake force, AWD 40/60 drive split, 60/40 brake split,
+and the traction-control clip `|Fx_axle| ≤ traction_limit·mu·Fz_axle` with load transfer from the
+previous tick's ax. It integrates the clipped axle forces with dt taken from column t. The plain
+longitudinal balance (E_trac − E_brake − E_drag − E_roll − ΔKE) leaves 7–13 % unexplained. That
+remainder is cornering tyre scrub, the work of the lateral tyre forces, which the meter rebuilds with
+`bicycle._lat()` from vy, yaw rate and steer angle. With it, **the balance closes to within ±0.05 % on
+every run** (tests: `tests/test_energy.py`, synthetic accelerate/cruise/brake with a known answer).
+
+**Assumptions (not Blazer EV specs; CLI flags):** eta_drive = 0.90 (battery to wheel),
+eta_regen = 0.65 (wheel to battery), P_regen_max = 60 kW. E_batt = E_trac/eta_drive − eta_regen·∫min(P_brake, P_regen_max)dt.
+The simulator has no electric drivetrain and no regen, so battery Wh are an estimate. The wheel-level
+terms (traction, drag, rolling, brake, tyre) are exact to the bicycle model. Note that ΔKE at the
+finish line counts as energy used. Performance crosses the finish of practice_technical at about 20 m/s
+(108 Wh of 335 Wh). Without that term Eco still saves 40 % there (227 → 137 Wh).
+
+**CARLA:** not measured (Viraj owns CARLA). CARLA telemetry has no pedal-to-force model we can mirror,
+so there the tractive force would have to come from m·ax + drag + rolling. That is a proxy that cannot
+separate brake heat from tyre losses.
+
+Demo figures (`tools/figures/`): `eco_pareto.png` (lap time vs energy, one line per course, the
+recommended point marked, baseline in grey), `eco_energy_breakdown.png` (where the energy goes for
+baseline / Performance / Eco on practice_technical), `eco_speed_trace.png` (Performance vs Eco speed
+with Eco's coasting stretches shaded).
+Reproduce from simulator/: `..\tools\eco_pareto.py --out <tmp>`, then
+`..\tools\eco_figures.py --results <tmp>\results.json --eco 0.8`.
+
+Verification on this branch (bicycle):
+- 91 tests pass: 84 inherited from main, 3 for the energy meter (`tests/test_energy.py`) and 4 Eco tests,
+  including the eco_weight 0 golden sequence and the lap-time regression.
+- Default selftest (`runs/20261017-150854_selftest`): times identical to main 96a781e (51.357 / 31.272 /
+  88.646 / 56.541 / 38.549 s), 0 penalties, 0 controller errors, 0 overruns, p99 8.3–9.5 ms.
+- Eco selftest with `hackuab\eco.yaml` (`runs/20261017-150952_selftest`): hackathon 55.45, basic 32.95,
+  loop 96.01, obstacles 59.30, technical 41.71 s; 0 penalties, 0 controller errors, 0 overruns.
+  Its p99 of 7.7–25 ms is machine jitter: the same eco technical run gave 14.5 ms and then 8.4 ms back to back,
+  and the Pareto sweep's eco runs measured p99 7.9–10.2 ms. The eco planner adds about 1 ms mean.
+
+Limits: lift-and-coast contributes little on its own (Eco coasts about 2 s per lap on
+practice_technical), because the 40 m view leaves little room to coast before a corner. Most of the
+saving comes from the lower top speed and gentler acceleration, which leave less kinetic energy to
+brake away. Not built: regen-first braking (b) and lowering lat_accel_frac. The eco_weight 1.0 cone
+was not investigated.
+
+## Latest validated code: lap-time optimization (Rodion)
+
+Goal: lower clean completion time, not necessarily maximize every scoring category. Only Rodion's
+planner/predictor and their tests changed; tracker, horizon, controller, Params and the pinned
+simulator are untouched. The united-main description and historical tables below remain reference baselines.
+
+Changes:
+
+- Exact O(K) braking/acceleration reachability replaces O(K squared) all-pairs matrices. Cached,
+  read-only derivative operators and fewer temporary arrays reduce planner overhead.
+- Horizon-end racing-line fade is 4 m / weight 0.5 instead of 8 m / 2.0. All other corridor,
+  curvature, grip, braking and verification constraints remain in place.
+- A finite finish inside the visible corridor releases only the speculative unseen-hairpin cap;
+  it does not release limits for visible corners. No course names or hidden geometry are used.
+- Remembered verifier caps now use centerline station for both storage and lookup, matching
+  `obs.progress`, rather than mixing progress with offset-path length.
+- Predictor sanitization uses tracker's scalar helper. Bounded AWD memoization calls the actual
+  tracker helper at cell extremes and reuses only exactly equal plateau answers; boundary cells
+  call the original helper at the actual input. No approximate interpolation or copied physics.
+
+### Default-parameter results versus STATUS's united main
+
+Times are seconds; points are technical /75. Every row finishes with zero cones, off-course
+events, missed gates, obstacle hits, controller errors and overruns.
+
+| Course | United main time / points | Optimized time / points | Time saved |
+|---|---:|---:|---:|
+| hackathon_test | 51.949 / 68.40 | 51.357 / 68.47 | 0.592 |
+| practice_basic | 31.616 / 70.06 | 31.272 / 70.21 | 0.344 |
+| practice_loop | 88.975 / 68.90 | 88.646 / 68.77 | 0.329 |
+| practice_obstacles | 57.281 / 67.34 | 56.544 / 67.88 | 0.737 |
+| practice_technical | 38.701 / 65.88 | 38.549 / 65.82 | 0.152 |
+| Random seed 1 | 51.587 / 68.94 | 51.167 / 68.95 | 0.420 |
+| Random seed 2 | 62.879 / 68.79 | 62.398 / 68.51 | 0.481 |
+| Random seed 3 | 54.359 / 68.05 | 53.876 / 68.09 | 0.483 |
+
+Total time across these eight courses: 437.347 -> 433.809 s (3.538 s / 0.81% faster).
+Mean public technical score: 68.116 -> 68.230. Some individual scores fall despite faster laps;
+do not describe this as a uniform scoring improvement. Default selected p99 is 8.3-11.0 ms,
+well below 50 ms, with about 34 MB memory. CPU results do not establish a universal speedup:
+memoization has cold misses and the shared AWD helper remains the predictor's dominant cost.
+
+Planner-stage wall times from 8,950 controller calls in the five public courses and seeds 1/2/3:
+including verification, mean **4.23 ms**, p99 **7.61 ms**, maximum **37.00 ms**; 23.43% exceed
+5 ms. Excluding the nested verification timer, mean is 0.88 ms and p99 1.30 ms. Thus the
+line/speed planner is comfortably under 5 ms, but the complete verified planner is only under
+5 ms on average, not at p99. These are measured bicycle timings on Rodion's machine, not a
+hard runtime guarantee or a fresh CARLA measurement.
+
+### Extra holdouts: existing obstacle failures, not a clean-course claim
+
+Generated seeds 4/5 only after selecting the code. Both hit an unmapped obstacle cone, so neither
+is a clean pass. An isolated untouched `8acab13` worktree reproduces the same cone IDs at nearly
+the same progress. The branch is faster with **no new penalties**, but does not fix these failures.
+
+| Extra seed | Untouched main time / points | Optimized time / points | Cones main / branch |
+|---|---:|---:|---:|
+| 4 | 58.797 / 65.12 | 58.419 / 65.11 | 1 / 1 (unmapped cone 437, progress ~78 m) |
+| 5 | 52.619 / 65.87 | 52.464 / 65.86 | 1 / 1 (unmapped cone 401, progress ~401 m) |
+
+All four runs finish without off-course/missed gates/controller errors/overruns. This is a
+pre-existing obstacle-handling limitation requiring the Saisi/Rodion follow-up, not evidence
+of general unseen-course safety. No course-specific workaround was added. Reports are under
+`runs/optimization/selected-default/holdouts/` and `runs/optimization/baseline-holdouts/`;
+the isolated baseline is `runs/optimization/baseline-main/` (all ignored).
+
+### Verification and review
+
+Promotion recheck (2026-10-17, ~2:50 PM): fetched `origin/main` was still `8acab13`, so the
+reviewed code can be fast-forwarded without a controller-code merge. Re-ran every required
+check on `70cb357`; only this handoff documentation changed afterward.
+
+| Check | Previously recorded optimized result | Pre-merge recheck |
+|---|---:|---:|
+| Unit tests | 84 passing | 84 passing |
+| Strict technical time | 38.549 s, clean | 38.549 s, clean |
+| Strict obstacles time | 56.541 s, clean | 56.541 s, clean |
+| Full selftest | 5 clean finishes, mean 68.230 /75 | 5 clean finishes, mean 68.370 /75 |
+
+The recheck has zero cones/off-course/missed gates/controller errors/overruns, with selftest
+step p99 8.2-9.1 ms. Differences in compute scores do not imply changed controller behavior.
+Fresh reports: `runs/merge-validation/20261017-144906_selftest/`; strict runs are siblings
+`20261017-144846_controller_practice_technical` and `20261017-144855_controller_practice_obstacles`.
+The previously documented random-course evidence applies to the identical controller code.
+
+Required strict technical/obstacle runs finish cleanly in 38.549 / 56.541 s (p99 8.16 / 8.96 ms).
+Default selftest and strict random seeds 1/2/3 (`--obstacles 3`) all finish cleanly. Artifacts:
+`runs/optimization/selected-default/20261017-141708_selftest/`, its sibling `random/`, and
+`runs/optimization/final-strict/` (ignored local files). Technical report visually inspected.
+All **84 tests pass**, including unchanged predictor timing budgets. Pytest emits only an
+existing cache-directory permission warning; collection and assertions complete normally.
+
+Independent read-only review found no blocking implementation issues. Its documentation and
+next-step cap-lookup test suggestions were addressed and re-reviewed. Tests cover exact speed
+passes on nonuniform grids, curvature invariance, finish visibility, both remembered-cap storage
+and lookup, randomized AWD parity/quantization edges, parameter mutation and existing per-step
+tracker pedal parity. This is evidence, not a guarantee of global optimality or unseen-course safety.
+
+Rejected experiments: a path-length surrogate cut some laps but introduced mapped-cone hits;
+it was removed completely. Stronger warm-start weights were slower on basic and not adopted.
+No generic obstacle safeguard was added, consistent with Rodion's earlier scope decision.
+
+Parameter-only experiments on this exact code: `lat_accel_frac: 0.8`, `decel_frac: 0.6`
+cut technical to 34.775 s; `0.85 / 0.7` cut it to 33.998 s. Both pass all five public courses
+and seeds 1/2, but **both hit one cone on seed 3** (49.306 / 48.119 s). Neither qualifies as
+a clean all-course recommendation. Rear sliding also increases; `0.85 / 0.7` reaches 13.6 degrees
+on basic. Default fractions remain unchanged. Artifacts: `runs/optimization/race08-06/` and
+`race085-07/` (full selftests in `full/`, random seed 2 in the root, other seeds in `random/`).
+Braking-only `decel_frac: 0.6` at default lateral fraction also fails: technical is faster at
+36.856 s but hits one cone; seed 3 also hits one cone. It is not recommended either
+(`runs/optimization/brake06-final/`). It retains the seed-4/5 obstacle hits as well.
+
+Review follow-ups requiring other owners:
+
+- **Viraj + Rodion:** expose a read-only live tracker-state snapshot to verification (PI, jerk,
+  steering-command and filtered-slip histories). Current prediction starts that history afresh.
+- **Saisi + Rodion:** coordinate corridor-aware verification and a safe invalid/blocked-corridor
+  policy. Planner currently does not pass the corridor to `verify_plan`; `pred_ok` therefore does
+  not certify containment. Existing invalid-corridor centerline fallback remains a known risk.
+- **Viraj:** confirm the exact branch and any opt-in parameter preset on CARLA before adopting
+  new grip/braking defaults. Default lateral/deceleration fractions remain 0.6 / 0.4.
+
+## United code state at consolidation (`8acab13`, before optimization)
 
 | Module | Owner | State |
 |---|---|---|
@@ -20,7 +299,7 @@ after validation. Code freeze 5:00 PM, feature freeze 4:15 PM._
 
 Vehicle: **all-wheel drive** (EIC Chevy Blazer EV): 40 % front drive, 60 % front brakes. See CLAUDE.md "Drivetrain".
 
-## Latest unified validation (default params, bicycle)
+## Historical consolidation validation (default params, bicycle, `8acab13`)
 
 Combined `rodion/regroup` (which already contains verifier-sync, Viraj's tracker/tools/figures and
 Saisi's corridor fix) with the remaining `chore/team-setup` architecture history. All fetched remote
@@ -215,14 +494,16 @@ and `run`. Generate courses outside the submodule with `gen-track --seed 1 --obs
 ## Next tasks
 
 **Rodion (planner.py, predict.py):**
-1. Revalidate the historical 0.8875 lateral-fraction candidate on the unified tracker and 20 m taper:
-   public courses plus random seeds 1/2/3, then Viraj's CARLA confirmation before changing defaults.
-2. After CARLA confirmation, raise `decel_frac` (0.4) the same way. Target: `practice_technical` ≤ 36 s with 0 penalties.
+1. Coordinate the live tracker-state and corridor-verification interfaces with Viraj/Saisi; keep
+   optimizer changes separate from the known invalid-corridor fallback risk.
+2. Have Viraj confirm this branch and any qualifying braking/lateral candidate on CARLA before
+   changing Params defaults. Historical 0.8875 is not automatically transferable to the new code.
 3. Write `docs/INNOVATION.md`: racing line, physics-verified speed profile, visibility guard, AWD model.
    For each: what it is, why it matters, and the evidence (a number or a plot from `figures/`).
 
-**Viraj:** pull the united `main`, run `compare` (bicycle vs CARLA), then test the revalidated lateral fraction on CARLA.
-Check rear slip and obstacle clearance as well as lap time; keep the default at 0.6 until confirmed.
+**Viraj:** pull `main` including `70cb357` and run `compare` (bicycle vs CARLA) on the exact defaults.
+Check rear slip and obstacle clearance as well as lap time; no faster parameter preset qualified
+on this code, and the default lateral/deceleration fractions remain 0.6 / 0.4 until confirmed.
 **Saisi + Rodion:** follow up on the seed-2 invalid-corridor/centerline-fallback clearance issue separately.
 **Saisi:** fusion track (roadmap S2).
 

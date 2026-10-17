@@ -1,0 +1,12 @@
+# Edge cases beyond config/robustness.yaml, plus nominal as the do-no-harm check.
+tracks:
+  - tracks/practice_technical.yaml
+  - tracks/practice_obstacles.yaml
+  - ../tracks/seed5.yaml
+  - ../tracks/seed42.yaml
+seeds: [0, 1]
+perturbations:
+  nominal: {}
+  low_grip: {friction_scale: 0.8}
+  very_wet: {friction_scale: 0.65}
+  very_laggy: {actuation_delay_steps: 4}
