@@ -90,6 +90,7 @@ TUNABLES = {
     "verify_grip_limit": 1.0, "verify_rear_slip_deg": 5.0, "verify_relax": 1.01,
     # Eco mode; the Params fields of the same name (params.py) are the ones to tune
     "eco_coast_m": 30.0, "eco_coast_margin": 0.03, "eco_vmax_drop": 0.35, "eco_accel_drop": 0.5,
+    "eco_seed_drop": 0.5,
 }
 
 
@@ -282,7 +283,7 @@ def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Pl
     v_now = max(float(obs.speed), 0.0)
     a_now = float(np.interp(v_now + 0.1, table[0], table[1]) - np.interp(v_now, table[0], table[1]))
     a_now = 0.1 * (v_now + 0.05) / max(a_now, 1e-6)                      # a = v dv/ds
-    v_seed = v_now + a_now * _t(p, "fwd_seed_time")
+    v_seed = v_now + a_now * _t(p, "fwd_seed_time") * (1.0 if eco_cfg is None else eco_cfg["seed_scale"])
 
     def profile(cap: np.ndarray) -> np.ndarray:
         if eco_cfg is None:
@@ -327,7 +328,8 @@ def _eco_setup(v_cap: np.ndarray, s: np.ndarray, vehicle: VehicleParams, p: Para
     a_coast = ((0.5 * _t(p, "air_density") * p.drag_area * v_cruise ** 2) / m + p.rolling_resistance * G
                + _t(p, "eco_coast_margin"))
     return cap, {"v_cruise": v_cruise, "a_coast": min(a_coast, 0.9 * p.a_dec), "horizon": h,
-                 "coast_m": eco * _t(p, "eco_coast_m"), "accel_scale": 1.0 - _t(p, "eco_accel_drop") * eco}
+                 "coast_m": eco * _t(p, "eco_coast_m"), "accel_scale": 1.0 - _t(p, "eco_accel_drop") * eco,
+                 "seed_scale": 1.0 - _t(p, "eco_seed_drop") * eco}
 
 
 def eco_backward_pass(v_cap: np.ndarray, s: np.ndarray, a_dec: float, cfg: dict) -> tuple[np.ndarray, np.ndarray]:
