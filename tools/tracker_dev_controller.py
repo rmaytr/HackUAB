@@ -42,6 +42,8 @@ class TrackerDev(Controller):
     def on_start(self, track_info: TrackInfo, vehicle: VehicleParams) -> None:
         super().on_start(track_info, vehicle)
         self.state: dict = {}
+        # tracker overrides via --controller-config (keys under `tracker:`), for tuning sweeps
+        self.params = SimpleNamespace(**self.config.get("tracker", {}))
 
     def step(self, obs: Observation) -> Command:
         road, vp = obs.road, self.vehicle
@@ -51,7 +53,7 @@ class TrackerDev(Controller):
         a_lat = float(self.config.get("lat_frac", 0.70)) * vp.mu * G * self.state.get("a_lat_scale", 1.0)
         # horizon guard: be able to take a ~7 m radius corner just past the sight limit
         plan = stand_in_plan(road, obs.speed, vp, a_lat, v_horizon=float(np.sqrt(a_lat * 7.0)))
-        steer, throttle, brake = track(plan, obs, vp, None, self.state)
+        steer, throttle, brake = track(plan, obs, vp, self.params, self.state)
         dbg = dict(self.state.get("debug", {}))
         dbg["t_track_ms"] = (time.perf_counter() - t0) * 1e3
         dbg["k_abs_max10"] = float(np.max(np.abs(plan.kappa[plan.s < 10.0])))

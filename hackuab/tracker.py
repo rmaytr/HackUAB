@@ -45,7 +45,8 @@ DEFAULTS = {
     "i_limit": 2.0,                 # m/s^2, integrator clamp
     "coast_band": 0.25,             # m/s^2, small decel requests coast instead of braking
     "accel_floor": 0.15,            # min fraction of max_accel the ellipse leaves at full lateral load
-    "brake_floor": 0.5,             # min fraction of max_decel ever allowed (safety over realism)
+    "brake_floor": 0.3,             # min fraction of max_decel ever allowed (safety over realism)
+    "jerk_max": 40.0,               # m/s^3, max change of the acceleration command
     "ff_preview_t": 0.2,            # s, curvature feedforward is read this far ahead of the car
     "fb_gain": 1.0,                # weight of the pure-pursuit error feedback on top of the plan's curvature
     "slip_ema_alpha": 0.2,          # low-pass on the yaw-rate understeer indicator
@@ -138,13 +139,23 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
     state["i_err"] = float(np.clip(state.get("i_err", 0.0) + _p(p, "ki_speed") * err * dt, -i_lim, i_lim))
     a_cmd = a_ff + _p(p, "kp_speed") * err + state["i_err"]
 
-    # friction ellipse: grip used laterally is not available longitudinally
+    # friction ellipse: grip used laterally is not available longitudinally. Lateral load is the
+    # larger of what the steering asks now and what the path asks just ahead (corner entry).
+    # lon_frac = 1 - (a_lat/a_lat_max)^2 sits inside the true ellipse sqrt(1 - r^2): braking
+    # scales against max_decel, which is above the lateral limit, and the rear axle of this car
+    # lets go first under combined braking and cornering.
     delta = steer * vehicle.max_steer
-    a_lat = v * v * abs(math.tan(delta)) / L
-    lon_frac = math.sqrt(max(0.0, 1.0 - min(a_lat / max(a_lat_max, 1e-3), 1.0) ** 2))
+    a_lat = max(v * v * abs(math.tan(delta)) / L, v * v * abs(kappa_ff))
+    lon_frac = max(0.0, 1.0 - min(a_lat / max(a_lat_max, 1e-3), 1.0) ** 2)
     a_up = vehicle.max_accel * max(lon_frac, _p(p, "accel_floor"))
     a_dn = vehicle.max_decel * max(lon_frac, _p(p, "brake_floor"))
     a_cmd = float(np.clip(a_cmd, -a_dn, a_up))
+
+    # jerk limit: ramp the pedals so load transfer does not unsettle the rear
+    a_prev = state.get("a_prev", a_cmd)
+    j = _p(p, "jerk_max") * dt
+    a_cmd = float(np.clip(a_cmd, a_prev - j, a_prev + j))
+    state["a_prev"] = a_cmd
 
     # pedals, mutually exclusive by construction
     if a_cmd >= 0.0:
