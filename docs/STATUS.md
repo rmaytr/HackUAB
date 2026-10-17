@@ -3,13 +3,157 @@
 **Update this file at the end of every task** (results table + what changed + next step) and commit it
 with your work, so the next agent, whether Claude, ChatGPT/Codex or a teammate's, picks up exactly where you left off.
 
-_Last updated: 2026-10-17, Viraj tracking integration reviewed on `rodion/viraj-optimization-sync`.
-Main remains `96a781e` by Rodion's explicit decision; integrated tuning is NOT promoted.
-CARLA validation remains pending.
+_Last updated: 2026-10-17, score/lap-time diagnosis and current team pulls on `rodion/score-diagnosis`.
+Published main advanced from `1d93fac` to `dcd7f3c` (PR #7) during validation; this task did not promote it.
+New speed limits still need CARLA confirmation.
 Code freeze 5:00 PM, feature freeze 4:15 PM._
-_~3:40 PM: Eco mode merged into `main` together with PERFORMANCE / ECO mode selection (below)._
 
-## Driving modes: PERFORMANCE (default, scored) and ECO
+## Score versus lap time: diagnosis and latest team pulls
+
+Pulled published main `1d93fac` (PERFORMANCE/ECO selection), Saisi's `fusion-starter` tip `fde3667`,
+and Viraj's latest tracking/speed tip `b9a6feb` into this owner branch. Driving code snapshot after
+those merges is `1146012`. No controller fix or test-assertion change was implemented here; this
+task diagnoses and integrates owner-authored code. Main was not overwritten or promoted by this task.
+The final fetch found PR #7 already merged upstream as `dcd7f3c`; its `hackuab/` code is identical
+to the snapshot under test, so this is not an additional untested controller change.
+That upstream merge is included locally as `ffb3b51`; local main was fast-forwarded to `dcd7f3c`.
+The prior request to exclude a separate ECO branch was superseded by pulling the now-published
+main; all score-comparison driving below selected PERFORMANCE (`eco_weight=0`).
+
+### Why 66.96 locally does not contradict PR #7's 68.75
+
+[PR #7](https://github.com/rmaytr/HackUAB/pull/7) reports 68.75 versus 68.62 for its A/B and describes
+large CPU-timing variation with CARLA load/thermals. The PR does not attach per-course summaries
+for that exact pair, so its course set, category breakdown and any compute normalization cannot
+be reconstructed precisely. Do not assume that headline is the same five-course mean as ours.
+
+Directly reproduced locally, using the pre-speed-update tracking settings (lat fraction 0.6,
+v_max 22) on the same five public courses:
+
+| Measurement | Raw time total | Mean technical /75 | Mean compute /15 |
+|---|---:|---:|---:|
+| Previous main, fresh earlier baseline | 266.366 s | 67.032 | 12.968 |
+| Tracking update, earlier run | 267.874 s | 66.960 | 12.590 |
+| Same tracking behavior, fresh PERFORMANCE rerun after mode pull | 267.874 s | 68.460 | 14.086 |
+
+All five individual lap times, completion/deviation/dynamics points and zero penalties are
+identical between the last two rows. The 1.50-point total difference is compute timing (rounded
+category means give 1.496). Earlier versus fresh main can also lose over a point with identical
+driving. The compute rubric includes p99 latency, not only overruns; meeting 50 ms is not full
+compute marks. The fresh tracking run's p99 was 9.19-10.24 ms versus about 15-20 ms earlier.
+
+Same-machine category changes, old main versus earlier tracking run: completion time -0.296,
+deviation +0.602, dynamics unchanged, compute -0.378 points; net about -0.072. Holding compute
+equal would instead give about +0.306 points. A better score and slower raw lap can coexist.
+With the same five driving metrics, compute averaging about 14.38/15 would yield roughly 68.75;
+this is an illustrative calculation, not reconstruction of Viraj's unprovided logs.
+
+Standalone hardware diagnostic (not release-harness settings): identical 32x30 rollout best
+times were 2.63-2.78 ms on logical CPU 0 versus 5.28-5.36 ms on logical CPU 15. The harness pins
+its one-core worker to the last logical core. Affinity was changed only inside that diagnostic
+Python process and restored; no simulator settings were changed. This supports CPU/core/load
+sensitivity, but does not identify the thermal/background-load cause of any particular run.
+
+### Why raw time increased at the old speed limits
+
+Controlled seed-2 ablation on the pulled code, with PERFORMANCE, lat fraction 0.6, v_max 22 and
+decel fraction 0.4 held fixed. All four cases finish with zero penalties/errors/overruns:
+
+| ff_preview_t | fb_gain | Seed-2 time |
+|---:|---:|---:|
+| 0.2 | 1.0 | 62.397837 s |
+| 0.1 | 1.0 | 65.242988 s |
+| 0.2 | 1.5 | 62.359501 s |
+| 0.1 | 1.5 | 65.696554 s |
+
+The shorter preview reproduces most of this course's slowdown; raising feedback alone does not.
+Effects interact, so this is not a universal additive decomposition or a recommendation to
+revert the clearance fix. On the matched baseline/new-tracking runs, approximate driven distance
+is 659.4 -> 671.9 m, average speed 10.57 -> 10.23 m/s, average target 10.73 -> 10.43 m/s, braking
+39.82% -> 42.09% of control ticks, and within-step verifier rescaling 0.40% -> 4.26%. The mean
+planner grip scale is slightly higher, not lower (0.8815 -> 0.8942). Thus both more faithful/longer
+tracking and lower locally commanded speed contribute; global grip collapse or ECO activation
+does not explain this comparison. Steering preview also feeds the longitudinal grip envelope
+and the verifier control law, not just the path visualization.
+
+An initial fresh seed-2 run had one deadline overrun and took 65.835 s; its isolated repeat was
+65.696554 s with zero overruns. Both are recorded, and the no-overrun repeat is used for the
+parameter comparison. Other fresh public and seed-1/3 runs had no penalties/errors/overruns.
+
+### Latest speed update and integration caveats
+
+Viraj's newly pulled `b9a6feb` raises lat_accel_frac 0.6 -> 0.75 and v_max 22 -> 30, retaining
+the tracking fix and decel_frac 0.4. Its commit explicitly reports the old-limit corner fix as
+slower, then improved speed with the revised limits. Its reported 70.54 over ten courses excludes
+compute; do not confuse that with an official selftest mean out of 75. The 68.460 above is the
+older-limit diagnostic rerun, not the score of the new speed limits.
+
+Independent latest-speed validation (bicycle, PERFORMANCE, official one-core enforce settings):
+
+| Course | Prior main 96a781e time | Old-limit tracking time | Latest speed time | Latest /75 | Overruns |
+|---|---:|---:|---:|---:|---:|
+| hackathon_test | 51.357 | 52.462 | 50.521 | 57.23 | 25 |
+| practice_basic | 31.272 | 31.487 | 30.424 | 65.72 | 0 |
+| practice_loop | 88.646 | 86.842 | 86.216 | 59.61 | 20 |
+| practice_obstacles | 56.541 | 58.283 | 54.329 | 68.61 | 0 |
+| practice_technical | 38.549 | 38.800 | 37.036 | 63.17 | 0 |
+| **Five-course total / mean score** | **266.366** | **267.874** | **258.527** | **62.868** | **45** |
+
+All five finish with zero penalties/controller errors, but this is NOT a clean timing pass.
+Strict technical/obstacle checks independently finish in 36.839513 / 54.328999 s with zero
+penalties/errors/overruns. The strict technical report was visually inspected. The selftest
+technical trajectory differs from the strict run despite zero external deadline overruns;
+the controller also has its own 35 ms budget/fallback, so zero external overruns alone does
+not imply an identical trajectory. Latest selftest means: compute 8.348/15, deviation 14.082/15.
+Do not attribute the latest score loss entirely to compute, unlike the identical-driving
+old-limit comparison above. Latest public time is 7.839 s (2.94%) below prior main, but loaded
+measurements cannot establish an isolated speedup or release readiness.
+
+| Generated course (3 obstacles) | Old-limit tracking time | Latest time | Cones / off-course / gates | Overruns |
+|---|---:|---:|---|---:|
+| seed 1 | 51.012 | DNF (lost) | 2 / 1 / 0 | 53 |
+| seed 2 | 65.697 | 66.678 | 3 / 1 / 1 | 104 |
+| seed 3 | 55.299 | 52.385 | 0 / 0 / 0 | 0 |
+| holdout 4 | 61.133 | 57.822 | 0 / 0 / 0 | 1 |
+| holdout 5 | 52.765 | 54.833 | 2 / 1 / 0 | 154 |
+
+Controller errors are zero in these runs. Process inspection during this batch found another
+Claude worktree's `tools/export_viz.py --jobs 4` and a separate worktree's pytest/simulator laps
+running concurrently. Our validation commands themselves were serial. This is observed
+benchmark interference, not proof that every penalty disappears without it; do not claim a
+clean result or revert tuning from these loaded runs alone. Those external jobs were not stopped
+or changed. Re-run the same frozen revision after coordinating an idle validation window.
+Artifacts: `runs/score-diagnosis/speed-update/20261017-153936_selftest/`, strict siblings,
+and `speed-update/{random,holdouts}/`. All failed/loaded results are retained.
+
+The pulled fusion tests require the repository root on the import path. The prescribed command
+from simulator/ first failed collection (`No module named fusion`); adding
+`-o pythonpath=C:/Users/rodio/Desktop/Programming/HackUAB` collected all 110 tests. Before the speed
+update, 105 passed and five failed: four newly inherited mode/golden assertions freeze the old
+96a781e config/time, plus the unchanged batch timing test at 3.94 ms (isolated rerun 2.33 ms passes).
+The final latest-speed suite collects 110 tests and finishes **106 passed, 4 failed (28.40 s)**;
+the batch timing assertion passes in that run. The four failures are
+`test_eco_weight_zero_reproduces_golden_commands`,
+`test_eco_weight_zero_keeps_practice_technical_lap_time`,
+`test_performance_yaml_reproduces_golden_commands`, and
+`test_performance_lap_practice_technical`. The lap tests now obtain 36.839513 s rather than the
+old fixed 38.548896 s; the command tests retain the old steering baseline. No assertion, golden
+file or threshold was loosened. A manual latest-code diagnostic explicitly restores all four
+old values (ff 0.2, gain 1.0, lateral fraction 0.6, v_max 22): **all six stored arrays match exactly**.
+Future baseline tests should identify revision/config, not silently assume intentional tuning
+changes preserve old commands. Both documented strict runs and selftest were executed; the
+unmodified prescribed pytest command still fails fusion collection without the root-path override.
+
+Diagnostic artifacts (ignored): `runs/score-diagnosis/latest/20261017-153059_selftest/`, its strict
+siblings and random runs; `ablation/{old-steering,preview-only,gain-only}/`; isolated both-new
+repeat `repeat/20261017-153408_controller_gen_open_2/`. Frozen ablation YAMLs include all four
+old speed/steering values. `telemetry_compare.py` reads those traces only. The supplied local
+CLAUDE_REVIEW_HANDOFF.md remains unmodified/untracked.
+
+## Upstream-reported driving modes (main `1d93fac`, before the tracking/speed candidate)
+
+The following mode/ECO tables are the upstream author's validation at the old steering/speed
+settings, not claims that the current combined candidate passes the same frozen golden tests.
 
 One controller, two selectable modes. The mode is picked **only** by `mode:` in a `--controller-config` YAML
 (`params.MODES` holds each mode's values), never by course or position. No config means PERFORMANCE.
@@ -548,14 +692,21 @@ and `run`. Generate courses outside the submodule with `gen-track --seed 1 --obs
 **Rodion (planner.py, predict.py):**
 1. Follow OPTIMIZATION_PLAN.md: agree on blocked-corridor policy with Saisi/Viraj and state/FIFO
    snapshot with Viraj, then implement corridor/footprint-aware prediction with a corrective response.
-2. Recover the integration branch's lap-time regression without giving back the seed-4/5 clearance
-   gains. Keep main at `96a781e` until clean timing evidence supports promotion; no blind fraction increase.
+2. Validate Viraj's `b9a6feb` speed recovery on an idle machine and CARLA without giving back the
+   seed-4/5 clearance gains. Published main already advanced to `dcd7f3c` via PR #7 independently;
+   do not claim release validation until its tests and clean timing gates pass. Preserve the
+   contaminated runs as diagnostic evidence.
 3. Write `docs/INNOVATION.md`: racing line, physics-verified speed profile, visibility guard, AWD model.
    For each: what it is, why it matters, and the evidence (a number or a plot from `figures/`).
 
 **Viraj:** coordinate final jerk/grip priority, straight-line slip recovery, supported config and
-state/FIFO contracts; compare exact approved revisions on CARLA. The integration branch is not
-promoted. Lateral/deceleration fractions remain 0.6 / 0.4.
+state/FIFO contracts; compare exact approved revisions on CARLA. This task did not promote the
+integration branch; upstream independently merged PR #7. Latest default lateral/deceleration
+fractions are 0.75 / 0.4, with v_max 30;
+the old-limit diagnosis explicitly freezes 0.6 / 0.4 and v_max 22. Reconcile mode golden tests
+with intentional tuning by freezing the old configuration, not overwriting expected commands;
+fix fusion test collection from the documented simulator working directory. Coordinate test/export
+jobs before latency benchmarking: four export workers were observed overlapping this validation.
 **Saisi + Rodion:** define physically blocked/narrow corridor states and safe degraded behavior;
 the clean integrated holdout runs do not repair the reproduced unsafe fallback policy.
 **Saisi:** fusion track (roadmap S2).
