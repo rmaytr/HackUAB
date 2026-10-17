@@ -7,6 +7,8 @@ so these rules keep merges painless and `main` always submittable.
 
 ## Project & track
 
+- **Original spec:** [`docs/ecocar_autocross_context_architecture_spec.md`](docs/ecocar_autocross_context_architecture_spec.md)
+  (the organizers' brief; this file supersedes its TODO section with the real API below).
 - **Challenge:** University of Alabama EcoCAR Innovation Challenge, autonomous **autocross**.
 - **What we build:** one Python `Controller` (path planner + motion controller) for the
   `mil-sim` harness: https://github.com/dszurek/ecocar-hackathon-sim
@@ -48,28 +50,32 @@ A slower clean run beats a fast run that clips cones.
 
 ### Setup (one time per teammate)
 
-Clone the simulator **next to** this repo, so both folders sit side by side:
+The simulator is a **git submodule** at `simulator/`, pinned to a known commit. Do NOT edit files
+inside it. Our code lives in `hackuab/` at the repo root.
 
 ```powershell
-git clone https://github.com/dszurek/ecocar-hackathon-sim.git
-cd ecocar-hackathon-sim
-powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
+git clone --recurse-submodules https://github.com/rmaytr/HackUAB.git
+cd HackUAB
+git config core.longpaths true                    # Windows: avoids "Filename too long"
+# already cloned without the submodule?  git submodule update --init --recursive
+cd simulator
+powershell -ExecutionPolicy Bypass -File scripts\setup.ps1     # needs Python 3.10–3.12
 .venv\Scripts\Activate.ps1          # or call .venv\Scripts\python.exe directly
 ```
 
-### Everyday commands (run from inside `ecocar-hackathon-sim/`)
+### Everyday commands (run from inside `simulator/`)
 
 ```powershell
 # watch it drive
-python -m autocross run -c ..\HackUAB\hackuab\controller.py -t tracks\practice_technical.yaml --backend bicycle --view
+python -m autocross run -c ..\hackuab\controller.py -t tracks\practice_technical.yaml --backend bicycle --view
 # compare with the baseline
 python -m autocross run -c controllers\baseline_pure_pursuit.py -t tracks\practice_technical.yaml --backend bicycle
 # random unseen course (catches overfitting); try several seeds
 python -m autocross gen-track --seed 42 --obstacles 3 --out tracks\my_random.yaml --preview
 # robustness sweep: noise, low grip, latency, start offsets
-python -m autocross batch -c ..\HackUAB\hackuab\controller.py
+python -m autocross batch -c ..\hackuab\controller.py
 # REQUIRED before merging to main and before submitting
-python -m autocross selftest -c ..\HackUAB\hackuab\controller.py
+python -m autocross selftest -c ..\hackuab\controller.py
 ```
 
 Each run writes `runs/<stamp>_<team>_<course>/` with `report.png` (open it first),
@@ -236,7 +242,7 @@ Change a contract only after telling the team, and update this section in the sa
 2. **Stay in your own files** (see ownership above).
 3. **Never commit `.env*`, keys, tokens, `runs/`, or `.venv/`.**
 4. **Keep `main` submittable.** Work on your branch and open a PR. Merge only after
-   `python -m autocross selftest -c ..\HackUAB\hackuab\controller.py` passes with no sandbox
+   `python -m autocross selftest -c ..\hackuab\controller.py` passes with no sandbox
    violations and the run is no worse than the current `main`.
 5. **No overfitting.** Never branch on course name, station or position. Validate on ≥ 3 random
    `gen-track` seeds plus `practice_technical`.
