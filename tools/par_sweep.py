@@ -25,6 +25,7 @@ ap.add_argument("grid", nargs="*")
 ap.add_argument("-j", type=int, default=12)
 ap.add_argument("--courses", default=",".join(DEFAULT))
 ap.add_argument("--backend", default="bicycle")
+ap.add_argument("--controller", default="../hackuab/controller.py", help="e.g. another worktree's controller")
 ap.add_argument("--serial-timing", action="store_true",
                 help="keep the official enforce-mode deadline (only meaningful with -j 1)")
 a = ap.parse_args()
@@ -44,7 +45,7 @@ def run(job):
     if not os.path.exists(cfg):
         with open(cfg, "w") as f:
             f.write("".join(f"{k}: {v}\n" for k, v in over.items()) or "{}\n")
-    out = subprocess.run([PY, "-m", "autocross", "run", "-c", "../hackuab/controller.py", "-t", course,
+    out = subprocess.run([PY, "-m", "autocross", "run", "-c", a.controller, "-t", course,
                           "--backend", a.backend, "--no-render", "--team", f"ps{ci}", "--controller-config", cfg]
                          + SETS,
                          capture_output=True, text=True).stdout
