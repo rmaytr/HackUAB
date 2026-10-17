@@ -60,6 +60,16 @@ New tunables (TUNABLES below; a Params field of the same name wins, so add them 
     verify_grip_limit    1.0    max predicted commanded grip demand (tracker caps at 1.05, scorer flags 1.1)
     verify_rear_slip_deg 5.0    max predicted rear-axle slip angle (scorer flags 6 deg)
     verify_relax         1.01   remembered verifier caps grow by this factor per step until re-confirmed
+    blocked_stop_margin  1.0    m, stop this far before the car's nose reaches the first blocked station
+    blocked_decel_frac   0.8    fraction of vehicle.max_decel used to plan the stop before a blockage
+    blocked_creep_speed  2.0    m/s, speed held at the stop point instead of 0, so a blockage that is only
+                                transient perception, or a cone wall, never ends in the 8 s "stuck" DNF
+                                (set 0 for a true stop)
+
+Blocked corridor (horizon.build_corridor returns valid=False: no gap the car fits through): the plan
+is the centerline with a speed profile that brakes to blocked_creep_speed at the stop point in front of
+the first blocked station and NEVER exceeds the current speed. It used to be a normal, accelerating
+centerline plan (full throttle at the blockage). debug["blocked"] = 1 and debug["blocked_s"] = station.
 """
 from __future__ import annotations
 
@@ -93,6 +103,8 @@ TUNABLES = {
     # Eco mode; the Params fields of the same name (params.py) are the ones to tune
     "eco_coast_m": 30.0, "eco_coast_margin": 0.03, "eco_vmax_drop": 0.35, "eco_accel_drop": 0.5,
     "eco_seed_drop": 0.5,
+    # blocked corridor
+    "blocked_stop_margin": 1.0, "blocked_decel_frac": 0.8, "blocked_creep_speed": 2.0,
 }
 
 
@@ -233,6 +245,33 @@ def racing_offsets(s: np.ndarray, kappa_c: np.ndarray, lo: np.ndarray, hi: np.nd
 
 
 def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Plan:
+    """Racing-line plan, or a braking plan when the corridor is blocked (see the module docstring)."""
+    if not c.valid and len(c.s) >= 2:
+        return _blocked_plan(c, obs, vehicle, p)
+    pl = _plan(c, obs, vehicle, p)
+    pl.debug = {**(pl.debug or {}), "blocked": 0.0}
+    return pl
+
+
+def _blocked_plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Plan:
+    """Centerline plan that brakes to a creep (or a stop) before the first blocked station and never
+    accelerates. A blocked station is one where horizon.py had to pinch the band to zero width."""
+    pl = _centerline_plan(c, obs, p)
+    s = pl.s
+    width = np.asarray(c.left, float) + np.asarray(c.right, float)
+    pinched = np.flatnonzero(width <= 1e-6)
+    s_block = float(s[pinched[0]]) if len(pinched) else 0.0          # no pinch found: treat it as here
+    s_stop = max(s_block - 0.5 * vehicle.length - _t(p, "blocked_stop_margin"), 0.0)
+    creep = max(_t(p, "blocked_creep_speed"), 0.0)
+    a_stop = max(_t(p, "blocked_decel_frac") * vehicle.max_decel, 0.1)
+    v_stop = np.sqrt(creep * creep + 2.0 * a_stop * np.maximum(s_stop - s, 0.0))
+    v_now = max(float(obs.speed) if np.isfinite(obs.speed) else 0.0, creep)
+    pl.v = np.minimum(np.minimum(pl.v, v_stop), v_now)                  # brake, never accelerate
+    pl.debug = {"blocked": 1.0, "blocked_s": s_block}
+    return pl
+
+
+def _plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Plan:
     road = obs.road
     if not c.valid or road is None or len(c.s) < 6:
         return _centerline_plan(c, obs, p)
