@@ -69,6 +69,12 @@ class Params:
     drag_area: float = 0.55                      # m^2, Cd*A
     rolling_resistance: float = 0.012
     steer_time_constant: float = 0.06            # s, first-order steering lag
+    # Drivetrain: the car is ALL-WHEEL DRIVE (both axles driven), as in the harness's bicycle backend.
+    # Traction is limited by the load on all four tyres, and drive force also uses front-tyre grip
+    # in corners (power-on understeer). Don't model it as rear- or front-wheel drive anywhere.
+    front_drive_fraction: float = 0.4            # front share of drive force (rear gets 0.6)
+    front_brake_fraction: float = 0.6            # front share of brake force
+    traction_limit: float = 0.97                 # TC/ABS: |Fx| per axle <= traction_limit * mu * Fz
 
     # --- derived from VehicleParams in from_vehicle() ---
     a_lat: float = 0.0
