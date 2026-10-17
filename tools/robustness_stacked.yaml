@@ -1,0 +1,18 @@
+# Harder than config/robustness.yaml: perturbations stacked, the way real conditions combine.
+# python ..\tools\par_robust.py --robustness ..\tools\robustness_stacked.yaml
+tracks:
+  - tracks/practice_technical.yaml
+  - tracks/practice_obstacles.yaml
+  - ../tracks/seed5.yaml
+  - ../tracks/seed42.yaml
+seeds: [0, 1]
+perturbations:
+  wet_and_laggy: {friction_scale: 0.8, actuation_delay_steps: 2}
+  wet_short_sight: {friction_scale: 0.8, road_range_m: 25}
+  laggy_noisy: {actuation_delay_steps: 2, road_offset_noise: 0.1, road_heading_noise_deg: 0.5, road_curvature_noise: 0.002}
+  heavy_wet_biased: {mass_scale: 1.15, friction_scale: 0.8, steer_bias: 0.03}
+  everything: {friction_scale: 0.8, mass_scale: 1.15, actuation_delay_steps: 2, road_range_m: 25, road_offset_noise: 0.1,
+               road_heading_noise_deg: 0.5, road_curvature_noise: 0.002, steer_bias: 0.03, cone_noise_std: 0.15,
+               cone_dropout: 0.15}
+  very_wet: {friction_scale: 0.65}
+  very_laggy: {actuation_delay_steps: 4}
