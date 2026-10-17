@@ -13,7 +13,8 @@ Three tools, all pure functions (with bounded memoization), numpy + stdlib only:
   the harness needs 2.5 ms sub-steps.
 * verify_plan: rolls the car out along a Plan with a scalar version of tracker.py's control law and
   reports predicted poses, friction use, grip demand, rear slip, path deviation and a per-node
-  speed scale that keeps them under their limits. planner.py uses it to verify every plan.
+  speed scale for grip/slip and buffered corridor breaches. planner.py applies caps and
+  re-verifies; a proposed speed scale alone is not a safety certificate.
 
 The same physics code (_step) runs on numpy arrays (batched rollouts, sampling MPC) and on plain
 floats (one verification, ~10x faster than 1-element numpy arrays): `xp` selects the math backend.
@@ -356,6 +357,92 @@ def _grip_bound(vp: _GripVehicle, p: _GripParams, a_lat: float, scale: float, do
     return low if low == high else lon_envelope(a_lat, vp, p, scale)[down]
 
 
+def corridor_clearance(poses: np.ndarray, corridor) -> dict:
+    """Project reference points into the buffered, piecewise-linear corridor.
+
+    Interpolate BOTH the center and its normal/bounds, not the nearest node's band. Three
+    bounded Newton steps invert the ruled strip C(u) + d*N(u); this avoids the tangential
+    station error of nearest-node/segment-normal projection on curved, asymmetric bands.
+    Width/obstacle/vehicle buffers already belong to horizon.py: do not subtract them again.
+    This checks reference-point clearance, not a new yaw-dependent vehicle footprint model.
+    """
+    poses = np.asarray(poses, float)
+    count = len(poses)
+    bad = {"corridor_station": np.zeros(count), "corridor_offset": np.zeros(count),
+           "corridor_violation": np.full(count, 1e3), "corridor_covered": np.zeros(count, bool),
+           "corridor_signed_violation": np.full(count, 1e3), "corridor_valid": False}
+    if not getattr(corridor, "valid", False):
+        return bad
+    center, normal = np.asarray(corridor.center, float), np.asarray(corridor.normal, float)
+    station = np.asarray(corridor.s, float)
+    left, right = np.asarray(corridor.left, float), np.asarray(corridor.right, float)
+    n = len(station)
+    if (n < 2 or center.shape != (n, 2) or normal.shape != (n, 2)
+            or left.shape != (n,) or right.shape != (n,)
+            or not all(np.isfinite(a).all() for a in (poses, center, normal, station, left, right))
+            or np.any(np.diff(station) <= 0) or np.any(left + right < 0)):
+        return bad
+    seg = np.diff(center, axis=0)
+    seg2 = np.sum(seg * seg, axis=1)
+    if np.any(seg2 < 1e-12) or np.any(np.linalg.norm(normal, axis=1) < 0.5):
+        return bad
+    normal = normal / np.linalg.norm(normal, axis=1, keepdims=True)
+    delta = poses[:, None, :] - center[None, :-1, :]
+    dn = np.diff(normal, axis=0)
+
+    def cross(a, b):
+        return a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]
+
+    u = np.clip(np.sum(delta * seg, axis=2) / seg2, 0.0, 1.0)
+    a = cross(seg, dn)
+    b = cross(delta, dn) - cross(seg, normal[:-1])
+    c0 = cross(delta, normal[:-1])
+    for _ in range(3):  # fixed iterations, vectorised over poses AND spatial segments
+        deriv = b - 2.0 * a * u
+        step = np.divide(c0 + b * u - a * u * u, deriv,
+                         out=np.zeros_like(u), where=np.abs(deriv) > 1e-9)
+        u = np.clip(u - step, 0.0, 1.0)
+    residual = delta - u[..., None] * seg
+    # A vertex can be Euclidean-nearest while its normal does not pass through the point.
+    # Prefer a genuine cross-section inverse on either adjacent segment; otherwise every
+    # curved vertex creates a false "unobserved" wedge for nonzero lateral offsets.
+    normals = normal[:-1] + u[..., None] * dn
+    normal_lengths = np.linalg.norm(normals, axis=2)
+    ray_error = np.abs(cross(residual, normals)) / np.maximum(normal_lengths, 1e-9)
+    inverse = (ray_error <= 1e-5) & (normal_lengths > 1e-9)
+    distance = np.sum(residual * residual, axis=2)
+    distance = np.where(inverse.any(axis=1)[:, None], np.where(inverse, distance, np.inf), distance)
+    j = np.argmin(distance, axis=1)
+    rows = np.arange(count)
+    f = u[rows, j]
+    ref = center[j] + f[:, None] * seg[j]
+    norm = normal[j] + f[:, None] * dn[j]
+    norm /= np.linalg.norm(norm, axis=1, keepdims=True)
+    diff = poses - ref
+    off = np.sum(diff * norm, axis=1)
+    along_error = cross(diff, norm)
+    tangent_error = np.abs(along_error)
+    # No extrapolated end band is certified as observed free space.
+    # The first normal is a forward-difference tangent in horizon.py. On a curved road
+    # an offset car at station zero can lie just behind that discretised cross-section.
+    # Use the SAME buffered lateral band across its half-cell; never extrapolate the
+    # far preview end. This is not an extra lateral tolerance or a rejoin exemption.
+    start_cell = (j == 0) & (f <= 1e-9) & (along_error <= 0.0) & (
+        tangent_error <= min(0.5 * float(np.sqrt(seg2[0])), 0.5))
+    covered = (tangent_error <= 1e-5) | start_cell
+    hi = left[j] + f * (left[j + 1] - left[j])
+    lo = -(right[j] + f * (right[j + 1] - right[j]))
+    signed_violation = np.maximum(off - hi, lo - off)
+    violation = np.maximum(signed_violation, 0.0)
+    # Unobserved space is a failed clearance check, not a silent pass at the last node.
+    violation = np.where(covered, violation, np.maximum(violation, tangent_error))
+    signed_violation = np.where(covered, signed_violation, violation)
+    return {"corridor_station": station[j] + f * (station[j + 1] - station[j]),
+            "corridor_offset": off, "corridor_violation": violation,
+            "corridor_signed_violation": signed_violation,
+            "corridor_covered": covered, "corridor_valid": True}
+
+
 def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: float = 1.5,
                 dt: float = 0.05, corridor=None, use_limit: float = 0.95, grip_limit: float = 1.0,
                 rear_slip_limit_deg: float = 5.0) -> dict:
@@ -379,7 +466,12 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
       demand under grip_limit (the tracker's grip cap allows 1.05, the scorer flags > 1.1) and rear
       slip under rear_slip_limit_deg (the scorer flags > 6 deg),
       demand_max (the worst of the three, normalised by its limit: > 1 = over),
-      corridor_violation_max (m outside corridor.left/right; NaN without a corridor), ok (bool).
+      corridor_violation (T+1,) nonnegative metres outside the buffered corridor, corridor_station,
+      corridor_offset, corridor_covered, corridor_ok, corridor_first_step/time/s/path_s (-1 if none).
+      Unobserved end-of-preview space and invalid corridors fail closed. No second width buffer.
+      v_scale and demand_max include clearance failures as well as grip/slip; ok requires both.
+      corridor_violation_max retains signed-margin compatibility (negative = inside everywhere);
+      corridor_violation is nonnegative. The first half-cell covers the current offset car pose.
     """
     c = model_constants(vp, p)
     grip_vp, grip_p = _grip_constants(vp, p)
@@ -441,11 +533,12 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
          _finite(obs.yaw_rate), app * max_steer, app, _finite(obs.ax))
     steer_prev, i_err, a_prev = app, 0.0, None
     i = 0
-    xs, ys, yaws, spd, rates, devs, nodes, rears = [], [], [], [], [], [], [], []
+    xs, ys, yaws, spd, rates, devs, nodes, rears, path_stations = [], [], [], [], [], [], [], [], []
     uses, demands = [], []
     for k in range(t_steps + 1):
         x, y, yaw, vx, vy, r = s[0], s[1], s[2], s[3], s[4], s[5]
         i, along_c = project(x, y, i)
+        path_stations.append(s_l[i] + along_c / sl_l[i] * (s_l[i + 1] - s_l[i]))
         xs.append(x), ys.append(y), yaws.append(yaw), rates.append(r)
         speed = math.hypot(vx, vy)
         spd.append(speed)
@@ -534,15 +627,36 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
     np.minimum.at(v_scale, node_t, np.clip(scale_t, 0.0, 1.0))
     v_scale[:-1] = np.minimum(v_scale[:-1], v_scale[1:])   # start slowing one node early
     dev = np.array(devs)
-    viol = float("nan")
-    if corridor is not None and getattr(corridor, "valid", True) and len(corridor.center) > 1:
-        d2 = ((poses[:, None, :] - corridor.center[None, :, :]) ** 2).sum(axis=2)
-        jn = d2.argmin(axis=1)
-        off = ((poses - corridor.center[jn]) * corridor.normal[jn]).sum(axis=1)
-        viol = float(np.max(np.maximum(off - corridor.left[jn], -off - corridor.right[jn])))
+    clearance = {}
+    viol, first, corridor_ok = float("nan"), -1, True
+    demand = float(worst.max())
+    if corridor is not None:
+        clearance = corridor_clearance(poses, corridor)
+        violation = clearance["corridor_violation"]
+        failed = (violation > 1e-6) | ~clearance["corridor_covered"]
+        hits = np.flatnonzero(failed)
+        viol = float(clearance["corridor_signed_violation"].max())
+        corridor_ok = not len(hits)
+        if len(hits):
+            first = int(hits[0])
+            demand = max(demand, 1.0 + max(viol, 1e-6) / 0.3)
+            # A bounded local cap ahead of the first breach. Braking/acceleration reachability
+            # is re-run by the planner, so the braking influence extends upstream as needed.
+            breach = path_stations[first]
+            lead = max(float(spd[first]) * vp.control_dt * (1 + vp.actuation_delay_steps), 1.0)
+            anchor = max(breach - lead, 0.0)
+            start = max(int(np.searchsorted(stations, anchor, side="right")) - 1, 0)
+            end = min(int(np.searchsorted(stations, breach + 2.0)) + 1, n_nodes)
+            factor = min(max(1.0 / (1.0 + viol / 0.3), 0.65), 0.9)
+            v_scale[start:end] = np.minimum(v_scale[start:end], factor)
+    clearance.update(corridor_ok=corridor_ok, corridor_first_step=first,
+                     corridor_first_time=first * dt if first >= 0 else -1.0,
+                     corridor_first_s=float(clearance["corridor_station"][first]) if first >= 0 else -1.0,
+                     corridor_first_path_s=float(path_stations[first]) if first >= 0 else -1.0,
+                     corridor_violation_max=viol)
     return {"poses": poses, "yaw": np.array(yaws), "speed": np.array(spd), "yaw_rate": np.array(rates),
             "rear_slip_deg": rear, "lat_dev": dev, "friction_use": use_t, "grip_demand": dem_t,
             "friction_use_max": float(use_t.max()), "grip_demand_max": float(dem_t.max()),
             "rear_slip_max_deg": float(np.abs(rear).max()), "lat_dev_max": float(np.abs(dev).max()),
-            "v_scale": v_scale, "demand_max": float(worst.max()), "corridor_violation_max": viol,
-            "ok": bool(worst.max() <= 1.0 and not viol > 0.0)}
+            "v_scale": v_scale, "demand_max": demand, **clearance,
+            "ok": bool(worst.max() <= 1.0 and corridor_ok)}

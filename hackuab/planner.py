@@ -16,9 +16,11 @@ Once the finish is visible, only the speculative unseen-corner cap is released.
 
 R3 steps 4 + 6, predictive verification: predict.verify_plan() rolls the car out along the plan for
 1.5 s with the dynamic bicycle model driven by (a mirror of) the tracker's control law. Where it
-predicts tyre utilisation over 0.95, commanded grip demand over 1.0 or rear slip over 5 deg, it
-returns a per-node speed factor; we cap v there and redo the backward/forward passes, at most
-verify_iters times, keeping the first clean plan (or the least over-demanding one). The caps it
+predicts tyre utilisation over 0.95, commanded grip demand over 1.0, rear slip over 5 deg, or a
+breach of the buffered corridor, it returns a per-node speed factor. We cap v there and redo the
+backward/forward passes, at most verify_iters times within a soft compute budget. A clean plan
+must pass BOTH grip and clearance. Unresolved cases use a labelled braking fallback on the same
+lateral path, not a falsely certified least-demanding trajectory. The successful caps it
 imposed are remembered by course progress and applied up front next step (relaxed by verify_relax per
 step), so a corner is usually found once and later steps verify in a single pass. Results go to
 Plan.debug (pred_* keys) for telemetry.
@@ -53,13 +55,15 @@ New tunables (TUNABLES below; a Params field of the same name wins, so add them 
     fwd_accel_frac       1.0    fraction of vehicle.max_accel the forward pass may use
     fwd_seed_time        1.0    s, the forward pass starts from speed + a(speed) * this
     air_density          1.2    kg/m^3, for the drag term of the forward pass
-    verify_iters         1      re-plans allowed after the first verification (0 = verify and log only;
-                                negative = skip verification)
+    verify_iters         1      corrective re-plans allowed (0 = no retry, fallback still applies;
+                                negative = skip verification for development only)
     verify_horizon_s     1.5    s, prediction horizon of the verifier
     verify_use_limit     0.95   max predicted tyre utilisation |F| / (mu Fz)
     verify_grip_limit    1.0    max predicted commanded grip demand (tracker caps at 1.05, scorer flags 1.1)
     verify_rear_slip_deg 5.0    max predicted rear-axle slip angle (scorer flags 6 deg)
     verify_relax         1.01   remembered verifier caps grow by this factor per step until re-confirmed
+    verify_budget_ms     12.0   soft verification budget, also leaves 5 ms of the controller budget
+                                for tracking; non-preemptible calls can still exceed the deadline
     blocked_stop_margin  1.0    m, stop this far before the car's nose reaches the first blocked station
     blocked_decel_frac   0.8    fraction of vehicle.max_decel used to plan the stop before a blockage
     blocked_creep_speed  2.0    m/s, speed held at the stop point instead of 0, so a blockage that is only
@@ -75,6 +79,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from functools import lru_cache
+from time import perf_counter
 
 import numpy as np
 
@@ -100,6 +105,7 @@ TUNABLES = {
     "vis_hairpin_radius": 8.0, "vis_margin_m": 0.0, "fwd_accel_frac": 1.0, "fwd_seed_time": 1.0,
     "air_density": 1.2, "verify_iters": 1, "verify_horizon_s": 1.5, "verify_use_limit": 0.95,
     "verify_grip_limit": 1.0, "verify_rear_slip_deg": 5.0, "verify_relax": 1.01,
+    "verify_budget_ms": 12.0,
     # Eco mode; the Params fields of the same name (params.py) are the ones to tune
     "eco_coast_m": 30.0, "eco_coast_margin": 0.03, "eco_vmax_drop": 0.35, "eco_accel_drop": 0.5,
     "eco_seed_drop": 0.5,
@@ -272,6 +278,7 @@ def _blocked_plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Para
 
 
 def _plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Plan:
+    started = perf_counter()
     road = obs.road
     if not c.valid or road is None or len(c.s) < 6:
         return _centerline_plan(c, obs, p)
@@ -363,9 +370,14 @@ def _plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> P
         return _centerline_plan(c, obs, p)
     out = Plan(path=path, s=sp, kappa=kappa, v=v)
     if verify:
-        out, cap = _verify(out, v_cap, profile, obs, vehicle, p)
+        out, cap = _verify(out, v_cap, profile, obs, vehicle, p, c,
+                           started + max(float(p.budget_ms) - 5.0, 0.0) * 1e-3)
         # Progress is measured along the centerline, not along this step's offset racing line.
-        _VCAP.update(s=obs.progress + s, cap=np.where(cap < base_cap - 1e-6, cap, _NO_CAP), step=obs.step)
+        if out.debug.get("pred_fallback", 0.0):
+            # A stop is a response to this observation, not a permanent zero-valued memory cap.
+            _VCAP.clear()
+        else:
+            _VCAP.update(s=obs.progress + s, cap=np.where(cap < base_cap - 1e-6, cap, _NO_CAP), step=obs.step)
     if eco_cfg is not None:
         out.debug = dict(out.debug or {})
         out.debug.update(_eco_debug(out, eco_cfg, eco, v_now, p))
@@ -430,19 +442,40 @@ def _eco_debug(pl: Plan, cfg: dict, eco: float, v_now: float, p: Params) -> dict
 
 
 def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: VehicleParams,
-            p: Params) -> tuple[Plan, np.ndarray]:
-    """R3.4: predict the car along the plan; where it over-demands the tyres, cap v and redo the passes.
-    Returns (the first clean plan, else the least over-demanding one, with pred_* diagnostics; its cap)."""
-    from time import perf_counter
+            p: Params, corridor: Corridor | None = None,
+            deadline_s: float | None = None) -> tuple[Plan, np.ndarray]:
+    """Bounded correction of grip AND clearance, then an explicitly labelled braking fallback.
+
+    A failed prediction is never called safe just because another candidate had worse grip.
+    Keep the planned lateral path during fallback: switching to the centerline can hit the
+    very obstacle that cut the corridor. A stop profile is conservative, not proof of safety;
+    the current state may already make clearance infeasible and tracker history is not shared.
+    """
     t0 = perf_counter()
     kw = dict(horizon_s=_t(p, "verify_horizon_s"), use_limit=_t(p, "verify_use_limit"),
-              grip_limit=_t(p, "verify_grip_limit"), rear_slip_limit_deg=_t(p, "verify_rear_slip_deg"))
+              grip_limit=_t(p, "verify_grip_limit"), rear_slip_limit_deg=_t(p, "verify_rear_slip_deg"),
+              corridor=corridor)
     v0 = pl.v
     best, best_res, best_cap, n = pl, None, v_cap, 0
+    deadline = t0 + max(_t(p, "verify_budget_ms"), 0.0) * 1e-3
+    if deadline_s is not None:
+        deadline = min(deadline, deadline_s)
+    cost, exhausted = 0.0, False
+
+    def rank(res):
+        violation = float(res.get("corridor_violation_max", 0.0))
+        return (not res.get("corridor_ok", True),
+                max(violation, 0.0) if np.isfinite(violation) else 0.0, res["demand_max"])
+
     for it in range(int(_t(p, "verify_iters")) + 1):
+        if n and perf_counter() + cost * 1.25 >= deadline:
+            exhausted = True
+            break
+        before = perf_counter()
         res = verify_plan(pl, obs, vehicle, p, **kw)
+        cost = max(cost, perf_counter() - before)
         n += 1
-        if best_res is None or res["ok"] or res["demand_max"] < best_res["demand_max"]:
+        if best_res is None or res["ok"] or rank(res) < rank(best_res):
             best, best_res, best_cap = pl, res, v_cap
         if res["ok"] or it == int(_t(p, "verify_iters")):
             break
@@ -452,9 +485,43 @@ def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: Veh
             break
         pl = Plan(path=pl.path, s=pl.s, kappa=pl.kappa, v=v)
     r = best_res
+    fallback = not r["ok"]
+    verified = True
+    if fallback:
+        # Stop before the first predicted clearance breach, allowing a reaction lead. No
+        # acceleration on the rest of this fallback. Re-run BOTH reachability passes.
+        if not r.get("corridor_ok", True):
+            breach = r["corridor_first_path_s"]
+            lead = max(float(obs.speed) * vehicle.control_dt * (1 + vehicle.actuation_delay_steps), 1.0)
+            stop = max(breach - lead - 1.0, 0.0)
+            stop_cap = np.sqrt(2.0 * p.a_dec * np.maximum(stop - best.s, 0.0))
+            cap = np.minimum(best_cap, stop_cap)
+        else:
+            cap = np.minimum(best_cap, best.v * np.minimum(r["v_scale"], 0.8))
+        cap = np.minimum(cap, max(float(obs.speed), 0.0))
+        best = Plan(best.path, best.s, best.kappa, profile(cap))
+        best_cap = cap
+        verified = False
+        if perf_counter() + cost * 1.25 < deadline:
+            r = verify_plan(best, obs, vehicle, p, **kw)
+            n += 1
+            verified = True
+        else:
+            exhausted = True
+        # If unverified, r describes the failed candidate, not the returned fallback.
+        # pred_verified=0 makes this distinction explicit to telemetry consumers.
     best.debug = {"pred_friction_max": r["friction_use_max"], "pred_grip_max": r["grip_demand_max"],
                   "pred_rear_slip_max": r["rear_slip_max_deg"], "pred_offset_max": r["lat_dev_max"],
-                  "pred_demand_max": r["demand_max"], "pred_ok": float(r["ok"]), "pred_iters": float(n),
+                  "pred_demand_max": r["demand_max"], "pred_ok": float(verified and r["ok"]),
+                  "pred_verified": float(verified), "pred_fallback": float(fallback),
+                  "pred_unresolved": float(not verified or not r["ok"]),
+                  "pred_budget_exhausted": float(exhausted),
+                  "pred_corridor_checked": float(corridor is not None),
+                  "pred_corridor_ok": float(verified and r.get("corridor_ok", True)),
+                  "pred_corridor_max": max(float(r.get("corridor_violation_max", 0.0)), 0.0),
+                  "pred_corridor_first_s": float(r.get("corridor_first_s", -1.0)),
+                  "pred_corridor_first_time": float(r.get("corridor_first_time", -1.0)),
+                  "pred_iters": float(n),
                   "v_scale_min": float(np.min(best.v / np.maximum(v0, 0.1))),
                   "t_verify_ms": (perf_counter() - t0) * 1e3}
     return best, best_cap
