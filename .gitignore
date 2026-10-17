@@ -27,6 +27,7 @@ venv/
 
 # Simulator outputs (the simulator itself is the submodule at simulator/)
 runs/
+!viz/data/runs/
 *.log
 
 # Claude Code local settings (shared skills in .claude/skills ARE committed)
