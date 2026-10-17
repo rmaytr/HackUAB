@@ -13,6 +13,13 @@ _~3:40 PM: Eco mode merged into `main` together with PERFORMANCE / ECO mode sele
 
 [Draft PR #9](https://github.com/rmaytr/HackUAB/pull/9), branch `rodion/corridor-verifier`.
 
+Final-fetch note: upstream main independently advanced to `3fa788e`, adding fusion/viz history
+and rebaselined mode tests/goldens. Its `hackuab/` driving files are identical to `d35176d`.
+Those new test expectations were NOT folded into this frozen draft; the test counts/failures
+below refer to its `d35176d`-based suite, not a claim that current upstream still has old goldens.
+Reconcile with that upstream test update during the next clean-validation pass; do not change
+expected outputs merely to hide this feature's intentional speed/command differences.
+
 **Decision: do not merge.** Rodion chose to finish the draft with load-affected measurements
 rather than interrupt another session's export. Functional implementation and regression checks
 are complete, but the observed score/runtime/rear-slip tradeoff does NOT qualify for promotion.
