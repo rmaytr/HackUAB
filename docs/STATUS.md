@@ -3,10 +3,153 @@
 **Update this file at the end of every task** (results table + what changed + next step) and commit it
 with your work, so the next agent, whether Claude, ChatGPT/Codex or a teammate's, picks up exactly where you left off.
 
-_Last updated: 2026-10-17, Rodion's lap-time optimization (`70cb357`) promoted from
-`rodion/lap-time-optimization` to `main` after validation. CARLA validation remains pending.
+_Last updated: 2026-10-17, corridor-aware verifier draft on `rodion/corridor-verifier`.
+Baseline: published main `d35176d`. This draft is NOT merged; defaults are unchanged.
+Clean timing and CARLA validation remain gates before promotion or any new default.
 Code freeze 5:00 PM, feature freeze 4:15 PM._
 _~3:40 PM: Eco mode merged into `main` together with PERFORMANCE / ECO mode selection (below)._
+
+## Corridor-aware verifier draft (Rodion, `42918cd`)
+
+**Decision: do not merge.** Rodion chose to finish the draft with load-affected measurements
+rather than interrupt another session's export. Functional implementation and regression checks
+are complete, but the observed score/runtime/rear-slip tradeoff does NOT qualify for promotion.
+Higher lateral-fraction candidates were not started: first obtain a clean default validation.
+CARLA is still Viraj's gate; no new default is selected.
+
+Only `hackuab/planner.py`, `hackuab/predict.py`, `tests/test_corridor_verifier.py` and this shared
+status file differ from baseline. No tracker, horizon/squeeze, controller, Params/default or
+simulator changes. Earlier fusion/diagnosis history was deliberately removed from the PR by
+isolating these commits onto `d35176d`; it remains on the separate local work branch. The baseline
+controller is preserved at `d35176d` and in `runs/corridor-verifier/baseline/` (detached worktree).
+
+### Behavior and contracts
+
+- Pass the original `Corridor` through `plan -> _verify -> predict.verify_plan`. Its vehicle-width
+  and clearance buffers are ALREADY applied: do not shrink the left/right bands again. Negative
+  one-sided bounds and interpolated widths are supported.
+- Project through interpolated center/normal cross-sections with three fixed vectorised Newton
+  steps. Nearest-node widths are inaccurate on curves. Prefer genuine local inverses rather than
+  false vertex wedges or remote normal rays across a hairpin. The initial half-cell covers the
+  current offset vehicle pose without relaxing lateral limits; the far preview is not extrapolated.
+- Return per-pose nonnegative `corridor_violation`, signed offset, centerline station, validity
+  and coverage; report first breach step/time/centerline station/plan station. Existing
+  `corridor_violation_max` remains signed for compatibility (negative = inside everywhere).
+  Invalid/folded geometry or unobserved space fails closed.
+- Clearance failures now affect BOTH `v_scale` and `demand_max`. A bounded 0.65-0.9 local speed
+  factor starts before the breach, with a response lead for delay + speed preview + three steering
+  time constants. Re-run braking AND acceleration reachability, then re-verify. This lead is a
+  response heuristic, not a bound on uncertain dynamics.
+- Prefer plans passing BOTH grip/slip and clearance. Normal correction retries are bounded by
+  `verify_iters` and a 12 ms SOFT verifier budget, also reserving 5 ms for tracking within the
+  controller budget. A call cannot be preempted; OS stalls can exceed that budget and are logged.
+- If no safe plan is found, keep the obstacle-avoiding lateral path. A clearance fallback brakes
+  to a stop before the breach; grip-only fallback uses local demand caps, not a blanket derate.
+  Reverify fallback if budget allows. Otherwise `pred_verified=0`, `pred_ok=0`, `pred_unresolved=1`
+  explicitly marks it UNVERIFIED. Other telemetry: fallback/clearance-fallback, budget exhaustion,
+  initial/final violation and first breach. Do not retain zero stop caps forever; preserve useful
+  nonzero grip-cap memory. An unresolved fallback is not called safe.
+
+Limits: reference-point containment using the existing buffers, NOT a new swept-rectangle or
+uncertainty guarantee. The predictor still starts PI/jerk/slip history afresh and lacks the live
+tracker snapshot/delay FIFO. Slowing cannot repair every lateral/perception failure. Existing
+blocked-corridor creep and Viraj's controller-level exception/previous-over-budget centerline
+fallbacks bypass this verification and remain separate; this PR does not certify them.
+
+### Default Performance validation versus STATUS and frozen main
+
+All runs use bicycle, one core, enforce mode, no rendering, default PERFORMANCE (lateral fraction
+0.75, v_max 30), with three obstacle groups on generated seeds 1-5. Each of the ten baseline and
+draft runs finishes with **0 cones, obstacle hits, off-course events, missed gates and controller
+errors**. This does NOT mean zero overruns or rear slip.
+
+`STATUS time` is the historical 96a781e promotion table below (0.6 / 22 and older tracking), NOT a
+matched A/B for this feature. The freshly frozen `d35176d` baseline has the current settings.
+
+| Course | STATUS time | Fresh baseline time /75 | Draft time /75 | p99 ms baseline -> draft |
+|---|---:|---:|---:|---:|
+| hackathon_test | 51.357 | 49.766 / 69.38 | 50.308 / 60.04 | 11.73 -> 43.38 |
+| practice_basic | 31.272 | 30.694 / 67.66 | 32.245 / 59.09 | 24.12 -> 50.10 |
+| practice_loop | 88.646 | 86.139 / 63.25 | 90.904 / 56.98 | 32.89 -> 53.68 |
+| practice_obstacles | 56.541 | 54.165 / 67.67 | 54.640 / 66.76 | 14.46 -> 25.38 |
+| practice_technical | 38.549 | 36.840 / 67.32 | 36.917 / 63.65 | 12.58 -> 30.54 |
+| seed 1 | 51.167 | 48.243 / 70.01 | 49.098 / 63.93 | 14.12 -> 37.98 |
+| seed 2 | 62.398 | 61.843 / 64.30 | 63.205 / 62.85 | 27.22 -> 29.41 |
+| seed 3 | 53.876 | 53.367 / 60.51 | 52.814 / 69.21 | 44.62 -> 12.08 |
+| seed 4 | 58.419* | 57.390 / 67.30 | 57.444 / 68.17 | 15.90 -> 11.42 |
+| seed 5 | 52.464* | 49.402 / 69.76 | 50.898 / 68.35 | 10.78 -> 13.09 |
+
+*Historical 96a781e holdout seeds 4/5 each hit one cone. Fresh baseline and draft have none.
+
+Public total: **257.604 -> 265.014 s** (+7.410 s / 2.88%); ten-course total **527.850 -> 538.473 s**
+(+10.624 s / 2.01%). Public mean technical **67.056 -> 61.304 /75**; ten-course mean
+**66.716 -> 63.903 /75**. Public category means (baseline -> draft): completion 25.744 -> 24.960,
+deviation 14.456 -> 13.980, compute 12.132 -> 7.484, dynamics 14.718 -> 14.878. Not all of the
+score loss is compute: timing/budget fallback also changes driving.
+
+| Course | Rear-slip peak deg baseline -> draft | Rear-slip-over % baseline -> draft | Path mean/max m baseline -> draft |
+|---|---:|---:|---|
+| hackathon_test | 5.56 -> 7.00 | 0 -> 0.584 | .064/.228 -> .079/1.323 |
+| practice_basic | 6.90 -> 5.02 | 2.52 -> 0 | .068/.429 -> .104/1.194 |
+| practice_loop | 10.38 -> 7.99 | 2.19 -> 1.351 | .067/1.021 -> .086/1.097 |
+| practice_obstacles | 5.03 -> 5.04 | 0 -> 0 | .073/1.112 -> .071/.224 |
+| practice_technical | 5.26 -> 4.96 | 0 -> 0 | .061/.241 -> .061/.402 |
+| seed 1 | 5.11 -> 5.00 | 0 -> 0 | .068/.224 -> .072/.786 |
+| seed 2 | 7.91 -> 14.06 | 1.51 -> 1.477 | .080/1.127 -> .079/1.237 |
+| seed 3 | 5.12 -> 5.03 | 0 -> 0 | .070/1.172 -> .059/.225 |
+| seed 4 | 5.05 -> 4.91 | 0 -> 0 | .072/.214 -> .071/.221 |
+| seed 5 | 4.87 -> 4.89 | 0 -> 0 | .070/.264 -> .070/.254 |
+
+Frozen baseline has six deadline overruns across the ten comparison runs; draft has 41. A separate
+Claude worktree's `export_viz.py --jobs 4` was observed overlapping the final draft batch. It was
+not stopped or modified. These measurements cannot establish the isolated feature cost or prove
+all failures are caused by load. In particular the draft seed-2 peak rear slip is unacceptable as
+release evidence. Rodion explicitly chose to finish with these load-affected results.
+
+Planner-stage wall time over the ten comparison runs: baseline mean/p99 **6.47/21.04 ms**, draft
+**9.61/32.31 ms**; nested verifier **5.50/19.93 -> 8.49/30.12 ms**. No under-5-ms claim is justified.
+Draft has 865 fallback-labelled calls, 858 unresolved, and 2,552 budget-exhaustion flags out of
+10,959 planner calls. Failed/UNVERIFIED plans remain explicitly flagged, not silently certified.
+
+Small hot-cache diagnostic (NOT release timing): gentle-circle verifier median without/with
+corridor is 0.833/1.207 ms on logical CPU 0 and 1.523/2.246 ms on CPU 15, 200 samples each.
+Only that diagnostic process's affinity changed and was restored; no harness settings changed.
+
+### Checks, provenance and next gates
+
+- Prescribed full pytest command: **131 passed, 4 failed (37.54 s)**. The same four inherited
+  PERFORMANCE/ECO-zero golden assertions still expect pre-tuning 96a781e commands/38.548896 s.
+  Neither expected outputs nor tolerances were weakened. They require an owner-coordinated
+  frozen-config baseline update, not blind regeneration. Current full laps finish; exact old
+  lap equality is intentionally no longer true. This is NOT an all-tests-green result.
+- Focused planner/predictor/corridor suite: **67 passed (0.80 s)**, including all existing
+  `test_predict.py` tests. Existing budgets pass unchanged: batch 2.94 ms (<3), verifier without
+  corridor 0.839 ms (<2). 29 new tests cover curved/rotated/nonuniform projection, variable and
+  negative bounds, preview edges/hairpins, malformed geometry, first breach, local caps, real
+  narrow-vs-wide production response, dynamically verified fallback, budget exhaustion, grip
+  memory and finite legacy diagnostics. Pytest's existing cache-permission warning is nonfatal.
+- Required strict technical/obstacle checks ran: **36.899 / 56.421 s**, zero penalties/errors,
+  p99 **29.29 / 39.19 ms**, **1 / 6 overruns**. Full five-course selftest and seeds 1-5 ran.
+  Fresh technical and seed-2 reports were visually inspected.
+- Driving validation snapshot `864d256` was transplanted byte-for-byte as `2b648fc` onto main;
+  `42918cd` only fixes NaN diagnostics for optional no-corridor callers and is covered by the
+  final tests. Normal passed-corridor driving is unchanged by that diagnostics-only follow-up.
+- Earlier experiments are retained: curved-end/vertex false stops and a seed-2 remote-normal
+  alias were found and fixed with regression tests. Earlier `4c050fc` (same source as `eb74126`)
+  finished all ten with zero penalties/overruns, public mean 68.722, but still added rear slip
+  on some courses. It is not the final refinement's clean validation and must not substitute for it.
+
+Ignored artifacts: `runs/corridor-verifier/{baseline,localized-final}/validation/` hold summaries,
+telemetry, reports, command logs and results.json; `projection-fix/`, `candidate/`, `candidate-final/`
+retain failed/earlier experiments. `validate.py` runs serially; `compare.py` reads the summaries;
+`benchmark.py` is the diagnostic. Original local CLAUDE_REVIEW_HANDOFF.md remains unmodified/untracked.
+
+Before promotion: coordinate an idle-machine matched A/B on the exact current defaults; require
+clean deadlines and no unacceptable score/path/slip regression, then Viraj's CARLA confirmation.
+Only then run higher lat_accel_frac candidates separately (never change defaults from bicycle
+alone). Integrate Saisi's squeeze fix in a separate comparison/PR; coordinate live tracker-state
+and controller-level fallback contracts separately. This draft leaves main untouched;
+`d35176d` is the preserved known-good baseline.
 
 ## Fixed: blocked corridor (~3:45 PM, `rodion/blocked-corridor`)
 
@@ -20,11 +163,14 @@ Logged as `dbg_blocked` / `dbg_blocked_s`. Tests: `tests/test_blocked.py` (final
 closed-loop slow-down, gap control case).
 The blocked plan never triggers on any public course (0 of ~11k steps, both modes), so lap times are
 unchanged (PERFORMANCE identical; ECO practice_obstacles 59.30 s = before, with 0 overruns).
-Still open from the same review: the verifier doesn't receive the corridor (finding 2), the jerk limit can undo
+Finding 2 (corridor verification) is addressed by the unmerged draft above. Still open: the jerk limit can undo
 the grip clamp (3), the stale understeer estimate on straights (4), unknown YAML keys silently ignored (5),
 and narrow-road clamping (6).
 
-## Driving modes: PERFORMANCE (default, scored) and ECO
+## Historical upstream driving modes (before tracking/speed/verifier updates)
+
+The following tables and golden-test claims describe the older upstream snapshots, not a green
+test or release-validation claim for the current defaults or this verifier draft.
 
 One controller, two selectable modes. The mode is picked **only** by `mode:` in a `--controller-config` YAML
 (`params.MODES` holds each mode's values), never by course or position. No config means PERFORMANCE.
@@ -479,17 +625,20 @@ and `run`. Generate courses outside the submodule with `gen-track --seed 1 --obs
 ## Next tasks
 
 **Rodion (planner.py, predict.py):**
-1. Coordinate the live tracker-state and corridor-verification interfaces with Viraj/Saisi; keep
-   optimizer changes separate from the known invalid-corridor fallback risk.
-2. Have Viraj confirm this branch and any qualifying braking/lateral candidate on CARLA before
-   changing Params defaults. Historical 0.8875 is not automatically transferable to the new code.
+1. Keep this verifier draft unmerged. Coordinate an idle-machine matched default A/B, reconcile
+   the inherited golden/config expectations with their owner, and inspect score/slip/runtime
+   tradeoffs before any promotion. Preserve `d35176d` as the comparison controller.
+2. Obtain Viraj's exact-revision CARLA check. Only after clean default validation, evaluate
+   higher lateral fractions separately; do not select a new default without CARLA. Coordinate
+   live tracker-state/FIFO and controller-level fallback contracts separately from this PR.
 3. Write `docs/INNOVATION.md`: racing line, physics-verified speed profile, visibility guard, AWD model.
    For each: what it is, why it matters, and the evidence (a number or a plot from `figures/`).
 
-**Viraj:** pull `main` including `70cb357` and run `compare` (bicycle vs CARLA) on the exact defaults.
-Check rear slip and obstacle clearance as well as lap time; no faster parameter preset qualified
-on this code, and the default lateral/deceleration fractions remain 0.6 / 0.4 until confirmed.
-**Saisi + Rodion:** follow up on the seed-2 invalid-corridor/centerline-fallback clearance issue separately.
+**Viraj:** compare the exact default baseline/draft on CARLA, including slip, clearance and runtime.
+Defaults inherited from main remain lateral/deceleration 0.75 / 0.4, v_max 30; this PR does not
+change them. Coordinate jerk/grip priority, stale-slip recovery and baseline tests with their owners.
+**Saisi + Rodion:** keep squeeze-fix integration separate initially, then run an explicit combined
+comparison. Buffered reference-point checking does not by itself fix every narrow/blocked corridor.
 **Saisi:** fusion track (roadmap S2).
 
 ## How to verify any change (from `simulator/`, Windows)
