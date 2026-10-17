@@ -103,6 +103,17 @@ class HackUABController(Controller):
   `cg_to_front/rear`, `max_steer` (rad, 35°), `max_steer_rate` (normalised units/s),
   `mu` ≈ 0.95, `max_accel` ≈ 5.2 m/s², `max_decel` ≈ 9 m/s², `max_speed`, `control_dt` (0.05 s),
   `actuation_delay_steps`.
+- **Drivetrain: the car is ALL-WHEEL DRIVE (4WD/AWD), confirmed by the organisers.** Every model we write
+  must assume both axles are driven: 40 % of the drive force to the front and 60 % to the rear
+  (`params.front_drive_fraction`), brakes 60 % front (`front_brake_fraction`), and per-axle traction control
+  (`traction_limit`). This matches the harness's bicycle backend (`vehicle.bicycle` in `simulator/config/sim.yaml`).
+  Consequences:
+  - The acceleration traction limit is set by the load on **all four** tyres, not just the rear axle.
+  - Throttle mid-corner also loads the front tyres, so expect **power-on understeer**, not oversteer.
+  - Keep the friction ellipse (`tracker.py`) and the dynamic model (`predict.py`) consistent with this split.
+
+  CARLA runs its own stock `vehicle.tesla.model3` drivetrain. Our controller cannot change it, so use
+  `compare` (bicycle vs CARLA) to catch behaviour differences.
 - **`Observation`:** `t, step, x, y, yaw, vx, vy, yaw_rate, ax, ay, speed`, the applied
   `steer, throttle, brake`, `progress, lap, timing_started`, `cones`, `road`.
 - **`obs.road` (`RoadModel`, vehicle frame, referenced to the centerline):**

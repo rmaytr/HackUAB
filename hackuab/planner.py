@@ -90,11 +90,14 @@ def backward_pass(v_cap: np.ndarray, s: np.ndarray, a_dec: float) -> np.ndarray:
 
 def accel_table(vehicle: VehicleParams, p: Params, v_top: float) -> tuple[np.ndarray, np.ndarray]:
     """Distance needed to accelerate from 0 to each speed in a table, flat out:
-    a(v) = min(a_max, F_drive/m, P/(m v)) - (drag + rolling)/m and S(v) = int v / a(v) dv."""
+    a(v) = min(a_max, F_drive/m, P/(m v), a_traction) - (drag + rolling)/m and S(v) = int v / a(v) dv.
+    The car is all-wheel drive, so the traction limit is set by the load on all four tyres:
+    a_traction = traction_limit * mu * g (rear-wheel drive would only get the rear axle's share)."""
     m = vehicle.mass
     v = np.linspace(0.0, v_top, 64)
     f_drive = np.minimum(p.max_drive_force, p.max_power_w / np.maximum(v, 0.5))
-    a = np.minimum(_t(p, "fwd_accel_frac") * vehicle.max_accel, f_drive / m)
+    a_traction = float(getattr(p, "traction_limit", 0.97)) * float(getattr(p, "mu_model", vehicle.mu)) * G
+    a = np.minimum(np.minimum(_t(p, "fwd_accel_frac") * vehicle.max_accel, f_drive / m), a_traction)
     a -= (0.5 * _t(p, "air_density") * p.drag_area * v * v) / m + p.rolling_resistance * G
     a = np.maximum(a, 0.05)
     integrand = v / a
