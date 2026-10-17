@@ -181,9 +181,12 @@ docs/                   pitch, innovation write-up, screenshots for the demo
 
 | Teammate | Owns | Branch prefix |
 | -------- | ---- | ------------- |
-| Rodion   | _TBD_ (suggested: `controller.py`, `params.py`, integration + selftest) | `rodion/*` |
-| Saisi    | _TBD_ (suggested: `horizon.py` + `planner.py`) | `saisi/*` |
-| _TBD_    | _TBD_ (suggested: `tracker.py` + `docs/`) | `_tbd_/*` |
+| Rodion   | _TBD_ | `rodion/*` |
+| Saisi    | _TBD_ | `saisi/*` |
+| Viraj    | _TBD_ | `viraj/*` |
+
+**Ownership is not assigned yet.** Until this table is filled in, ask your human which files
+they're working on before editing anything outside the files you create.
 
 ## Data contracts between modules
 
