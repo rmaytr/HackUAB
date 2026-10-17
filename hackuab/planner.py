@@ -11,7 +11,8 @@ does not jump, and fade n back to 0 over the last few metres so we never commit 
 R3 steps 1-2, speed profile on the new line: v_cap = sqrt(a_lat / |kappa|), a visibility guard at
 the horizon end (a hairpin of radius vis_hairpin_radius may start just past it), a backward braking
 pass and a forward acceleration pass that is power-limited (F = min(F_drive, P/v)) and includes drag
-and rolling resistance. Both passes are vectorised K x K reachability minimisations.
+and rolling resistance. Both passes are exact O(K) prefix/suffix reachability minimisations.
+Once the finish is visible, only the speculative unseen-corner cap is released.
 
 R3 steps 4 + 6, predictive verification: predict.verify_plan() rolls the car out along the plan for
 1.5 s with the dynamic bicycle model driven by (a mirror of) the tracker's control law. Where it
@@ -40,8 +41,8 @@ New tunables (TUNABLES below; a Params field of the same name wins, so add them 
     rl_w_heading         20.0   weight tying dn/ds at s=0 to tan(heading_error)
     rl_w_warm            0.05   weight (per m) pulling n toward last step's (shifted) solution; it keeps
                                 apexes already committed to (0.002 -> 0.05 cut 1-3 s per course)
-    rl_fade_m            8.0    m, length over which n is pulled back to 0 at the horizon end
-    rl_w_fade            2.0    weight (per m) of that pull at the very end (grows quadratically)
+    rl_fade_m            4.0    m, length over which n is pulled back to 0 at the horizon end
+    rl_w_fade            0.5    weight (per m) of that pull at the very end (grows quadratically)
     rl_iters             3      projected re-solves with the violated bounds pinned
     rl_start_free_m      1.0    m, no corridor bounds before this station (the car may be outside)
     rl_rejoin_m          6.0    m, minimum length over which a car outside the corridor is led back in
@@ -63,6 +64,7 @@ New tunables (TUNABLES below; a Params field of the same name wins, so add them 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 import numpy as np
 
@@ -83,7 +85,7 @@ class Plan:
 
 TUNABLES = {
     "rl_ds": 1.0, "rl_w_smooth": 4.0, "rl_w_start": 1e4, "rl_w_heading": 20.0, "rl_w_warm": 0.05,
-    "rl_fade_m": 8.0, "rl_w_fade": 2.0, "rl_iters": 3, "rl_start_free_m": 1.0,
+    "rl_fade_m": 4.0, "rl_w_fade": 0.5, "rl_iters": 3, "rl_start_free_m": 1.0,
     "rl_rejoin_m": 6.0, "rl_rejoin_time": 1.0, "rl_margin": 0.5,
     "vis_hairpin_radius": 8.0, "vis_margin_m": 0.0, "fwd_accel_frac": 1.0, "fwd_seed_time": 1.0,
     "air_density": 1.2, "verify_iters": 1, "verify_horizon_s": 1.5, "verify_use_limit": 0.95,
@@ -108,17 +110,17 @@ _NO_CAP = 1e3
 
 def curvature(path: np.ndarray, s: np.ndarray) -> np.ndarray:
     """Signed curvature of a polyline: (x'y'' - y'x'') / (x'^2 + y'^2)^1.5, derivatives w.r.t. s."""
-    dx, dy = np.gradient(path[:, 0], s), np.gradient(path[:, 1], s)
-    ddx, ddy = np.gradient(dx, s), np.gradient(dy, s)
+    d = np.gradient(path, s, axis=0)
+    dd = np.gradient(d, s, axis=0)
+    dx, dy, ddx, ddy = d[:, 0], d[:, 1], dd[:, 0], dd[:, 1]
     return (dx * ddy - dy * ddx) / np.maximum((dx * dx + dy * dy) ** 1.5, 1e-9)
 
 
 def backward_pass(v_cap: np.ndarray, s: np.ndarray, a_dec: float) -> np.ndarray:
     """Fastest speed at each node from which every later cap is reachable at deceleration a_dec:
-    v_i = min_{j >= i} sqrt(v_cap_j^2 + 2 a_dec (s_j - s_i)). Vectorised (K x K, K ~ 40)."""
-    ds = s[None, :] - s[:, None]
-    reach = np.sqrt(v_cap[None, :] ** 2 + 2.0 * a_dec * np.maximum(ds, 0.0))
-    return np.where(ds >= 0.0, reach, np.inf).min(axis=1)
+    v_i = min_{j >= i} sqrt(v_cap_j^2 + 2 a_dec (s_j - s_i)). An O(K) suffix minimum."""
+    energy = v_cap * v_cap + 2.0 * a_dec * s
+    return np.sqrt(np.maximum(np.minimum.accumulate(energy[::-1])[::-1] - 2.0 * a_dec * s, 0.0))
 
 
 def accel_table(vehicle: VehicleParams, p: Params, v_top: float,
@@ -141,12 +143,12 @@ def accel_table(vehicle: VehicleParams, p: Params, v_top: float,
 
 def forward_pass(v_cap: np.ndarray, s: np.ndarray, table: tuple[np.ndarray, np.ndarray]) -> np.ndarray:
     """Slowest of all flat-out acceleration curves started from an earlier node's cap:
-    v_i = min_{j <= i} V(S(v_cap_j) + s_i - s_j), with S/V the accel_table and its inverse."""
+    v_i = min_{j <= i} V(S(v_cap_j) + s_i - s_j), with S/V the accel_table and its inverse.
+    Monotonic V lets us take the prefix minimum in distance space before one interpolation."""
     tv, td = table
     d0 = np.interp(v_cap, tv, td)                                       # (K,) "distance from standstill"
-    ds = s[:, None] - s[None, :]                                        # i rows, j cols
-    reach = np.interp(d0[None, :] + np.maximum(ds, 0.0), td, tv, right=tv[-1])
-    return np.where(ds >= 0.0, reach, np.inf).min(axis=1)
+    reachable_distance = np.minimum.accumulate(d0 - s) + s
+    return np.interp(reachable_distance, td, tv, right=tv[-1])
 
 
 def _centerline_plan(c: Corridor, obs: Observation, p: Params) -> Plan:
@@ -167,26 +169,40 @@ def _diff_matrix(k: int, order: int) -> np.ndarray:
     return d
 
 
+@lru_cache(maxsize=8)
+def _line_operators(k: int, ds: float) -> tuple[np.ndarray, np.ndarray]:
+    """Bounded cache of geometry-independent derivative operators; callers never modify them."""
+    d2 = _diff_matrix(k, 2) / ds ** 2
+    d3 = _diff_matrix(k, 3) / ds ** 3
+    out = d2, d3.T @ d3
+    for matrix in out:
+        matrix.setflags(write=False)
+    return out
+
+
 def racing_offsets(s: np.ndarray, kappa_c: np.ndarray, lo: np.ndarray, hi: np.ndarray,
                    n0: float, slope0: float, n_warm: np.ndarray, w_warm: np.ndarray,
                    p: Params) -> tuple[np.ndarray, int]:
     """Min-curvature lateral offsets n (K,) with lo <= n <= hi. Returns (n, solves used)."""
     k = len(s)
     ds = float(s[1] - s[0])
-    d2 = _diff_matrix(k, 2) / ds ** 2
-    a = d2 + np.diag(kappa_c[1:-1] ** 2) @ np.eye(k)[1:-1]              # d kappa / d n, rows 1..K-2
-    d3 = _diff_matrix(k, 3) / ds ** 3
-    h = ds * (a.T @ a) + _t(p, "rl_w_smooth") * ds * (d3.T @ d3)
+    d2, smooth_gram = _line_operators(k, ds)
+    a = d2.copy()
+    rows = np.arange(k - 2)
+    a[rows, rows + 1] += kappa_c[1:-1] ** 2                          # d kappa / d n
+    h = ds * (a.T @ a) + _t(p, "rl_w_smooth") * ds * smooth_gram
     g = -ds * (a.T @ kappa_c[1:-1])
 
     # pose: n_0 = car offset, initial slope = car heading relative to the centerline
     w0, wh = _t(p, "rl_w_start"), _t(p, "rl_w_heading")
     h[0, 0] += w0
     g[0] += w0 * n0
-    e = np.zeros(k)
-    e[0], e[1] = -1.0 / ds, 1.0 / ds
-    h += wh * np.outer(e, e)
-    g += wh * slope0 * e
+    h[0, 0] += wh / ds ** 2
+    h[1, 1] += wh / ds ** 2
+    h[0, 1] -= wh / ds ** 2
+    h[1, 0] -= wh / ds ** 2
+    g[0] -= wh * slope0 / ds
+    g[1] += wh * slope0 / ds
 
     # warm start + fade to the centerline at the horizon end
     diag = w_warm * _t(p, "rl_w_warm") * ds
@@ -273,7 +289,9 @@ def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Pl
     kappa = curvature(path, sp)
     v_cap = np.minimum(np.sqrt(p.a_lat / np.maximum(np.abs(kappa), 1e-4)), p.v_max)
     r_min = _t(p, "vis_hairpin_radius")
-    v_cap[-1] = min(v_cap[-1], np.sqrt(p.a_lat * r_min + 2.0 * p.a_dec * _t(p, "vis_margin_m")))
+    finish = float(getattr(road, "finish_distance", float("nan")))
+    if not (np.isfinite(finish) and 0.0 <= finish <= float(c.s[-1])):
+        v_cap[-1] = min(v_cap[-1], np.sqrt(p.a_lat * r_min + 2.0 * p.a_dec * _t(p, "vis_margin_m")))
     eco = float(getattr(p, "eco_weight", 0.0))
     eco_cfg = None
     if eco > 0.0:
@@ -297,7 +315,7 @@ def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Pl
     verify = _t(p, "verify_iters") >= 0
     base_cap = v_cap
     if verify and _VCAP and obs.step == _VCAP["step"] + 1:
-        v_cap = np.minimum(v_cap, np.interp(obs.progress + sp, _VCAP["s"], _VCAP["cap"] * _t(p, "verify_relax"),
+        v_cap = np.minimum(v_cap, np.interp(obs.progress + s, _VCAP["s"], _VCAP["cap"] * _t(p, "verify_relax"),
                                             left=_NO_CAP, right=_NO_CAP))
     v = profile(v_cap)
     if not (np.all(np.isfinite(v)) and np.all(np.isfinite(kappa))):
@@ -307,7 +325,8 @@ def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Pl
     out = Plan(path=path, s=sp, kappa=kappa, v=v)
     if verify:
         out, cap = _verify(out, v_cap, profile, obs, vehicle, p)
-        _VCAP.update(s=obs.progress + sp, cap=np.where(cap < base_cap - 1e-6, cap, _NO_CAP), step=obs.step)
+        # Progress is measured along the centerline, not along this step's offset racing line.
+        _VCAP.update(s=obs.progress + s, cap=np.where(cap < base_cap - 1e-6, cap, _NO_CAP), step=obs.step)
     if eco_cfg is not None:
         out.debug = dict(out.debug or {})
         out.debug.update(_eco_debug(out, eco_cfg, eco, v_now, p))

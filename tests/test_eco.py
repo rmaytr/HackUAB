@@ -1,6 +1,6 @@
 """Eco mode (planner eco_weight) and its guarantee that eco_weight = 0 is today's controller, bit for bit.
 
-The golden file tests/data/eco0_golden.npz was recorded from main at 8acab13 (before Eco mode existed)
+The golden file tests/data/eco0_golden.npz was recorded from main at 96a781e (before Eco mode existed)
 by running this file as a script:  .venv\\Scripts\\python.exe ..\\tests\\test_eco.py --record
 The sequence is closed loop on a synthetic course (straight, then a tight corner, then a straight),
 so it covers acceleration, the braking zone, cornering and the warm-start / verifier-cap memories.
@@ -109,7 +109,7 @@ def test_eco_debug_keys_and_plan_verified():
     assert cmd.debug["pred_ok"] == 1.0
 
 
-MAIN_TECHNICAL_TIME_S = 38.70137396097199      # main at 8acab13, default config, bicycle, practice_technical
+MAIN_TECHNICAL_TIME_S = 38.54889586951406      # main at 96a781e, default config, bicycle, practice_technical
 
 
 def test_eco_weight_zero_keeps_practice_technical_lap_time(tmp_path):
