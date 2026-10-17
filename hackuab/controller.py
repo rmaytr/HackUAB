@@ -62,6 +62,7 @@ class HackUABController(Controller):
                 if not _plan_ok(pl):
                     raise FloatingPointError("invalid plan")
                 dbg.update({"t_horizon_ms": (t1 - t0) * 1e3, "t_plan_ms": (t2 - t1) * 1e3})
+                dbg.update(getattr(pl, "debug", None) or {})        # planner diagnostics (pred_*)
             except Exception:
                 if self.strict:
                     raise

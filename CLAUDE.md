@@ -237,6 +237,7 @@ class Plan:
     s: np.ndarray            # (N,) arc length along the path
     kappa: np.ndarray        # (N,) signed curvature, + left
     v: np.ndarray            # (N,) target speed after the backward/forward passes
+    debug: dict = {}         # optional scalar diagnostics (pred_* from the verifier); controller merges into Command.debug
 def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Plan: ...
 
 # tracker.py

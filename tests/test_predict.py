@@ -165,18 +165,56 @@ def test_verify_plan_tracks_a_gentle_circle():
     assert ms < 2.0
 
 
+def _approach_plan(straight=8.0, radius=25.0, grip=1.1, length=40.0):
+    """Straight then a constant-radius left turn; speed = grip * mu * g corner limit + braking pass."""
+    from planner import backward_pass
+    s = np.arange(0.0, length + 1.0)
+    th = np.clip(s - straight, 0.0, None) / radius
+    path = np.column_stack((np.where(s <= straight, s, straight + radius * np.sin(th)),
+                            np.where(s <= straight, 0.0, radius * (1.0 - np.cos(th)))))
+    kappa = np.where(s < straight, 0.0, 1.0 / radius)
+    v_cap = np.minimum(np.sqrt(grip * VP.mu * G / np.maximum(kappa, 1e-4)), 22.0)
+    return SimpleNamespace(path=path, s=s, kappa=kappa, v=backward_pass(v_cap, s, P.a_dec)), v_cap
+
+
 def test_verify_plan_flags_and_scales_an_over_fast_corner():
-    # entering a R = 20 m arc at 11 m/s with a 14 m/s plan: the car accelerates into over-demand
-    plan = _circle_plan(radius=20.0, v=14.0)
-    obs = _obs(11.0, r=11.0 / 20.0, steer=math.atan(3.0 / 20.0) / VP.max_steer)
-    res = predict.verify_plan(plan, obs, VP, P)
-    assert not res["ok"]
-    assert max(res["friction_use_max"], res["grip_demand_max"]) > 0.95
-    assert (res["v_scale"] <= 1.0).all() and res["v_scale"].min() < 0.95
-    slower = SimpleNamespace(path=plan.path, s=plan.s, kappa=plan.kappa, v=plan.v * res["v_scale"])
-    res2 = predict.verify_plan(slower, obs, VP, P)
-    assert res2["ok"]                                    # one scale pass fixes it
-    assert res2["lat_dev_max"] < res["lat_dev_max"]
+    # a corner planned at 1.1 g, approached at 16 m/s: verify, scale, re-run the braking pass (as the
+    # planner does) until the prediction is clean
+    from planner import backward_pass
+    plan, v_cap = _approach_plan()
+    obs = _obs(16.0)
+    first = res = predict.verify_plan(plan, obs, VP, P)
+    assert not res["ok"] and (res["v_scale"] <= 1.0).all() and res["v_scale"].min() < 0.95
+    for _ in range(3):
+        if res["ok"]:
+            break
+        v_cap = np.minimum(v_cap, plan.v * res["v_scale"])
+        plan = SimpleNamespace(path=plan.path, s=plan.s, kappa=plan.kappa, v=backward_pass(v_cap, plan.s, P.a_dec))
+        res = predict.verify_plan(plan, obs, VP, P)
+    assert res["ok"]
+    assert res["rear_slip_max_deg"] < first["rear_slip_max_deg"] and res["rear_slip_max_deg"] < 5.0
+
+
+def test_verify_plan_mirrors_the_tracker():
+    # the built-in law must steer like tracker.track() would on the same predicted states
+    import tracker
+    plan, _ = _approach_plan(grip=0.7)
+    state = {}
+
+    def real(s7, pl, k):
+        x, y, yaw, vx, vy, r, d = s7
+        c, sn = math.cos(yaw), math.sin(yaw)
+        dx, dy = pl.path[:, 0] - x, pl.path[:, 1] - y
+        local = SimpleNamespace(path=np.column_stack((c * dx + sn * dy, c * dy - sn * dx)), s=pl.s,
+                                kappa=pl.kappa, v=pl.v)
+        o = SimpleNamespace(speed=math.hypot(vx, vy), vx=vx, vy=vy, yaw_rate=r, steer=d / VP.max_steer)
+        steer, thr, brk = tracker.track(local, o, VP, P, state)
+        return steer, thr if thr > 0.0 else -brk
+
+    mirror = predict.verify_plan(plan, _obs(12.0), VP, P)
+    ref = predict.verify_plan(plan, _obs(12.0), VP, P, track_fn=real)
+    assert np.abs(mirror["grip_demand"] - ref["grip_demand"]).max() < 0.08
+    assert np.abs(mirror["poses"] - ref["poses"]).max() < 0.3
 
 
 def test_verify_plan_corridor_and_custom_tracker():

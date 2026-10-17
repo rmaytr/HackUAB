@@ -13,6 +13,15 @@ the horizon end (a hairpin of radius vis_hairpin_radius may start just past it),
 pass and a forward acceleration pass that is power-limited (F = min(F_drive, P/v)) and includes drag
 and rolling resistance. Both passes are vectorised K x K reachability minimisations.
 
+R3 steps 4 + 6, predictive verification: predict.verify_plan() rolls the car out along the plan for
+1.5 s with the dynamic bicycle model driven by (a mirror of) the tracker's control law. Where it
+predicts tyre utilisation over 0.95, commanded grip demand over 1.0 or rear slip over 5 deg, it
+returns a per-node speed factor; we cap v there and redo the backward/forward passes, at most
+verify_iters times, keeping the first clean plan (or the least over-demanding one). The caps it
+imposed are remembered by course progress and applied up front next step (relaxed by verify_relax per
+step), so a corner is usually found once and later steps verify in a single pass. Results go to
+Plan.debug (pred_* keys) for telemetry.
+
 If the solver fails or produces non-finite values we return the Phase 0 centerline plan.
 
 New tunables (TUNABLES below; a Params field of the same name wins, so add them to params.py to tune):
@@ -35,16 +44,24 @@ New tunables (TUNABLES below; a Params field of the same name wins, so add them 
     fwd_accel_frac       1.0    fraction of vehicle.max_accel the forward pass may use
     fwd_seed_time        1.0    s, the forward pass starts from speed + a(speed) * this
     air_density          1.2    kg/m^3, for the drag term of the forward pass
+    verify_iters         1      re-plans allowed after the first verification (0 = verify and log only;
+                                negative = skip verification)
+    verify_horizon_s     1.5    s, prediction horizon of the verifier
+    verify_use_limit     0.95   max predicted tyre utilisation |F| / (mu Fz)
+    verify_grip_limit    1.0    max predicted commanded grip demand (tracker caps at 1.05, scorer flags 1.1)
+    verify_rear_slip_deg 5.0    max predicted rear-axle slip angle (scorer flags 6 deg)
+    verify_relax         1.01   remembered verifier caps grow by this factor per step until re-confirmed
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
 from autocross.api import Observation, VehicleParams
 from horizon import Corridor
 from params import G, Params
+from predict import verify_plan
 
 
 @dataclass
@@ -53,6 +70,7 @@ class Plan:
     s: np.ndarray            # (N,) arc length along the path
     kappa: np.ndarray        # (N,) signed curvature, + left
     v: np.ndarray            # (N,) target speed after the braking pass
+    debug: dict = field(default_factory=dict)   # scalar diagnostics for Command.debug (optional)
 
 
 TUNABLES = {
@@ -60,7 +78,8 @@ TUNABLES = {
     "rl_fade_m": 8.0, "rl_w_fade": 2.0, "rl_iters": 3, "rl_start_free_m": 1.0,
     "rl_rejoin_m": 6.0, "rl_rejoin_time": 1.0, "rl_margin": 0.5,
     "vis_hairpin_radius": 8.0, "vis_margin_m": 0.0, "fwd_accel_frac": 1.0, "fwd_seed_time": 1.0,
-    "air_density": 1.2,
+    "air_density": 1.2, "verify_iters": 1, "verify_horizon_s": 1.5, "verify_use_limit": 0.95,
+    "verify_grip_limit": 1.0, "verify_rear_slip_deg": 5.0, "verify_relax": 1.01,
 }
 
 
@@ -71,6 +90,9 @@ def _t(p: Params, name: str) -> float:
 
 # warm start carried between steps: offsets on the previous centerline grid + where we were
 _WARM: dict = {}
+# speed caps the verifier imposed last step, by course progress (no cap = _NO_CAP)
+_VCAP: dict = {}
+_NO_CAP = 1e3
 
 
 def curvature(path: np.ndarray, s: np.ndarray) -> np.ndarray:
@@ -240,15 +262,60 @@ def plan(c: Corridor, obs: Observation, vehicle: VehicleParams, p: Params) -> Pl
     v_cap = np.minimum(np.sqrt(p.a_lat / np.maximum(np.abs(kappa), 1e-4)), p.v_max)
     r_min = _t(p, "vis_hairpin_radius")
     v_cap[-1] = min(v_cap[-1], np.sqrt(p.a_lat * r_min + 2.0 * p.a_dec * _t(p, "vis_margin_m")))
-    v_back = backward_pass(v_cap, sp, p.a_dec)
-    table = accel_table(vehicle, p, max(p.v_max, float(v_back.max())) + 1.0)
+    table = accel_table(vehicle, p, max(p.v_max, float(v_cap.max())) + 1.0)
     v_now = max(float(obs.speed), 0.0)
     a_now = float(np.interp(v_now + 0.1, table[0], table[1]) - np.interp(v_now, table[0], table[1]))
     a_now = 0.1 * (v_now + 0.05) / max(a_now, 1e-6)                      # a = v dv/ds
     v_seed = v_now + a_now * _t(p, "fwd_seed_time")
-    v_back[0] = min(v_back[0], v_seed)
-    v = forward_pass(v_back, sp, table)
+
+    def profile(cap: np.ndarray) -> np.ndarray:
+        v_back = backward_pass(cap, sp, p.a_dec)
+        v_back[0] = min(v_back[0], v_seed)
+        return forward_pass(v_back, sp, table)
+
+    verify = _t(p, "verify_iters") >= 0
+    base_cap = v_cap
+    if verify and _VCAP and obs.step == _VCAP["step"] + 1:
+        v_cap = np.minimum(v_cap, np.interp(obs.progress + sp, _VCAP["s"], _VCAP["cap"] * _t(p, "verify_relax"),
+                                            left=_NO_CAP, right=_NO_CAP))
+    v = profile(v_cap)
     if not (np.all(np.isfinite(v)) and np.all(np.isfinite(kappa))):
         _WARM.clear()
+        _VCAP.clear()
         return _centerline_plan(c, obs, p)
-    return Plan(path=path, s=sp, kappa=kappa, v=v)
+    out = Plan(path=path, s=sp, kappa=kappa, v=v)
+    if verify:
+        out, cap = _verify(out, v_cap, profile, obs, vehicle, p)
+        _VCAP.update(s=obs.progress + sp, cap=np.where(cap < base_cap - 1e-6, cap, _NO_CAP), step=obs.step)
+    return out
+
+
+def _verify(pl: Plan, v_cap: np.ndarray, profile, obs: Observation, vehicle: VehicleParams,
+            p: Params) -> tuple[Plan, np.ndarray]:
+    """R3.4: predict the car along the plan; where it over-demands the tyres, cap v and redo the passes.
+    Returns (the first clean plan, else the least over-demanding one, with pred_* diagnostics; its cap)."""
+    from time import perf_counter
+    t0 = perf_counter()
+    kw = dict(horizon_s=_t(p, "verify_horizon_s"), use_limit=_t(p, "verify_use_limit"),
+              grip_limit=_t(p, "verify_grip_limit"), rear_slip_limit_deg=_t(p, "verify_rear_slip_deg"))
+    v0 = pl.v
+    best, best_res, best_cap, n = pl, None, v_cap, 0
+    for it in range(int(_t(p, "verify_iters")) + 1):
+        res = verify_plan(pl, obs, vehicle, p, **kw)
+        n += 1
+        if best_res is None or res["ok"] or res["demand_max"] < best_res["demand_max"]:
+            best, best_res, best_cap = pl, res, v_cap
+        if res["ok"] or it == int(_t(p, "verify_iters")):
+            break
+        v_cap = np.minimum(v_cap, pl.v * res["v_scale"])
+        v = profile(v_cap)
+        if not np.all(np.isfinite(v)):
+            break
+        pl = Plan(path=pl.path, s=pl.s, kappa=pl.kappa, v=v)
+    r = best_res
+    best.debug = {"pred_friction_max": r["friction_use_max"], "pred_grip_max": r["grip_demand_max"],
+                  "pred_rear_slip_max": r["rear_slip_max_deg"], "pred_offset_max": r["lat_dev_max"],
+                  "pred_demand_max": r["demand_max"], "pred_ok": float(r["ok"]), "pred_iters": float(n),
+                  "v_scale_min": float(np.min(best.v / np.maximum(v0, 0.1))),
+                  "t_verify_ms": (perf_counter() - t0) * 1e3}
+    return best, best_cap
