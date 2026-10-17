@@ -14,7 +14,9 @@ What it does each step (all O(N) numpy, no loops over the path):
   3. Steering guards: grip cap (keeps commanded lateral demand under the dynamics metric's
      110% threshold) and a slew limit just below the actuator's rate limit.
   4. Longitudinal: feedforward accel from the plan's v(s) + PI on speed error.
-  5. Friction ellipse: longitudinal accel capped by the lateral grip already in use.
+  5. AWD per-axle friction model: the largest acceleration and braking for which both axles
+     stay inside their friction circles, given the cornering load, the AWD drive split, the
+     brake split and load transfer (see lon_envelope).
   6. Online slip adaptation: compares expected yaw rate v/L*tan(delta) with the measured one
      and rear-axle slip; shrinks the usable lateral grip when the tyres saturate and recovers
      it slowly. The result goes in state["a_lat_scale"] for the planner to read.
@@ -53,7 +55,7 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
 
     # ------------------------------------------------------------------ slip adaptation
     scale = _update_slip(obs, vehicle, p, state, v)
-    a_lat_max = _p(p, "ellipse_lat_frac") * mu_g * scale
+    a_lat_max = _p(p, "grip_frac") * mu_g * scale      # lateral grip at zero longitudinal load
 
     # ------------------------------------------------------------------ latency compensation
     t_pred = dt * (1 + int(getattr(vehicle, "actuation_delay_steps", 0)))
@@ -125,17 +127,16 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
     state["i_err"] = float(np.clip(state.get("i_err", 0.0) + _p(p, "ki_speed") * err * dt, -i_lim, i_lim))
     a_cmd = a_ff + _p(p, "kp_speed") * err + state["i_err"]
 
-    # friction ellipse: grip used laterally is not available longitudinally. Lateral load is the
-    # larger of what the steering asks now and what the path asks just ahead (corner entry).
-    # Throttle uses the true ellipse sqrt(1 - r^2). Braking uses 1 - r^2, inside it: braking
-    # scales against max_decel, which is above the lateral limit, and the rear axle of this car
-    # lets go first under combined braking and cornering.
+    # AWD per-axle friction limit: grip used for cornering is not available for driving or
+    # braking. Lateral load is the larger of what the steering asks now and what the path asks
+    # just ahead (corner entry). The floors are safety overrides: always some drive to keep
+    # moving, and always some braking even if it costs grip.
     delta = steer * vehicle.max_steer
     a_lat = max(v * v * abs(math.tan(delta)) / L, v * v * abs(kappa_ff))
-    r2 = min(a_lat / max(a_lat_max, 1e-3), 1.0) ** 2
-    lon_frac = math.sqrt(1.0 - r2)
-    a_up = vehicle.max_accel * max(lon_frac, _p(p, "accel_floor"))
-    a_dn = vehicle.max_decel * max(1.0 - r2, _p(p, "brake_floor"))
+    env_up, env_dn = lon_envelope(a_lat, vehicle, p, scale)
+    a_up = max(env_up, _p(p, "accel_floor") * vehicle.max_accel)
+    a_dn = max(env_dn, _p(p, "brake_floor") * vehicle.max_decel)
+    lon_frac = env_up / vehicle.max_accel
     a_cmd = float(np.clip(a_cmd, -a_dn, a_up))
 
     # jerk limit: ramp the pedals so load transfer does not unsettle the rear
@@ -164,8 +165,51 @@ def track(plan, obs, vehicle, p, state: dict) -> tuple[float, float, float]:
         "lookahead": ld, "kappa_cmd": kappa_cmd, "kappa_ff": kappa_ff, "kappa_pp": kappa_pp,
         "kappa_ideal": kappa_ideal, "steer_raw": steer_raw,
         "a_lat_max_est": a_lat_max, "slip": state.get("slip", 0.0),
+        "env_up": env_up, "env_dn": env_dn,
     }
     return _finite(steer), throttle, brake
+
+
+# ---------------------------------------------------------------------------- AWD friction model
+_AX_UP = np.linspace(0.0, 1.0, 41)            # candidate fractions of max_accel / max_decel
+_AX_DN = np.linspace(0.0, 1.0, 41)
+
+
+def lon_envelope(a_lat: float, vehicle, p, mu_scale: float = 1.0) -> tuple[float, float]:
+    """Largest longitudinal acceleration and deceleration (both >= 0, m/s^2) the car can use while
+    cornering at a_lat, with each axle inside its friction circle.
+
+    Per axle (steady state, single-track):
+      load      Fz_f = m (g l_r - a_x h) / L,    Fz_r = m (g l_f + a_x h) / L
+      cornering Fy_f = m a_lat l_r / L,          Fy_r = m a_lat l_f / L
+      drive     Fx_f = phi_d m a_x,  Fx_r = (1 - phi_d) m a_x     (AWD split, a_x > 0)
+      brake     Fx_f = phi_b m a_x,  Fx_r = (1 - phi_b) m a_x     (brake split, a_x < 0)
+      feasible  Fx^2 + Fy^2 <= (mu Fz)^2   and   |Fx| <= traction_limit mu Fz  (TC / ABS)
+    with mu = vehicle.mu * grip_frac * mu_scale. Evaluated on a grid of candidate a_x (vectorised);
+    0 if the corner alone already uses all the grip. Braking unloads the rear, which still carries
+    (1 - phi_b) of the brake force, so the rear circle is usually the one that limits trail braking."""
+    m = float(getattr(vehicle, "mass", 1845.0))
+    L = vehicle.wheelbase
+    lf = float(getattr(vehicle, "cg_to_front", 0.5 * L))
+    lr = L - lf
+    h = _p(p, "cg_height")
+    mu = vehicle.mu * _p(p, "grip_frac") * mu_scale
+    tl = _p(p, "traction_limit")
+    fyf, fyr = m * a_lat * lr / L, m * a_lat * lf / L
+
+    def best(ax, share_f):
+        fzf = np.maximum(m * (G * lr - ax * h) / L, 0.0)
+        fzr = np.maximum(m * (G * lf + ax * h) / L, 0.0)
+        fxf, fxr = share_f * m * ax, (1.0 - share_f) * m * ax
+        ok = ((fxf * fxf + fyf * fyf <= (mu * fzf) ** 2) & (fxr * fxr + fyr * fyr <= (mu * fzr) ** 2)
+              & (np.abs(fxf) <= tl * mu * fzf) & (np.abs(fxr) <= tl * mu * fzr))
+        # feasible set is an interval starting at a_x = 0: stop at the first infeasible candidate
+        n_ok = len(ok) if ok.all() else int(np.argmin(ok))
+        return float(np.abs(ax[n_ok - 1])) if n_ok else 0.0
+
+    up = best(_AX_UP * vehicle.max_accel, _p(p, "front_drive_fraction"))
+    dn = best(-_AX_DN * vehicle.max_decel, _p(p, "front_brake_fraction"))
+    return up, dn
 
 
 def _tangent(px, py, i):

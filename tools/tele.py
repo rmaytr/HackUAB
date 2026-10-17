@@ -1,6 +1,8 @@
-"""Print a time window of a run's telemetry (dev only).
+"""Print a window of a run's telemetry (dev only).
 
-  python ..\\tools\\tele.py RUN_DIR [t0 t1] [col ...]      RUN_DIR may be 'latest'
+  python ..\\tools\\tele.py RUN_DIR [t0 t1] [col ...]          window in seconds
+  python ..\\tools\\tele.py RUN_DIR p140 p215 [col ...]        window in progress (m)
+  RUN_DIR may be 'latest'.
 """
 import glob
 import os
@@ -15,10 +17,13 @@ args = sys.argv[1:]
 run = args.pop(0)
 if run == "latest":
     run = max(glob.glob(os.path.join("runs", "*")), key=os.path.getmtime)
-t0, t1 = (float(args.pop(0)), float(args.pop(0))) if len(args) >= 2 and args[0][0].isdigit() else (0.0, 1e9)
+key, lo, hi = "t", 0.0, 1e9
+if len(args) >= 2 and args[0][0] in "0123456789p":
+    key = "progress" if args[0][0] == "p" else "t"
+    lo, hi = float(args.pop(0).lstrip("p")), float(args.pop(0).lstrip("p"))
 cols = args or DEFAULT
 d = np.genfromtxt(os.path.join(run, "telemetry.csv"), delimiter=",", names=True)
-m = (d["t"] >= t0) & (d["t"] <= t1) & (d["ctrl_step"] > 0)
+m = (d[key] >= lo) & (d[key] <= hi) & (d["ctrl_step"] > 0)
 rows = d[m][::2]
 print(run)
 print("t      " + " ".join(f"{c[:9]:>9}" for c in cols))
