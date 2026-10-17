@@ -393,3 +393,30 @@ def test_verifier_cached_and_direct_tracker_envelopes_are_identical(monkeypatch,
     assert cached.keys() == reference.keys()
     for key in cached:
         np.testing.assert_array_equal(cached[key], reference[key], err_msg=key)
+
+
+@pytest.mark.parametrize("seed", [9, 37])
+def test_scalar_slip_matches_shared_tracker_every_state_update(seed):
+    from dataclasses import replace
+    import tracker
+
+    rng = np.random.default_rng(seed)
+    for _ in range(5):
+        vp = replace(VP, cg_to_rear=float(rng.uniform(1.1, 1.8)))
+        p = replace(P, slip_ema_alpha=float(rng.uniform(0.05, 0.6)),
+                    slip_threshold=float(rng.uniform(0.05, 0.4)),
+                    slip_scale_min=float(rng.uniform(0.5, 0.9)))
+        c = predict._slip_constants(vp, p)
+        scale, slip = 0.9, 0.0
+        state = {"a_lat_scale": scale, "slip": slip}
+        for k in range(240):
+            vx, vy, r, steer = rng.uniform([0, -2, -1, -0.8], [30, 2, 1, 0.8])
+            # Exercise finite sanitization and both exact branch thresholds too.
+            if k % 31 == 0:
+                vy, r, steer = np.nan, np.inf, np.nan
+            speed = (5.0, np.nextafter(5.0, np.inf), math.hypot(vx, vy) if np.isfinite(vy) else vx)[k % 3]
+            obs = SimpleNamespace(vx=vx, vy=vy, yaw_rate=r, steer=steer)
+            expected = tracker._update_slip(obs, vp, p, state, speed)
+            scale, slip = predict._slip_step(vx, vy, r, steer, speed, scale, slip, c)
+            assert scale == expected
+            assert slip == state["slip"]

@@ -1,5 +1,67 @@
 # STATUS: where the project stands (handoff file for any AI agent)
 
+## Ten-minute follow-up: scalar verifier hot path, fusion included (2026-10-17)
+
+Branch remains **rodion/compute-final**, based on the prior pushed **c1d12c0** candidate below.
+Rodion requested at most ten minutes and **no scored laps / fast checks only**. Verifier stays
+enabled, at the same 1.5 s / 50 ms prediction resolution, with unchanged tuning/safety limits.
+No tracker/controller/horizon/Params/simulator/fusion-source edits; main remains untouched.
+
+`predict.py` now uses a plain-float slip-state update with tuning extracted once per
+verification, avoiding NumPy scalar clipping, temporary observation writes, repeated parameter
+lookups and per-step state-dictionary writes. It mirrors the current tracker exactly; new
+randomized multi-step differential tests check every state update, including sanitization
+and speed thresholds. Existing tracker/pedal parity and golden commands remain passing.
+Future tracker slip changes MUST update this mirror or fail those tests. AWD grip limits still
+come from the tracker's own helper. Paired XY interpolation shares its station lookup and the
+nearest-node search calls ndarray.argmin directly, preserving expressions and tie behavior.
+
+Paired diagnostics, previous candidate vs this follow-up (not scored laps):
+
+| Measurement | Previous c1d12c0 | Follow-up |
+|---|---:|---:|
+| Cold verifier median / p99, 160 calls | 2.052 / 3.394 ms | **1.692 / 3.268 ms** |
+| Warm verifier median / p99, 160 calls | 0.811 / 2.194 ms | **0.613 / 2.095 ms** |
+| Synthetic PERFORMANCE controller median / p99 | 2.877 / 8.512 ms | **2.815 / 7.270 ms** |
+| Synthetic ECO controller median / p99 | 2.811 / 5.502 ms | **2.666 / 4.790 ms** |
+
+Verifier medians improve another **17.6% cold / 24.3% warm** relative to the prior candidate.
+The same paired run measured original main verifier medians **2.930 / 0.866 ms** (cold/warm),
+versus **1.692 / 0.613 ms** now. These are small diagnostics, not guarantees of tail latency.
+The controller diagnostic pins one logical core and runs 140 synthetic steps per mode/version,
+excludes harness IPC, and has 0 budget-guard trips. **Every command/path/speed array in both
+modes is bit-identical to c1d12c0.** Performance p99 still exceeds 5 ms; don't claim otherwise.
+
+Fast validation only: **126 passed, 3 simulator tests deselected in 2.55 s**. The first sandboxed
+attempt had three temporary-directory permission errors and the unchanged batch-rollout timing
+test exceeded its 3 ms bound (4.34 ms). The permission-corrected fast run passed every test;
+no thresholds, golden references or simulator files were changed. Independent read-only review
+found no blocking bug, with future tracker/mirror drift explicitly noted as a maintenance risk.
+
+**Fusion is included and smoke-checked**, using Saisi's existing offline raw-sensor pipeline
+and bridge into the full current controller:
+
+```powershell
+# From the repo root; synthetic/offline, not scored driving
+simulator\.venv\Scripts\python.exe -m fusion.demo --full-controller --frames 6 --png runs/compute-final/fusion-included.png
+```
+
+Six synthetic frames: fusion median **1.42 ms**, p95 **8.44 ms**, max **10.71 ms**; 66/70
+exact-color matches within 0.5 m. One fused obstacle reaches the full controller; steering
+changes **0.000 to -0.049**, fallback remains **0** in both observations. This is NOT a
+closed-loop race or evidence of real CARLA perception accuracy. The official Observation has
+no raw camera/LiDAR/radar fields, and fusion lives outside the copied submission folder;
+its raw-sensor pipeline therefore cannot be silently wired into scored driving. Source and
+the working offline integration are preserved, not represented as a new live sensor feed.
+Weather work is out of scope per Rodion's request.
+
+**No new lap time, score or cone-hit result is established for this follow-up.** The earlier
+18 clean laps / 68.294 Performance / 67.490 ECO scores below belong to **d86723b**, NOT this
+follow-up. **70+/75 with zero cones remains an acceptance target, not a certified result.**
+Required full STATUS checks and CARLA validation are deferred by the explicit fast-only time
+limit; do not merge/promote this candidate without them. Local diagnostic scripts/artifacts
+are under ignored `runs/compute-final/` (`controller_micro.py`, `profile_compare.py`, fusion PNG).
+
 ## Final compute-only candidate: `rodion/compute-final` (2026-10-17)
 
 Based on refreshed `origin/main` **3fa788e**, the integrated version Rodion reports as

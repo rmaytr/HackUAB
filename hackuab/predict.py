@@ -24,11 +24,10 @@ import math
 from bisect import bisect_right
 from functools import lru_cache
 from typing import Callable, NamedTuple
-from types import SimpleNamespace
 
 import numpy as np
 
-from tracker import _finite, _p, _tangent, _update_slip, lon_envelope
+from tracker import _finite, _p, _tangent, lon_envelope
 
 G = 9.81
 
@@ -308,6 +307,51 @@ def pedal_for_accel(a_des, vx, vp, p):
 
 # ----------------------------------------------------------------------------- plan verification
 
+class _SlipConstants(NamedTuple):
+    wheelbase: float
+    max_steer: float
+    lr: float
+    alpha: float
+    rear_max: float
+    threshold: float
+    drop: float
+    minimum: float
+    recover: float
+
+
+def _slip_constants(vp, p):
+    return _SlipConstants(float(vp.wheelbase), float(vp.max_steer), float(vp.cg_to_rear),
+                          *(_p(p, name) for name in ("slip_ema_alpha", "rear_slip_max_deg",
+                            "slip_threshold", "slip_drop", "slip_scale_min", "slip_recover")))
+
+
+def _slip_step(vx, vy, r, applied, speed, scale, slip, c: _SlipConstants):
+    """Scalar tracker._update_slip mirror, with parameters read once per verification.
+
+    No NumPy scalar clipping, temporary observation or per-step dict mutation. Keep the
+    arithmetic/order identical to the tracker; differential tests cover every state update
+    and the existing tracker-vs-verifier pedal tests cover its integration.
+    """
+    rear_ok = True
+    if speed > 5.0:
+        delta = _finite(applied) * c.max_steer
+        r_exp = speed / c.wheelbase * math.tan(delta)
+        r_meas = _finite(r)
+        if abs(r_exp) > 0.15:
+            raw = float(min(max(1.0 - r_meas / r_exp, -1.0), 1.0))
+            slip = (1.0 - c.alpha) * slip + c.alpha * raw
+        rear = math.degrees(math.atan2(_finite(vy) - c.lr * r_meas,
+                                      max(abs(_finite(vx)), 0.1)))
+        rear_ok = abs(rear) <= c.rear_max
+    else:
+        slip *= 0.9
+    if slip > c.threshold or not rear_ok:
+        scale = max(scale - c.drop, c.minimum)
+    else:
+        scale = min(scale + c.recover, 1.0)
+    return scale, slip
+
+
 class _GripVehicle(NamedTuple):
     mass: float
     wheelbase: float
@@ -386,7 +430,8 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
     The default control law mirrors tracker.track() (same Params fields): latency-compensated pose,
     curvature feedforward plus pure-pursuit error feedback, grip cap and steer slew limit, speed
     feedforward + PI, AWD per-axle friction limits, jerk limit, acceleration -> pedal mapping.
-    Grip limits, slip adaptation, defaults and tangents use the tracker's own helpers. The scalar
+    Grip limits, defaults and tangents use the tracker's own helpers; slip adaptation uses a
+    differentially tested scalar mirror to avoid NumPy dispatch on single floats. The scalar
     geometry/PI avoids calling the full numpy tracker 30 times per plan. Its integrator starts at
     0 and its initial grip scale comes from p.a_lat (the planner cannot see the tracker's remaining
     state). track_fn, if given, replaces it:
@@ -440,8 +485,7 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
     # grip estimate the controller applied to p.a_lat (= a_lat_base * a_lat_scale)
     base = g("lat_accel_frac") * mu_g
     scale = min(max(g("a_lat") / base, g("slip_scale_min")), 1.0) if base > 0.0 else 1.0
-    slip_state = {"a_lat_scale": scale}
-    predicted_obs = SimpleNamespace()
+    slip, slip_constants = 0.0, _slip_constants(vp, p)
     t_pred = vp.control_dt * (1 + int(getattr(vp, "actuation_delay_steps", 0) or 0))
 
     def interp(values, station):
@@ -449,6 +493,13 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
         j = min(max(bisect_right(s_l, station) - 1, 0), last)
         f = min(max((station - s_l[j]) / (s_l[j + 1] - s_l[j]), 0.0), 1.0)
         return values[j] + f * (values[j + 1] - values[j])
+
+    def interp_xy(station):
+        # One station lookup/fraction for both coordinates, preserving interp arithmetic.
+        j = min(max(bisect_right(s_l, station) - 1, 0), last)
+        f = min(max((station - s_l[j]) / (s_l[j + 1] - s_l[j]), 0.0), 1.0)
+        return (px_l[j] + f * (px_l[j + 1] - px_l[j]),
+                py_l[j] + f * (py_l[j + 1] - py_l[j]))
 
     def project(x, y, j):
         """Monotonic projection onto the path: (segment, distance along it clamped to the segment)."""
@@ -481,19 +532,17 @@ def verify_plan(plan, obs, vp, p, track_fn: Callable | None = None, horizon_s: f
             steer, pedal = track_fn(tuple(s[:7]), plan, k)
             steer, pedal = min(max(float(steer), -1.0), 1.0), min(max(float(pedal), -1.0), 1.0)
         else:
-            predicted_obs.vx, predicted_obs.vy = vx, vy
-            predicted_obs.yaw_rate, predicted_obs.steer = r, s[7]
-            scale = _update_slip(predicted_obs, vp, p, slip_state, speed)
+            scale, slip = _slip_step(vx, vy, r, s[7], speed, scale, slip, slip_constants)
             # latency compensation: track from where the car is when the command lands
             half, d = 0.5 * r * t_pred, speed * t_pred
             xq, yq, yawq = x + d * math.cos(yaw + half), y + d * math.sin(yaw + half), yaw + r * t_pred
             # Use the tracker's nearest-node rule, including on nonuniform/curved paths.
-            m = int(np.argmin((path_x - xq) ** 2 + (path_y - yq) ** 2))
+            m = int(((path_x - xq) ** 2 + (path_y - yq) ** 2).argmin())
             sq, nx, ny = s_l[m], px_l[m], py_l[m]
             # pure-pursuit target ld ahead along the path (extended past its end)
             s_t = sq + min(max(ld_min + ld_gain * speed, ld_min), ld_max)
             if s_t <= s_end:
-                tx, ty = interp(px_l, s_t), interp(py_l, s_t)
+                tx, ty = interp_xy(s_t)
             else:
                 tx, ty = px_l[-1] + ux_l[last] * (s_t - s_end), py_l[-1] + uy_l[last] * (s_t - s_end)
             cq, sn = math.cos(yawq), math.sin(yawq)
