@@ -1,6 +1,8 @@
 # Web-app dataset (`viz/data/`)
 
-> **Final preset refresh, 2026-10-17:** PERFORMANCE (eco_weight 0, lat_accel_frac 0.75) and ECO (0.8/0.75) for all five public courses and seeds 1-5 now come from the saved serial e3b8a28 validation telemetry. No laps were rerun. Each run has `code_commit` and `evidence`; other sweeps/baselines retain the historical bad18cd export. The top-level `commit` identifies the final preset code, not every historical run. Extra preset metrics retain overruns, budget-guard trips, peak rear slip, path error and obstacle hits. See [final validation](../../docs/STATUS.md).
+> PERFORMANCE (`eco_weight` 0) and ECO (0.8) runs on all ten courses come from the final submitted controller. The
+> baseline and intermediate `eco_weight` / `lat_accel_frac` sweeps come from an earlier controller version; every run
+> records its `code_commit` and `evidence`.
 
 Static JSON for the demo web app, which replays our laps step by step and compares driving modes and
 parameters. The app cannot run Python, so every number here is precomputed by `tools/export_viz.py` and

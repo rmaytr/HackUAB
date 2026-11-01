@@ -1,6 +1,8 @@
-# Innovations in the final HackUAB controller
+# Innovations
 
-The final selected controller is verifier-enabled `e3b8a28`. It uses the visible road rather than a course map and returns a command every 50 ms. [STATUS](STATUS.md) records the full tests and measured results; [README](../README.md) explains how to run it.
+What sets the HackUAB controller apart, why each piece matters, and the measured evidence. The controller uses only
+the visible road (no course map) and returns a command every 50 ms. See [ARCHITECTURE](ARCHITECTURE.md) for the
+design and [RESULTS](RESULTS.md) for the full measurements.
 
 ## 1. A racing line solved from current perception
 
@@ -56,7 +58,7 @@ The final selected controller is verifier-enabled `e3b8a28`. It uses the visible
 
 **Why:** redundant numerical work costs compute points and reduces the time available for prediction. Removing that work preserves the model, horizon and safety limits.
 
-**Evidence:** paired diagnostic cold/warm verifier medians improved from 2.930/0.866 ms on original main to 1.692/0.613 ms, approximately 42%/29%. Final PERFORMANCE full-run p99 was 6.957-10.597 ms with zero overruns. ECO retained a 52.060 ms overrun on seed 2 and a separate 38.128 ms soft-budget excursion on seed 4; the faster kernels do not guarantee bounded tail latency.
+**Evidence:** paired diagnostic cold/warm verifier medians improved from 2.930/0.866 ms before the optimisation to 1.692/0.613 ms after, approximately 42%/29%. Final PERFORMANCE full-run p99 was 6.957-10.597 ms with zero overruns. ECO retained a 52.060 ms overrun on seed 2 and a separate 38.128 ms soft-budget excursion on seed 4; the faster kernels do not guarantee bounded tail latency.
 
 ## 8. Offline camera, LiDAR and radar fusion
 
@@ -64,8 +66,11 @@ The final selected controller is verifier-enabled `e3b8a28`. It uses the visible
 
 **Why:** it demonstrates a perception front end for a controller that ordinarily receives an already-processed road model.
 
-**Evidence:** the existing six-frame full-controller smoke check measured 1.42 ms fusion median, 8.44 ms p95 and 10.71 ms maximum, with 66/70 exact-colour matches within 0.5 m. A fused obstacle changed steering from 0.000 to -0.049 with fallback 0. This is synthetic/offline evidence. Raw sensors are not provided by the scored Observation API, and fusion is not imported by the scored controller. Real CARLA perception accuracy is not certified.
+**Evidence:** a six-frame full-controller smoke check measured 1.42 ms fusion median, 8.44 ms p95 and 10.71 ms maximum, with 66/70 exact-colour matches within 0.5 m. A fused obstacle changed steering from 0.000 to -0.049 with fallback 0. This is synthetic/offline evidence. Raw sensors are not provided by the scored Observation API, and fusion is not imported by the scored controller. Real CARLA perception accuracy is not certified.
 
 ## Evidence and remaining limits
 
-The final single-pass bicycle validation comprises 129 passing tests and 22 penalty-free standalone finishes. Public means were 70.066/75 PERFORMANCE and 67.618/75 ECO. The score is an average on known public courses, not the official weighted unreleased-course result. Exact-code CARLA validation, ECO tail-latency investigation and full live tracker-state/corridor verification remain outstanding. Rodion explicitly selected this version for final main with those limits recorded.
+The final validation is 129 passing tests and 20 penalty-free laps on 10 courses (5 public, 5 randomly generated) in
+both modes. Public means were 70.07 / 75 in PERFORMANCE and 67.62 / 75 in ECO. These averages are on known courses,
+not the official weighted score on the unreleased courses. Remaining work: validating the exact final code on CARLA,
+investigating ECO tail latency, and passing the corridor and the full live tracker state into verification.

@@ -3,7 +3,7 @@
   python ..\\tools\\plot_run.py OURS_RUN BASELINE_RUN [--track tracks\\practice_technical.yaml] [--out ..\\figures]
 
 Writes <course>_<backend>_{map,speed,gg,steptime}.png plus a 2x2 <course>_<backend>_slide.png.
-Colours: ours = accent blue, baseline = grey (CLAUDE.md visualisation brief); speed on the map is
+Colours: ours = accent blue, baseline = grey (the project colour convention); speed on the map is
 a single-hue blue ramp. Static PNGs for slides, so every value worth reading is labelled.
 """
 from __future__ import annotations

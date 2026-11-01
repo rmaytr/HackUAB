@@ -1,6 +1,6 @@
 """Tracker: turns a Plan into (steer, throttle, brake).
 
-Contract (CLAUDE.md, "Data contracts"):
+Contract (docs/ARCHITECTURE.md, "Data contracts"):
     track(plan, obs, vehicle, p, state) -> (steer, throttle, brake)
     clipped, NaN-free, throttle and brake never both > 0.
 
